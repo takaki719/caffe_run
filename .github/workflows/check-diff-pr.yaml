@@ -1,0 +1,25 @@
+name: Check if there is a diff with develop
+
+on:
+  pull_request:
+    branches: [develop]
+
+jobs:
+  check-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Check diff with develop
+        run: |
+          git fetch origin develop
+          DIFF=$(git diff --name-only origin/develop)
+          if [ -z "$DIFF" ]; then
+            echo "No differences found. Failing to prevent unnecessary merge."
+            exit 1
+          else
+            echo "Differences found:"
+            echo "$DIFF"
+          fi
