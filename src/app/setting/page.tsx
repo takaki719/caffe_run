@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import BlueButton from "../../components/BlueButton";
 import TopBackButton from "@/components/TopBackButton";
-import { useRouter } from "next/navigation";
 
 const SettingPage: React.FC = () => {
   // 睡眠
