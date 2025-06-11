@@ -11,6 +11,10 @@ const SettingPage: React.FC = () => {
     { start: "", end: "" },
   ]);
 
+  // 集中時間の追加
+  const addFocusPeriod = () =>
+    setFocusPeriods([...focusPeriods, { start: "", end: "" }]);
+
   const updateFocusPeriod = (
     idx: number,
     key: "start" | "end",
@@ -77,7 +81,14 @@ const SettingPage: React.FC = () => {
                 />
               </div>
             ))}
-            {/* 追加ボタン（省略） */}
+            {/* 追加ボタン */}
+            <button
+              type="button"
+              onClick={addFocusPeriod}
+              className="mt-2 flex items-center text-blue-600 font-semibold hover:underline"
+            >
+              <span className="text-xl mr-1">＋</span>集中時間帯を追加
+            </button>
           </div>
         </section>
       </main>
