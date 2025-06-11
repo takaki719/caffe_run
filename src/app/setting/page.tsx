@@ -14,7 +14,11 @@ const SettingPage: React.FC = () => {
   // 集中時間の追加
   const addFocusPeriod = () =>
     setFocusPeriods([...focusPeriods, { start: "", end: "" }]);
-
+  
+  // 集中帯削除
+  const removeFocusPeriod = (idx: number) =>
+    setFocusPeriods(focusPeriods.filter((_, i) => i !== idx));
+  
   const updateFocusPeriod = (
     idx: number,
     key: "start" | "end",
@@ -53,43 +57,52 @@ const SettingPage: React.FC = () => {
 
         {/* 集中セクション */}
         <section className="w-full mb-12">
-          <div className="flex flex-col gap-3">
-            {focusPeriods.map((period, idx) => (
-              <div
-                key={idx}
-                className="flex flex-row items-center gap-2 sm:gap-4 w-full flex-wrap"
-              >
-                <label className="text-gray-600 text-sm font-medium min-w-[95px] mb-0">
-                  集中時間
-                </label>
-                <input
-                  type="time"
-                  value={period.start}
-                  onChange={(e) =>
-                    updateFocusPeriod(idx, "start", e.target.value)
-                  }
-                  className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
-                />
-                <span className="text-gray-500">～</span>
-                <input
-                  type="time"
-                  value={period.end}
-                  onChange={(e) =>
-                    updateFocusPeriod(idx, "end", e.target.value)
-                  }
-                  className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
-                />
-              </div>
-            ))}
-            {/* 追加ボタン */}
-            <button
-              type="button"
-              onClick={addFocusPeriod}
-              className="mt-2 flex items-center text-blue-600 font-semibold hover:underline"
-            >
-              <span className="text-xl mr-1">＋</span>集中時間帯を追加
-            </button>
-          </div>
+            <div className="flex flex-col gap-3">
+                {focusPeriods.map((period, idx) => (
+                <div
+                    key={idx}
+                    className="flex flex-row items-center gap-2 sm:gap-4 w-full flex-wrap"
+                >
+                    <label className="text-gray-600 text-sm font-medium min-w-[95px] mb-0">
+                    集中時間
+                    </label>
+                    <input
+                    type="time"
+                    value={period.start}
+                    onChange={e =>
+                        updateFocusPeriod(idx, "start", e.target.value)
+                    }
+                    className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
+                    />
+                    <span className="text-gray-500">～</span>
+                    <input
+                    type="time"
+                    value={period.end}
+                    onChange={e =>
+                        updateFocusPeriod(idx, "end", e.target.value)
+                    }
+                    className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
+                    />
+                    {focusPeriods.length > 1 && (
+                    <button
+                        type="button"
+                        onClick={() => removeFocusPeriod(idx)}
+                        className="ml-2 text-red-500 font-bold text-lg px-2 rounded hover:bg-red-100"
+                    >
+                        ×
+                    </button>
+                    )}
+                </div>
+                ))}
+                {/* 追加ボタン */}
+                <button
+                  type="button"
+                  onClick={addFocusPeriod}
+                  className="mt-2 flex items-center text-blue-600 font-semibold hover:underline"
+                >
+                  <span className="text-xl mr-1">＋</span>集中時間帯を追加
+                </button>
+            </div>
         </section>
       </main>
     </div>
