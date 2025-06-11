@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import BlueButton from "../../components/BlueButton";
 
 const SettingPage: React.FC = () => {
   // 睡眠
@@ -115,6 +116,10 @@ const SettingPage: React.FC = () => {
             </button>
           </div>
         </section>
+        {/* このボタンを押せばカフェインのグラフが生成される */}
+        <div className="w-full flex justify-center mt-8 mb-6">
+          <BlueButton label="カフェイン計画を生成する" href="../check-state" />
+        </div>
       </main>
     </div>
   );
