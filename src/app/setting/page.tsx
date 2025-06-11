@@ -42,22 +42,9 @@ const SettingPage: React.FC = () => {
     // 睡眠時間：どちらかが未入力ならNG
     if (!bed_time || !wake_time) return false;
     // 集中時間：少なくとも1つ、startとendが両方入力された期間があるか
-    const hasValidFocus = focusPeriods.some(
-      (p) => p.start && p.end
-    );
+    const hasValidFocus = focusPeriods.some((p) => p.start && p.end);
     if (!hasValidFocus) return false;
     return true;
-  };
-
-  // ボタン押下時の処理
-  const handleGenerate = (e: React.MouseEvent) => {
-    if (!isValid()) {
-      e.preventDefault(); // 遷移阻止
-      setError("集中時間・睡眠時間を入力してください");
-    } else {
-      setError("");
-      router.push("../check-state");
-    }
   };
 
   return (
@@ -146,7 +133,7 @@ const SettingPage: React.FC = () => {
             href="../check-state"
             onClick={() => {
               if (!isValid()) {
-                setError("集中時間 or 睡眠時間を入力してください");
+                setError("集中時間・睡眠時間を入力してください");
                 return false; // ←遷移させない
               }
               setError("");
