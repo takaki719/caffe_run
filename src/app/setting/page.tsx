@@ -1,5 +1,8 @@
 "use client";
 import React, { useState } from "react";
+import BlueButton from "../../components/BlueButton";
+import TopBackButton from "@/components/TopBackButton";
+
 const SettingPage: React.FC = () => {
   // 睡眠
   const [bed_time, setBedTime] = useState("");
@@ -11,6 +14,17 @@ const SettingPage: React.FC = () => {
     { start: "", end: "" },
   ]);
 
+  // エラーメッセージ
+  const [error, setError] = useState("");
+
+  // 集中時間の追加
+  const addFocusPeriod = () =>
+    setFocusPeriods([...focusPeriods, { start: "", end: "" }]);
+
+  // 集中帯削除
+  const removeFocusPeriod = (idx: number) =>
+    setFocusPeriods(focusPeriods.filter((_, i) => i !== idx));
+
   const updateFocusPeriod = (
     idx: number,
     key: "start" | "end",
@@ -21,9 +35,19 @@ const SettingPage: React.FC = () => {
     );
   };
 
+  // バリデーション
+  const isValid = () => {
+    // 睡眠時間：どちらかが未入力ならNG
+    if (!bed_time || !wake_time) return false;
+    // 集中時間：少なくとも1つ、startとendが両方入力された期間があるか
+    const hasValidFocus = focusPeriods.some((p) => p.start && p.end);
+    if (!hasValidFocus) return false;
+    return true;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 px-2 sm:px-0 flex flex-col">
-      {/* メイン */}
+      <TopBackButton />
       <main className="flex flex-col items-center flex-1 w-full max-w-2xl mx-auto">
         {/* 睡眠セクション */}
         <section className="w-full mb-8">
@@ -75,11 +99,46 @@ const SettingPage: React.FC = () => {
                   }
                   className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
                 />
+                {focusPeriods.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeFocusPeriod(idx)}
+                    className="ml-2 text-red-500 font-bold text-lg px-2 rounded hover:bg-red-100"
+                  >
+                    ×
+                  </button>
+                )}
               </div>
             ))}
-            {/* 追加ボタン（省略） */}
+            {/* 追加ボタン */}
+            <button
+              type="button"
+              onClick={addFocusPeriod}
+              className="mt-2 flex items-center text-blue-600 font-semibold hover:underline"
+            >
+              <span className="text-xl mr-1">＋</span>集中時間帯を追加
+            </button>
           </div>
         </section>
+        {/* エラー表示 */}
+        {error && (
+          <div className="text-red-600 font-semibold mb-3">{error}</div>
+        )}
+        {/* ボタン */}
+        <div className="w-full flex justify-center mt-8 mb-6">
+          <BlueButton
+            label="カフェイン計画を生成する"
+            href="../check-state"
+            onClick={() => {
+              if (!isValid()) {
+                setError("集中時間・睡眠時間を入力してください");
+                return false; // ←遷移させない
+              }
+              setError("");
+              // 何も返さなければ遷移OK
+            }}
+          />
+        </div>
       </main>
     </div>
   );
