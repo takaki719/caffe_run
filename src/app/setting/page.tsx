@@ -15,6 +15,10 @@ const SettingPage: React.FC = () => {
   const addFocusPeriod = () =>
     setFocusPeriods([...focusPeriods, { start: "", end: "" }]);
 
+  // 集中帯削除
+  const removeFocusPeriod = (idx: number) =>
+    setFocusPeriods(focusPeriods.filter((_, i) => i !== idx));
+
   const updateFocusPeriod = (
     idx: number,
     key: "start" | "end",
@@ -79,6 +83,15 @@ const SettingPage: React.FC = () => {
                   }
                   className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
                 />
+                {focusPeriods.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeFocusPeriod(idx)}
+                    className="ml-2 text-red-500 font-bold text-lg px-2 rounded hover:bg-red-100"
+                  >
+                    ×
+                  </button>
+                )}
               </div>
             ))}
             {/* 追加ボタン */}
