@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import BlueButton from "../../components/BlueButton";
+import TopBackButton from "@/components/TopBackButton";
 
 const SettingPage: React.FC = () => {
   // 睡眠
@@ -34,15 +35,7 @@ const SettingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 px-2 sm:px-0 flex flex-col">
-      {/* ヘッダー：左上アイコン */}
-      <header className="w-full flex items-center py-4 mb-8">
-        <Link href="../" className="flex items-center">
-          <span className="text-2xl sm:text-3xl font-bold text-blue-600 pl-2 cursor-pointer">
-            {/* 仮アイコン．作成次第置き換え予定 */}
-            📘 Caffe-Run
-          </span>
-        </Link>
-      </header>
+      <TopBackButton />
       {/* メイン */}
       <main className="flex flex-col items-center flex-1 w-full max-w-2xl mx-auto">
         {/* 睡眠セクション */}
