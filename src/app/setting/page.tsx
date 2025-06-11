@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // ★ 追加: 画面遷移のために必要
 import BlueButton from "../../components/BlueButton";
 
 const SettingPage: React.FC = () => {
@@ -13,7 +14,6 @@ const SettingPage: React.FC = () => {
   const [focusPeriods, setFocusPeriods] = useState<FocusPeriod[]>([
     { start: "", end: "" },
   ]);
-
   // 集中時間の追加
   const addFocusPeriod = () =>
     setFocusPeriods([...focusPeriods, { start: "", end: "" }]);
@@ -32,6 +32,56 @@ const SettingPage: React.FC = () => {
     );
   };
 
+  // ★ 追加：ルーター、ローディング、エラーのstate
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // ★ 追加：APIを呼び出し、結果をlocalStorageに保存して画面遷移する関数
+  const handleGeneratePlan = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    // 集中時間は最初のものを使用
+    const focusStart = focusPeriods[0]?.start;
+    const focusEnd = focusPeriods[0]?.end;
+
+    if (!bed_time || !wake_time || !focusStart || !focusEnd) {
+      setError("すべての時刻を入力してください。");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bedTime: bed_time,
+          wakeTime: wake_time,
+          focusStart: focusStart,
+          focusEnd: focusEnd,
+        }),
+      });
+
+      if (!response.ok) throw new Error('計算サーバーとの通信に失敗しました。');
+      
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      // 計算結果をlocalStorageに保存
+      localStorage.setItem('caffeinePlanResult', JSON.stringify(data));
+      
+      // 結果表示ページへ画面遷移
+      router.push('../check-state');
+
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 px-2 sm:px-0 flex flex-col">
       {/* ヘッダー：左上アイコン */}
@@ -43,6 +93,7 @@ const SettingPage: React.FC = () => {
           </span>
         </Link>
       </header>
+      
       {/* メイン */}
       <main className="flex flex-col items-center flex-1 w-full max-w-2xl mx-auto">
         {/* 睡眠セクション */}
@@ -66,7 +117,6 @@ const SettingPage: React.FC = () => {
             />
           </div>
         </section>
-
         {/* 集中セクション */}
         <section className="w-full mb-12">
           <div className="flex flex-col gap-3">
@@ -116,9 +166,16 @@ const SettingPage: React.FC = () => {
             </button>
           </div>
         </section>
-        {/* このボタンを押せばカフェインのグラフが生成される */}
-        <div className="w-full flex justify-center mt-8 mb-6">
-          <BlueButton label="カフェイン計画を生成する" href="../check-state" />
+
+        {/* ★ 変更点：ボタンの動作をonClickに変更 */}
+        <div className="w-full flex flex-col items-center justify-center mt-8 mb-6">
+          <BlueButton 
+            label={isLoading ? '生成中...' : 'カフェイン計画を生成する'} 
+            onClick={handleGeneratePlan}
+            disabled={isLoading}
+          />
+          {/* ★ 追加：エラーメッセージの表示エリア */}
+          {error && <p className="text-red-500 mt-4 font-semibold">{error}</p>}
         </div>
       </main>
     </div>
