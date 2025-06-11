@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import BlueButton from "../../components/BlueButton";
 import TopBackButton from "@/components/TopBackButton";
+import { useRouter } from "next/navigation";
 
 const SettingPage: React.FC = () => {
   // 睡眠
@@ -13,6 +14,10 @@ const SettingPage: React.FC = () => {
   const [focusPeriods, setFocusPeriods] = useState<FocusPeriod[]>([
     { start: "", end: "" },
   ]);
+
+  // エラーメッセージ
+  const [error, setError] = useState("");
+  const router = useRouter();
 
   // 集中時間の追加
   const addFocusPeriod = () =>
@@ -32,10 +37,32 @@ const SettingPage: React.FC = () => {
     );
   };
 
+  // バリデーション
+  const isValid = () => {
+    // 睡眠時間：どちらかが未入力ならNG
+    if (!bed_time || !wake_time) return false;
+    // 集中時間：少なくとも1つ、startとendが両方入力された期間があるか
+    const hasValidFocus = focusPeriods.some(
+      (p) => p.start && p.end
+    );
+    if (!hasValidFocus) return false;
+    return true;
+  };
+
+  // ボタン押下時の処理
+  const handleGenerate = (e: React.MouseEvent) => {
+    if (!isValid()) {
+      e.preventDefault(); // 遷移阻止
+      setError("集中時間・睡眠時間を入力してください");
+    } else {
+      setError("");
+      router.push("../check-state");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 px-2 sm:px-0 flex flex-col">
       <TopBackButton />
-      {/* メイン */}
       <main className="flex flex-col items-center flex-1 w-full max-w-2xl mx-auto">
         {/* 睡眠セクション */}
         <section className="w-full mb-8">
@@ -108,9 +135,24 @@ const SettingPage: React.FC = () => {
             </button>
           </div>
         </section>
-        {/* このボタンを押せばカフェインのグラフが生成される */}
+        {/* エラー表示 */}
+        {error && (
+          <div className="text-red-600 font-semibold mb-3">{error}</div>
+        )}
+        {/* ボタン */}
         <div className="w-full flex justify-center mt-8 mb-6">
-          <BlueButton label="カフェイン計画を生成する" href="../check-state" />
+          <BlueButton
+            label="カフェイン計画を生成する"
+            href="../check-state"
+            onClick={() => {
+              if (!isValid()) {
+                setError("集中時間 or 睡眠時間を入力してください");
+                return false; // ←遷移させない
+              }
+              setError("");
+              // 何も返さなければ遷移OK
+            }}
+          />
         </div>
       </main>
     </div>
