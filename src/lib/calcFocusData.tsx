@@ -3,13 +3,6 @@ export type FocusDataPoint = {
   focus: number; // 0-100
 };
 
-/**
- * ダミーデータ
- * @param wakeTime "07:00"
- * @param bedTime "02:00"（日をまたぐ可）
- * @param focusStart "13:00"
- * @param focusEnd "16:00"
- */
 export function calcFocusData(
   wakeTime: string,
   bedTime: string,
