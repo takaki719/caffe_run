@@ -1,24 +1,46 @@
 "use client";
-import React, { useState } from "react";
-import BlueButton from "../../components/BlueButton";
+import React, { useState, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
 import TopBackButton from "@/components/TopBackButton";
 
 const SettingPage: React.FC = () => {
-  // 睡眠
+  const router = useRouter();
+
   const [bed_time, setBedTime] = useState("");
   const [wake_time, setWakeTime] = useState("");
-
-  // 集中時間（可変リスト）
   type FocusPeriod = { start: string; end: string };
   const [focusPeriods, setFocusPeriods] = useState<FocusPeriod[]>([
     { start: "", end: "" },
   ]);
 
-  // 集中時間の追加
+  useEffect(() => {
+    const savedBedTime = localStorage.getItem("bed_time");
+    const savedWakeTime = localStorage.getItem("wake_time");
+    const savedFocusPeriods = localStorage.getItem("focus_periods");
+    
+    if (savedBedTime) setBedTime(savedBedTime);
+    if (savedWakeTime) setWakeTime(savedWakeTime);
+    if (savedFocusPeriods) {
+      setFocusPeriods(JSON.parse(savedFocusPeriods));
+    }
+  }, []);
+
+  // 各stateが変更されるたびにlocalStorageに保存する
+  useEffect(() => {
+    localStorage.setItem("bed_time", bed_time);
+  }, [bed_time]);
+
+  useEffect(() => {
+    localStorage.setItem("wake_time", wake_time);
+  }, [wake_time]);
+
+  useEffect(() => {
+    localStorage.setItem("focus_periods", JSON.stringify(focusPeriods));
+  }, [focusPeriods]);    
+
   const addFocusPeriod = () =>
     setFocusPeriods([...focusPeriods, { start: "", end: "" }]);
 
-  // 集中帯削除
   const removeFocusPeriod = (idx: number) =>
     setFocusPeriods(focusPeriods.filter((_, i) => i !== idx));
 
@@ -31,13 +53,43 @@ const SettingPage: React.FC = () => {
       periods.map((p, i) => (i === idx ? { ...p, [key]: value } : p)),
     );
   };
+  
+  const handleGeneratePlan = async () => {
+    const planData = {
+      bed_time,
+      wake_time,
+      focus_periods: focusPeriods,
+    };
+
+    try {
+      const response = await fetch("/api/plan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(planData),
+      });
+
+      if (!response.ok) {
+        throw new Error("APIリクエストに失敗しました");
+      }
+
+      const result = await response.json();
+      localStorage.setItem("focusData", JSON.stringify(result.data));
+
+      // 成功したら結果表示ページに遷移
+      router.push("/check-state");
+
+    } catch (error) {
+      console.error("エラーが発生しました:", error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 px-2 sm:px-0 flex flex-col">
       <TopBackButton />
-      {/* メイン */}
       <main className="flex flex-col items-center flex-1 w-full max-w-2xl mx-auto">
-        {/* 睡眠セクション */}
+        {/* ... (睡眠セクションと集中セクションのJSXは変更なし) ... */}
         <section className="w-full mb-8">
           <div className="flex items-center gap-3 w-full">
             <label className="text-gray-600 text-sm font-medium min-w-[95px]">
@@ -108,9 +160,19 @@ const SettingPage: React.FC = () => {
             </button>
           </div>
         </section>
-        {/* このボタンを押せばカフェインのグラフが生成される */}
+        
+        {/* ボタンをonClickで関数を呼び出すように変更 */}
         <div className="w-full flex justify-center mt-8 mb-6">
-          <BlueButton label="カフェイン計画を生成する" href="../check-state" />
+          <button
+            onClick={handleGeneratePlan} // クリックでデータ送信
+            className="
+              inline-block w-full sm:w-auto px-6 py-2 bg-blue-500 hover:bg-blue-600
+              text-white font-semibold rounded-xl shadow-md text-base sm:text-lg
+              text-center transition focus:outline-none focus:ring-2 focus:ring-blue-400
+            "
+          >
+            カフェイン計画を生成する
+          </button>
         </div>
       </main>
     </div>
