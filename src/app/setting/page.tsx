@@ -60,31 +60,27 @@ const SettingPage: React.FC = () => {
         </section>
 
         {/* 集中セクション */}
-        <section className="w-full mb-12">
-          <div className="flex flex-col gap-3">
+        <section className="w-full mb-8">
+          <div className="flex flex-col gap-8">
             {focusPeriods.map((period, idx) => (
               <div
                 key={idx}
-                className="flex flex-row items-center gap-2 sm:gap-4 w-full flex-wrap"
+                className="flex items-center gap-3 w-full"
               >
-                <label className="text-gray-600 text-sm font-medium min-w-[95px] mb-0">
+                <label className="text-gray-600 text-sm font-medium min-w-[95px]">
                   集中時間
                 </label>
                 <input
                   type="time"
                   value={period.start}
-                  onChange={(e) =>
-                    updateFocusPeriod(idx, "start", e.target.value)
-                  }
+                  onChange={e => updateFocusPeriod(idx, "start", e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
                 />
                 <span className="text-gray-500">～</span>
                 <input
                   type="time"
                   value={period.end}
-                  onChange={(e) =>
-                    updateFocusPeriod(idx, "end", e.target.value)
-                  }
+                  onChange={e => updateFocusPeriod(idx, "end", e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
                 />
                 {focusPeriods.length > 1 && (
