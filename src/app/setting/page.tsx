@@ -17,7 +17,6 @@ const SettingPage: React.FC = () => {
 
   // エラーメッセージ
   const [error, setError] = useState("");
-  const router = useRouter();
 
   // 集中時間の追加
   const addFocusPeriod = () =>
