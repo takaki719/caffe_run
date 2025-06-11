@@ -6,7 +6,7 @@ const TopBackButton: React.FC = () => (
     <Link href="../" className="flex items-center">
       <span className="text-2xl sm:text-3xl font-bold text-blue-600 pl-2 cursor-pointer">
         {/* 仮アイコン．作成次第置き換え予定 */}
-        📘 Caffe-Run
+        ☕️ Caffe-Run
       </span>
     </Link>
   </header>
