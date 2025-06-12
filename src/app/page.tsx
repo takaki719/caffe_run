@@ -142,7 +142,7 @@ const HomePage: React.FC = () => {
                   type="time"
                   value={bed_time}
                   onChange={(e) => setBedTime(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
+                  className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
                   disabled={isLoading}
                 />
                 <span className="text-gray-500">～</span>
@@ -150,7 +150,7 @@ const HomePage: React.FC = () => {
                   type="time"
                   value={wake_time}
                   onChange={(e) => setWakeTime(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
+                  className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
                   disabled={isLoading}
                 />
               </div>
@@ -170,7 +170,7 @@ const HomePage: React.FC = () => {
                       onChange={(e) =>
                         updateFocusPeriod(idx, "start", e.target.value)
                       }
-                      className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
+                      className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
                       disabled={isLoading}
                     />
                     <span className="text-gray-500">～</span>
@@ -180,7 +180,7 @@ const HomePage: React.FC = () => {
                       onChange={(e) =>
                         updateFocusPeriod(idx, "end", e.target.value)
                       }
-                      className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
+                      className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
                       disabled={isLoading}
                     />
                     {focusPeriods.length > 1 && (
