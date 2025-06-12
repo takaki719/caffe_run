@@ -5,9 +5,12 @@ import TopBackButton from "@/components/TopBackButton";
 import Chart from "@/components/Chart";
 import React, { useState } from "react";
 import { calcFocusData, FocusDataPoint } from "@/lib/calcFocusData";
+import { useRouter } from "next/navigation";
 
 const HomePage: React.FC = () => {
   // 睡眠時間
+  const router = useRouter();
+
   const [bed_time, setBedTime] = useState("");
   const [wake_time, setWakeTime] = useState("");
 
@@ -51,6 +54,36 @@ const HomePage: React.FC = () => {
   const [chartData] = useState<FocusDataPoint[]>(
     calcFocusData(wake_time, bed_time, focus_start, focus_end),
   );
+  const handleGeneratePlan = async () => {
+    const planData = {
+      bed_time,
+      wake_time,
+      focus_periods: focusPeriods,
+    };
+
+    try {
+      const response = await fetch("/api/plan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(planData),
+      });
+
+      if (!response.ok) {
+        throw new Error("APIリクエストに失敗しました");
+      }
+
+      const result = await response.json();
+      localStorage.setItem("focusData", JSON.stringify(result.data));
+
+      // 成功したら結果表示ページに遷移
+      router.push("/check-state");
+
+    } catch (error) {
+      console.error("エラーが発生しました:", error);
+    }
+  };
 
   return (
     <div>
@@ -147,6 +180,7 @@ const HomePage: React.FC = () => {
                     return false;
                   }
                   setError("");
+                  handleGeneratePlan();
                 }}
               />
             </div>
