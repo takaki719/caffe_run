@@ -1,41 +1,67 @@
-import { NextResponse } from "next/server";
-import { calcFocusData } from "../../../lib/calcFocusData";
+// src/app/api/plan/route.ts
 
+import { NextResponse } from 'next/server';
+// 仮のダミーデータを返す関数（CaffeineOptimizerが完成するまでの代替）
+import { calcFocusData } from '@/lib/calcFocusData'; 
+
+// --- 型定義（本来は interfaces.ts からインポート） ---
+export type FocusPeriod = {
+  start: string; // "09:00"
+  end: string;   // "17:00"
+};
+
+// --- APIのメイン処理 ---
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { wake_time, bed_time, focus_periods } = body;
+    // フロントエンドから渡されるデータ形式に合わせる
+    const { bed_time, wake_time, focus_periods } = body;
 
-    if (
-      !wake_time ||
-      !bed_time ||
-      !focus_periods ||
-      focus_periods.length === 0
-    ) {
+    // バリデーション
+    if (!bed_time || !wake_time || !focus_periods || focus_periods.length === 0) {
       return NextResponse.json(
-        { error: "必要なデータが不足しています。" },
-        { status: 400 },
+        { error: '必須の時刻データが不足しています。' },
+        { status: 400 }
+      );
+    }
+    
+    // --- 本来ここで CaffeineOptimizer を使ってカフェイン計画を計算する ---
+    // const optimizer = new CaffeineOptimizer();
+    // const optimalSchedule = optimizer.findOptimalSchedule(...);
+    // const caffeinePlan = ...;
+
+    // --- カフェイン計画に基づき、集中度予測データを生成する ---
+    // 現状はCaffeineOptimizerがないため、calcFocusDataでダミーのグラフデータを生成して返す
+    // 最初の有効な集中時間帯をフォールバックとして使用
+    const firstFocusPeriod = focus_periods.find((p: FocusPeriod) => p.start && p.end);
+    if (!firstFocusPeriod) {
+      return NextResponse.json(
+        { error: '有効な集中時間がありません。' },
+        { status: 400 }
       );
     }
 
-    // 現在のcalcFocusDataは引数を4つしか取れないため、
-    // ひとまず最初の集中時間帯のみ利用します。
-    // いずれ、複数の集中時間帯を考慮したアルゴリズムへ置き換える必要があります。
-    const firstFocusPeriod = focus_periods[0];
-
-    const focusData = calcFocusData(
+    const predictedFocusData = calcFocusData(
       wake_time,
       bed_time,
       firstFocusPeriod.start,
-      firstFocusPeriod.end,
+      firstFocusPeriod.end
     );
+    
+    // 最終的なレスポンス
+    // APIの責務として、グラフ用のデータも生成して返すとフロントが楽になる
+    const responseData = {
+      // caffeinePlan: [], // 本来はここに最適化された計画が入る
+      data: predictedFocusData, // グラフ描画用のデータ
+    };
 
-    return NextResponse.json({ data: focusData });
+    return NextResponse.json(responseData);
+
   } catch (error) {
-    console.error("APIエラー:", error);
+    console.error('API Error:', error);
     return NextResponse.json(
-      { error: "サーバー内部でエラーが発生しました。" },
-      { status: 500 },
+      { error: 'サーバーでエラーが発生しました。' },
+      { status: 500 }
     );
   }
 }
