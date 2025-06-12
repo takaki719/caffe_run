@@ -1,11 +1,12 @@
 "use client";
+import React, { useState } from "react";
 import BlueButton from "../components/BlueButton";
 import UnityModel from "../components/UnityModel";
 import TopBackButton from "@/components/TopBackButton";
 import Chart from "@/components/Chart";
-import React, { useState } from "react";
 import { calcFocusData, FocusDataPoint } from "@/lib/calcFocusData";
 import RecommendedPlanList from "../components/NextCaffeineTime";
+import CaffeineLogForm from "../components/CaffeineLogForm";
 
 // モックデータの型定義(APIの実装が終わり次第削除予定)
 import type { Recommendation } from "../components/NextCaffeineTime";
@@ -28,6 +29,9 @@ const HomePage: React.FC = () => {
 
   // グラフデータの状態管理
   const [chartData, setChartData] = useState<FocusDataPoint[]>([]);
+
+  // 摂取記録フォームの開閉state
+  const [isLogFormOpen, setIsLogFormOpen] = useState(false);
 
   // 集中時間の追加
   const addFocusPeriod = () =>
@@ -130,6 +134,29 @@ const HomePage: React.FC = () => {
           {/* 次のコーヒー摂取時間 */}
           <div className="w-full max-w-4xl mx-auto px-4 mt-8">
             <RecommendedPlanList recommendations={recommendations} />
+          </div>
+
+          {/* カフェイン摂取記録フォーム（タイトル＆開閉ボタン） */}
+          <div className="w-full max-w-2xl mx-auto my-8">
+            <div className="flex items-center mb-2">
+              {/* 1. 円形ボタン 2. 左側に配置 */}
+              <button
+                type="button"
+                className={`
+                  mr-3 w-8 h-8 flex items-center justify-center rounded-full 
+                  bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold 
+                  transition text-xl
+                `}
+                onClick={() => setIsLogFormOpen((prev) => !prev)}
+                aria-label={isLogFormOpen ? "閉じる" : "開く"}
+              >
+                {isLogFormOpen ? "-" : "+"}
+              </button>
+              <h2 className="text-lg font-bold text-gray-800">
+                カフェイン摂取記録
+              </h2>
+            </div>
+            {isLogFormOpen && <CaffeineLogForm />}
           </div>
           <main className="flex flex-col items-center flex-1 w-full max-w-2xl mx-auto">
             {/* 睡眠セクション */}
