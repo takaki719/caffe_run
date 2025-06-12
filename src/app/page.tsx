@@ -7,7 +7,6 @@ import React, { useState } from "react";
 import { calcFocusData, FocusDataPoint } from "@/lib/calcFocusData";
 
 const HomePage: React.FC = () => {
-  // 睡眠時間
   const [bed_time, setBedTime] = useState("");
   const [wake_time, setWakeTime] = useState("");
 
@@ -16,12 +15,15 @@ const HomePage: React.FC = () => {
   const [focusPeriods, setFocusPeriods] = useState<FocusPeriod[]>([
     { start: "", end: "" },
   ]);
-  // 集中時間のモックデータ．バックエンドの実装が完了次第置き換えてください
-  const focus_start = "13:00";
-  const focus_end = "16:00";
 
   // エラーメッセージ
   const [error, setError] = useState("");
+  
+  // API読み込み状態
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // グラフデータの状態管理
+  const [chartData, setChartData] = useState<FocusDataPoint[]>([]);
 
   // 集中時間の追加
   const addFocusPeriod = () =>
@@ -48,9 +50,62 @@ const HomePage: React.FC = () => {
     if (!hasValidFocus) return false;
     return true;
   };
-  const [chartData] = useState<FocusDataPoint[]>(
-    calcFocusData(wake_time, bed_time, focus_start, focus_end),
-  );
+
+  const handleGeneratePlan = async () => {
+    if (!isValid()) {
+      setError("集中時間・睡眠時間を入力してください");
+      return;
+    }
+    
+    setError("");
+    setIsLoading(true);
+
+    const planData = {
+      bed_time,
+      wake_time,
+      focus_periods: focusPeriods,
+    };
+
+    try {
+      const response = await fetch("/api/plan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(planData),
+      });
+
+      if (!response.ok) {
+        throw new Error("APIリクエストに失敗しました");
+      }
+
+      const result = await response.json();
+      
+      // APIレスポンスからグラフデータを更新
+      if (result.data) {
+        setChartData(result.data);
+      } else {
+        // フォールバック：APIレスポンスが期待した形式でない場合
+        // 最初の集中時間を使用してグラフデータを生成
+        const firstFocusPeriod = focusPeriods.find(p => p.start && p.end);
+        if (firstFocusPeriod) {
+          const fallbackData = calcFocusData(
+            wake_time, 
+            bed_time, 
+            firstFocusPeriod.start, 
+            firstFocusPeriod.end
+          );
+          setChartData(fallbackData);
+        }
+      }
+
+    } catch (error) {
+      console.error("エラーが発生しました:", error);
+      setError("プラン生成中にエラーが発生しました");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div>
@@ -74,6 +129,7 @@ const HomePage: React.FC = () => {
                   value={bed_time}
                   onChange={(e) => setBedTime(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
+                  disabled={isLoading}
                 />
                 <span className="text-gray-500">～</span>
                 <input
@@ -81,6 +137,7 @@ const HomePage: React.FC = () => {
                   value={wake_time}
                   onChange={(e) => setWakeTime(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
+                  disabled={isLoading}
                 />
               </div>
             </section>
@@ -100,6 +157,7 @@ const HomePage: React.FC = () => {
                         updateFocusPeriod(idx, "start", e.target.value)
                       }
                       className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
+                      disabled={isLoading}
                     />
                     <span className="text-gray-500">～</span>
                     <input
@@ -109,12 +167,14 @@ const HomePage: React.FC = () => {
                         updateFocusPeriod(idx, "end", e.target.value)
                       }
                       className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
+                      disabled={isLoading}
                     />
                     {focusPeriods.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeFocusPeriod(idx)}
                         className="ml-2 text-red-500 font-bold text-lg px-2 rounded hover:bg-red-100"
+                        disabled={isLoading}
                       >
                         ×
                       </button>
@@ -125,35 +185,40 @@ const HomePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={addFocusPeriod}
-                  className="mt-2 flex items-center text-blue-600 font-semibold hover:underline"
+                  className="mt-2 flex items-center text-blue-600 font-semibold hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isLoading}
                 >
                   <span className="text-xl mr-1">＋</span>集中時間帯を追加
                 </button>
               </div>
             </section>
+
             {/* エラー表示 */}
             {error && (
               <div className="text-red-600 font-semibold mb-3">{error}</div>
             )}
+
             {/* ボタン */}
             <div className="w-full flex justify-center mt-8 mb-6">
               <BlueButton
-                label="カフェイン計画を生成する"
-                href="../check-state"
-                // 睡眠時間・集中時間が入力されているかをチェック
-                onClick={() => {
-                  if (!isValid()) {
-                    setError("集中時間・睡眠時間を入力してください");
-                    return false;
-                  }
-                  setError("");
-                }}
+                label={isLoading ? "計画生成中..." : "カフェイン計画を生成する"}
+                href="#"
+                onClick={handleGeneratePlan}
+                disabled={isLoading}
               />
             </div>
+
             {/* 集中度グラフ */}
-            <div className="w-full max-w-2xl flex justify-center mt-8">
-              <Chart data={chartData} />
-            </div>
+            {chartData.length > 0 && (
+              <div className="w-full max-w-2xl flex justify-center mt-8">
+                <div className="w-full">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+                    カフェイン効果予測
+                  </h3>
+                  <Chart data={chartData} />
+                </div>
+              </div>
+            )}
           </main>
         </div>
       </div>
