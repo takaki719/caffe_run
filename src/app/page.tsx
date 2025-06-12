@@ -5,6 +5,10 @@ import TopBackButton from "@/components/TopBackButton";
 import Chart from "@/components/Chart";
 import React, { useState } from "react";
 import { calcFocusData, FocusDataPoint } from "@/lib/calcFocusData";
+import RecommendedPlanList from "../components/NextCaffeineTime";
+
+// モックデータの型定義(APIの実装が終わり次第削除予定)
+import type { Recommendation } from "../components/NextCaffeineTime";
 
 const HomePage: React.FC = () => {
   const [bed_time, setBedTime] = useState("");
@@ -18,10 +22,10 @@ const HomePage: React.FC = () => {
 
   // エラーメッセージ
   const [error, setError] = useState("");
-  
+
   // API読み込み状態
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // グラフデータの状態管理
   const [chartData, setChartData] = useState<FocusDataPoint[]>([]);
 
@@ -51,12 +55,20 @@ const HomePage: React.FC = () => {
     return true;
   };
 
+  // モックデータ(APIの実装が終わり次第削除予定)
+  const recommendations: Recommendation[] = [
+    { time: "08:00", item: "ドリップコーヒー", amount: "1杯" },
+    { time: "14:00", item: "エナジードリンク", amount: "半分" },
+    { time: "20:30", item: "カフェラテ", amount: "1杯" },
+    { time: "23:00", item: "カフェインレスコーヒー", amount: "1杯" },
+  ];
+
   const handleGeneratePlan = async () => {
     if (!isValid()) {
       setError("集中時間・睡眠時間を入力してください");
       return;
     }
-    
+
     setError("");
     setIsLoading(true);
 
@@ -80,25 +92,24 @@ const HomePage: React.FC = () => {
       }
 
       const result = await response.json();
-      
+
       // APIレスポンスからグラフデータを更新
       if (result.data) {
         setChartData(result.data);
       } else {
         // フォールバック：APIレスポンスが期待した形式でない場合
         // 最初の集中時間を使用してグラフデータを生成
-        const firstFocusPeriod = focusPeriods.find(p => p.start && p.end);
+        const firstFocusPeriod = focusPeriods.find((p) => p.start && p.end);
         if (firstFocusPeriod) {
           const fallbackData = calcFocusData(
-            wake_time, 
-            bed_time, 
-            firstFocusPeriod.start, 
-            firstFocusPeriod.end
+            wake_time,
+            bed_time,
+            firstFocusPeriod.start,
+            firstFocusPeriod.end,
           );
           setChartData(fallbackData);
         }
       }
-
     } catch (error) {
       console.error("エラーが発生しました:", error);
       setError("プラン生成中にエラーが発生しました");
@@ -116,7 +127,10 @@ const HomePage: React.FC = () => {
           <div className="w-full max-w-2xl flex justify-center">
             <UnityModel />
           </div>
-
+          {/* 次のコーヒー摂取時間 */}
+          <div className="w-full max-w-4xl mx-auto px-4 mt-8">
+            <RecommendedPlanList recommendations={recommendations} />
+          </div>
           <main className="flex flex-col items-center flex-1 w-full max-w-2xl mx-auto">
             {/* 睡眠セクション */}
             <section className="w-full mb-8 mt-8">
