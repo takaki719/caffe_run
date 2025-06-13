@@ -2,7 +2,7 @@
 // --------------------------------------------------
 // 睡眠とカフェインの効果を計算するコアロジック
 
-import { SleepPeriod, CaffeineDose, OptimizationParams } from "./interfaces";
+import { SleepPeriod, CaffeineDose } from "./interfaces";
 import * as C from "./constants";
 
 // モデルが管理する内部状態
