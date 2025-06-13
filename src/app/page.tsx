@@ -138,7 +138,7 @@ const HomePage: React.FC = () => {
           </div>
 
           {/* カフェイン摂取記録フォーム（タイトル＆開閉ボタン） */}
-          <div className="w-full max-w-2xl mx-auto my-8">
+          <div className="w-full max-w-2xl mx-auto mt-8 mb-2">
             <div className="flex items-center mb-2">
               {/* 1. 円形ボタン 2. 左側に配置 */}
               <button
