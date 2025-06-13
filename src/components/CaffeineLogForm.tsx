@@ -13,10 +13,18 @@ function calcCaffeineMg(drink: DrinkOption, ml: number): number {
   return Math.round((drink.caffeineMgPer100ml * ml) / 100);
 }
 
+// 現在時刻を "HH:MM" 形式で返すユーティリティ関数
+function getNowTimeString(): string {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
 // カフェイン摂取記録フォームのコンポーネント
 const CaffeineLogForm: React.FC = () => {
   // フォームの入力状態（時間、飲料名、入力モード、杯数、ml）
-  const [time, setTime] = useState("");
+  const [time, setTime] = useState(getNowTimeString()); // 現在時刻を初期値に設定
   const [drinkName, setDrinkName] = useState(DRINK_OPTIONS[0].name);
   const [mode, setMode] = useState<"preset" | "custom">("preset");
   const [cups, setCups] = useState(DRINK_OPTIONS[0].cupPresets[0]);
@@ -71,7 +79,6 @@ const CaffeineLogForm: React.FC = () => {
         caffeineMg,
       },
     ]);
-    setTime(""); // 入力欄をリセット
 
     // 成功メッセージを一時表示
     setSuccess("カフェイン摂取履歴を登録しました");
