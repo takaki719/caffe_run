@@ -24,8 +24,13 @@ const HomePage: React.FC = () => {
   const [isLogFormOpen, setIsLogFormOpen] = useState(false);
 
   // --- グラフ関連のstate定義 ---
-  const [graphData, setGraphData] = useState<{simulation: any[], current: any[]}>({ simulation: [], current: [] });
-  const [activeGraph, setActiveGraph] = useState<'simulation' | 'current'>('simulation');
+  const [graphData, setGraphData] = useState<{
+    simulation: any[];
+    current: any[];
+  }>({ simulation: [], current: [] });
+  const [activeGraph, setActiveGraph] = useState<"simulation" | "current">(
+    "simulation",
+  );
 
   // LocalStorageからのデータ読み込み処理
   useEffect(() => {
@@ -33,11 +38,13 @@ const HomePage: React.FC = () => {
       try {
         const savedSleepTime = window.localStorage.getItem(SLEEP_TIME_KEY);
         if (savedSleepTime) {
-          const { bed_time: savedBed, wake_time: savedWake } = JSON.parse(savedSleepTime);
+          const { bed_time: savedBed, wake_time: savedWake } =
+            JSON.parse(savedSleepTime);
           setBedTime(savedBed || "");
           setWakeTime(savedWake || "");
         }
-        const savedFocusPeriods = window.localStorage.getItem(FOCUS_PERIODS_KEY);
+        const savedFocusPeriods =
+          window.localStorage.getItem(FOCUS_PERIODS_KEY);
         if (savedFocusPeriods && JSON.parse(savedFocusPeriods).length > 0) {
           setFocusPeriods(JSON.parse(savedFocusPeriods));
         }
@@ -53,7 +60,7 @@ const HomePage: React.FC = () => {
       try {
         const sleepTimeData = JSON.stringify({ bed_time, wake_time });
         window.localStorage.setItem(SLEEP_TIME_KEY, sleepTimeData);
-        
+
         const focusPeriodsData = JSON.stringify(focusPeriods);
         window.localStorage.setItem(FOCUS_PERIODS_KEY, focusPeriodsData);
       } catch (e) {
@@ -126,15 +133,14 @@ const HomePage: React.FC = () => {
       // --- ここからが重要な修正点 ---
       // response.json() の呼び出しと、stateの更新を try ブロックの内側に移動
       const result = await response.json();
-      
+
       setGraphData({
         simulation: result.simulationData || [],
         current: result.currentStatusData || [],
       });
       // デフォルトでシミュレーショングラフをアクティブにする
-      setActiveGraph('simulation');
+      setActiveGraph("simulation");
       // --- ここまで ---
-
     } catch (error) {
       console.error("エラーが発生しました:", error);
       setError("プラン生成中にエラーが発生しました");
@@ -186,9 +192,21 @@ const HomePage: React.FC = () => {
                 <label className="text-gray-600 text-sm font-medium min-w-[95px]">
                   睡眠時間
                 </label>
-                <input type="time" value={bed_time} onChange={(e) => setBedTime(e.target.value)} className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24" disabled={isLoading} />
+                <input
+                  type="time"
+                  value={bed_time}
+                  onChange={(e) => setBedTime(e.target.value)}
+                  className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
+                  disabled={isLoading}
+                />
                 <span className="text-gray-500">～</span>
-                <input type="time" value={wake_time} onChange={(e) => setWakeTime(e.target.value)} className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24" disabled={isLoading} />
+                <input
+                  type="time"
+                  value={wake_time}
+                  onChange={(e) => setWakeTime(e.target.value)}
+                  className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
+                  disabled={isLoading}
+                />
               </div>
             </section>
             <section className="w-full mb-8">
@@ -198,37 +216,75 @@ const HomePage: React.FC = () => {
                     <label className="text-gray-600 text-sm font-medium min-w-[95px]">
                       集中時間
                     </label>
-                    <input type="time" value={period.start} onChange={(e) => updateFocusPeriod(idx, "start", e.target.value)} className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24" disabled={isLoading} />
+                    <input
+                      type="time"
+                      value={period.start}
+                      onChange={(e) =>
+                        updateFocusPeriod(idx, "start", e.target.value)
+                      }
+                      className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
+                      disabled={isLoading}
+                    />
                     <span className="text-gray-500">～</span>
-                    <input type="time" value={period.end} onChange={(e) => updateFocusPeriod(idx, "end", e.target.value)} className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24" disabled={isLoading} />
-                    {focusPeriods.length > 1 && (<button type="button" onClick={() => removeFocusPeriod(idx)} className="ml-2 text-red-500 font-bold text-lg px-2 rounded hover:bg-red-100" disabled={isLoading}>×</button>)}
+                    <input
+                      type="time"
+                      value={period.end}
+                      onChange={(e) =>
+                        updateFocusPeriod(idx, "end", e.target.value)
+                      }
+                      className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
+                      disabled={isLoading}
+                    />
+                    {focusPeriods.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeFocusPeriod(idx)}
+                        className="ml-2 text-red-500 font-bold text-lg px-2 rounded hover:bg-red-100"
+                        disabled={isLoading}
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
                 ))}
-                <button type="button" onClick={addFocusPeriod} className="mt-2 flex items-center text-blue-600 font-semibold hover:underline disabled:opacity-50 disabled:cursor-not-allowed" disabled={isLoading}>
+                <button
+                  type="button"
+                  onClick={addFocusPeriod}
+                  className="mt-2 flex items-center text-blue-600 font-semibold hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isLoading}
+                >
                   <span className="text-xl mr-1">＋</span>集中時間帯を追加
                 </button>
               </div>
             </section>
 
-            {error && (<div className="text-red-600 font-semibold mb-3">{error}</div>)}
+            {error && (
+              <div className="text-red-600 font-semibold mb-3">{error}</div>
+            )}
 
             <div className="w-full flex justify-center mt-8 mb-6">
-              <BlueButton label={isLoading ? "計画生成中..." : "カフェイン計画を生成する"} href="#" onClick={handleGeneratePlan} disabled={isLoading}/>
+              <BlueButton
+                label={isLoading ? "計画生成中..." : "カフェイン計画を生成する"}
+                href="#"
+                onClick={handleGeneratePlan}
+                disabled={isLoading}
+              />
             </div>
 
             {/* --- グラフ表示部分 --- */}
-            {(graphData.simulation.length > 0 || graphData.current.length > 0) && (
+            {(graphData.simulation.length > 0 ||
+              graphData.current.length > 0) && (
               <div className="w-full max-w-2xl flex flex-col items-center justify-center mt-8">
                 <div className="flex justify-center gap-4 mb-4">
-                  <button 
-                    onClick={() => setActiveGraph('simulation')}
-                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === 'simulation' ? 'bg-indigo-500 text-white shadow' : 'bg-gray-200 text-gray-700'}`}
+                  <button
+                    onClick={() => setActiveGraph("simulation")}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === "simulation" ? "bg-indigo-500 text-white shadow" : "bg-gray-200 text-gray-700"}`}
                   >
                     理想の覚醒度
                   </button>
-                  <button 
-                    onClick={() => setActiveGraph('current')}
-                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === 'current' ? 'bg-teal-500 text-white shadow' : 'bg-gray-200 text-gray-700'}`}
+                  <button
+                    onClick={() => setActiveGraph("current")}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === "current" ? "bg-teal-500 text-white shadow" : "bg-gray-200 text-gray-700"}`}
                   >
                     現在の覚醒度
                   </button>
@@ -238,7 +294,7 @@ const HomePage: React.FC = () => {
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
                     カフェイン効果予測
                   </h3>
-                  <Chart data={graphData[activeGraph]} /> 
+                  <Chart data={graphData[activeGraph]} />
                 </div>
               </div>
             )}

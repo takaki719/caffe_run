@@ -11,9 +11,8 @@ export interface FocusDataPoint {
 export function calcCurrentStatus(
   logs: CaffeineLogEntry[],
   wakeUpTime: string,
-  bedTime: string
+  bedTime: string,
 ): FocusDataPoint[] {
-  
   const timeline: FocusDataPoint[] = [];
   // --- ここから修正 ---
   // wakeUpTime または bedTime が空文字列の場合、計算を行わず空の配列を返す
@@ -27,21 +26,22 @@ export function calcCurrentStatus(
 
   const bedTotalMinutes = bedH * 60 + bedM;
   const wakeTotalMinutes = wakeH * 60 + wakeM;
-  const duration = bedTotalMinutes <= wakeTotalMinutes 
-    ? (24 * 60 - wakeTotalMinutes) + bedTotalMinutes 
-    : bedTotalMinutes - wakeTotalMinutes;
-  
+  const duration =
+    bedTotalMinutes <= wakeTotalMinutes
+      ? 24 * 60 - wakeTotalMinutes + bedTotalMinutes
+      : bedTotalMinutes - wakeTotalMinutes;
+
   const intervals = Math.floor(duration / 30);
 
   for (let i = 0; i <= intervals; i++) {
     const currentMinutes = wakeTotalMinutes + i * 30;
     const hour = Math.floor(currentMinutes / 60) % 24;
     const minute = currentMinutes % 60;
-    const timeString = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    const timeString = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
     timeline.push({ time: timeString, value: 0 });
   }
 
-  logs.forEach(log => {
+  logs.forEach((log) => {
     // --- ここから修正 ---
     // log.time が空や未定義の場合、このログはスキップする
     if (!log.time) return;
@@ -50,7 +50,7 @@ export function calcCurrentStatus(
     const [logH, logM] = log.time.split(":").map(Number);
     const logTimeInMinutes = logH * 60 + logM;
 
-    const startIndex = timeline.findIndex(point => {
+    const startIndex = timeline.findIndex((point) => {
       const [pointH, pointM] = point.time.split(":").map(Number);
       return pointH * 60 + pointM >= logTimeInMinutes;
     });

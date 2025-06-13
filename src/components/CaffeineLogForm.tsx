@@ -42,7 +42,9 @@ const CaffeineLogForm: React.FC = () => {
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
-        const savedLogs = window.localStorage.getItem(CAFFEINE_LOGS_STORAGE_KEY);
+        const savedLogs = window.localStorage.getItem(
+          CAFFEINE_LOGS_STORAGE_KEY,
+        );
         // 読み込んだデータがあればそれを、なければ空配列をセット
         setLogs(savedLogs ? JSON.parse(savedLogs) : []);
       } catch (e) {
@@ -58,7 +60,7 @@ const CaffeineLogForm: React.FC = () => {
       try {
         window.localStorage.setItem(
           CAFFEINE_LOGS_STORAGE_KEY,
-          JSON.stringify(logs)
+          JSON.stringify(logs),
         );
       } catch (e) {
         console.error("Failed to save logs to local storage", e);
@@ -93,21 +95,26 @@ const CaffeineLogForm: React.FC = () => {
     setError("");
     const caffeineMg = calcCaffeineMg(selectedDrink, totalMl);
     // logsがnullの場合も考慮して、空配列から始める
-    setLogs((prev) => [...(prev || []), {
-      time,
-      drink: drinkName,
-      mode,
-      cups: mode === "preset" ? Number(cups) : undefined,
-      ml: totalMl,
-      caffeineMg,
-    }]);
+    setLogs((prev) => [
+      ...(prev || []),
+      {
+        time,
+        drink: drinkName,
+        mode,
+        cups: mode === "preset" ? Number(cups) : undefined,
+        ml: totalMl,
+        caffeineMg,
+      },
+    ]);
     setTime("");
     setSuccess("カフェイン摂取履歴を登録しました");
     setTimeout(() => setSuccess(""), 2000);
   };
 
   const handleDeleteLog = (indexToDelete: number) => {
-    setLogs((prev) => (prev ? prev.filter((_, index) => index !== indexToDelete) : []));
+    setLogs((prev) =>
+      prev ? prev.filter((_, index) => index !== indexToDelete) : [],
+    );
   };
 
   return (
@@ -145,7 +152,7 @@ const CaffeineLogForm: React.FC = () => {
       </button>
       {error && <div className="text-red-500 text-sm mb-2">{error}</div>}
       {success && <div className="text-green-600 text-sm mb-2">{success}</div>}
-      
+
       {/* CHANGED 3: logsがnullの場合は空配列を渡すように修正 */}
       <CaffeineLogTable logs={logs || []} onDeleteLog={handleDeleteLog} />
     </div>
