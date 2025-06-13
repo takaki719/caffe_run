@@ -46,10 +46,10 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    const firstFocusPeriod = focus_periods.find(
+    const validFocusPeriods = focus_periods.filter(
       (p: FocusPeriodRequest) => p.start && p.end,
     );
-    if (!firstFocusPeriod) {
+    if (validFocusPeriods.length === 0) {
       return NextResponse.json(
         { error: "有効な集中時間がありません。" },
         { status: 400 },
@@ -69,13 +69,13 @@ export async function POST(request: Request) {
     ];
 
     const params: OptimizationParams = {
-      timeWindow: {
-        start: timeToDate(firstFocusPeriod.start, today),
-        end: timeToDate(firstFocusPeriod.end, today),
-      },
+      timeWindows: validFocusPeriods.map((p: FocusPeriodRequest) => ({
+        start: timeToDate(p.start, today),
+        end: timeToDate(p.end, today),
+      })),
       targetPerformance: 0.6,
       maxDosePerIntake: 200,
-      minTimeBetweenDosesHours: 0.5,
+      minTimeBetweenDosesHours: 0.5, // 間隔を短くして柔軟性を高める
     };
 
     // --- 最適化の実行 ---
@@ -112,48 +112,21 @@ export async function POST(request: Request) {
 
     // --- ここから変更点 ---
 
-    /**
-     * カフェイン摂取量(mg)を具体的な飲み物に変換するヘルパー関数
-     * @param dose カフェイン摂取情報 { time: Date, mg: number }
-     * @returns 変換後のオブジェクト { time: string, item: string, amount: string }
-     */
-    const doseToPlanItem = (dose: CaffeineDose) => {
-      const mg = dose.mg;
-      let item = "カフェインサプリ"; // デフォルト値
-      let amount = `${mg} mg`;
+    // --------------------------------------------------
+    /*
+    const doseToPlanItem = (dose: CaffeineDose) => { ... }; // この関数を削除
+    */
 
-      // カフェイン量に応じた代表的な飲み物のマッピング例
-      if (mg > 0 && mg <= 70) {
-        // 例: 50mg
-        item = "緑茶";
-        amount = "約2杯";
-      } else if (mg > 70 && mg <= 120) {
-        // 例: 100mg
-        item = "ドリップコーヒー";
-        amount = "約1杯";
-      } else if (mg > 120 && mg <= 170) {
-        // 例: 150mg
-        item = "ドリップコーヒー (濃いめ)";
-        amount = "約1杯";
-      } else if (mg > 170) {
-        // 例: 200mg
-        item = "エナジードリンク";
-        amount = "約1本";
-      }
-      //ここで辞書型で{time: string; // "08:00",item: string; // "ドリップコーヒー",amount: string; // 例: 1杯}返してるお
-      return {
+    // --- 最終的なレスポンス ---
+    const responseData = {
+      // optimalScheduleのmap処理を直接書き換える
+      caffeinePlan: optimalSchedule.map((dose) => ({
         time: dose.time.toLocaleTimeString("ja-JP", {
           hour: "2-digit",
           minute: "2-digit",
         }),
-        item,
-        amount,
-      };
-    };
-
-    // --- 最終的なレスポンス ---
-    const responseData = {
-      caffeinePlan: optimalSchedule.map((dose) => doseToPlanItem(dose)), // ヘルパー関数を使って変換
+        mg: dose.mg, // mgの値をそのまま返す
+      })),
       data: predictedFocusData,
     };
 
