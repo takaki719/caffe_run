@@ -92,6 +92,7 @@ const HomePage: React.FC = () => {
     { time: "20:30", caffeineAmount: 30 },
   ];
 
+  // --- handleGeneratePlan 関数をここから変更 ---
   const handleGeneratePlan = async () => {
     if (!isValid()) {
       setError("集中時間・睡眠時間を入力してください");
@@ -137,6 +138,7 @@ const HomePage: React.FC = () => {
     } catch (error) {
       console.error("エラーが発生しました:", error);
       setError("プラン生成中にエラーが発生しました");
+      setGraphData({ simulation: [], current: [] });
     } finally {
       setIsLoading(false);
     }
@@ -240,6 +242,7 @@ const HomePage: React.FC = () => {
                 </div>
               </div>
             )}
+            {/* --- ここまで変更 --- */}
           </main>
         </div>
       </div>
