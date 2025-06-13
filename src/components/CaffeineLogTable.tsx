@@ -45,8 +45,7 @@ const CaffeineLogTable: React.FC<Props> = ({ logs }) => {
               <tr>
                 <th className="text-left py-2 text-gray-500">時間</th>
                 <th className="text-left py-2 text-gray-500">飲料名</th>
-                <th className="text-left py-2 text-gray-500">杯数/量</th>
-                <th className="text-left py-2 text-gray-500">総摂取ml</th>
+                <th className="text-left py-2 text-gray-500">摂取量</th>
                 <th className="text-left py-2 text-gray-500">
                   カフェイン量(mg)
                 </th>
@@ -67,9 +66,8 @@ const CaffeineLogTable: React.FC<Props> = ({ logs }) => {
                       ? log.cups !== undefined
                         ? `${log.cups}杯`
                         : "-"
-                      : `${log.ml}ml（手入力）`}
+                      : `${log.ml}ml`}
                   </td>
-                  <td className="py-2">{log.ml}</td>
                   <td className="py-2">{log.caffeineMg}</td>
                 </tr>
               ))}
