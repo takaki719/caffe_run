@@ -1,10 +1,9 @@
-name: lint check
+name: Format Check
 
 on: [push, pull_request]
 
 jobs:
-  build:
-    needs: format  # formatチェックが通ってからbuildを実行
+  format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -17,5 +16,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run build
-        run: npm run build
+      - name: Run formatter check
+        run: npx prettier --check "**/*.{js,ts}"
+
+
