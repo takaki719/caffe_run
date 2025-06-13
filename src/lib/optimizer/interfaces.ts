@@ -17,7 +17,7 @@ export interface CaffeineDose {
 /** 最適化のパラメータ */
 export interface OptimizationParams {
   timeWindow: { start: Date; end: Date }; // この期間のパフォーマンスを最大化
-  targetPerformance: number;              // 維持したい最低パフォーマンスレベル (0-1)
-  maxDosePerIntake: number;               // 1回あたりの最大摂取量 (mg)
-  minTimeBetweenDosesHours: number;       // 摂取の最短間隔 (時間)
+  targetPerformance: number; // 維持したい最低パフォーマンスレベル (0-1)
+  maxDosePerIntake: number; // 1回あたりの最大摂取量 (mg)
+  minTimeBetweenDosesHours: number; // 摂取の最短間隔 (時間)
 }

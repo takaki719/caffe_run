@@ -18,10 +18,10 @@ const HomePage: React.FC = () => {
 
   // エラーメッセージ
   const [error, setError] = useState("");
-  
+
   // API読み込み状態
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // グラフデータの状態管理
   const [chartData, setChartData] = useState<FocusDataPoint[]>([]);
 
@@ -56,7 +56,7 @@ const HomePage: React.FC = () => {
       setError("集中時間・睡眠時間を入力してください");
       return;
     }
-    
+
     setError("");
     setIsLoading(true);
 
@@ -80,25 +80,24 @@ const HomePage: React.FC = () => {
       }
 
       const result = await response.json();
-      
+
       // APIレスポンスからグラフデータを更新
       if (result.data) {
         setChartData(result.data);
       } else {
         // フォールバック：APIレスポンスが期待した形式でない場合
         // 最初の集中時間を使用してグラフデータを生成
-        const firstFocusPeriod = focusPeriods.find(p => p.start && p.end);
+        const firstFocusPeriod = focusPeriods.find((p) => p.start && p.end);
         if (firstFocusPeriod) {
           const fallbackData = calcFocusData(
-            wake_time, 
-            bed_time, 
-            firstFocusPeriod.start, 
-            firstFocusPeriod.end
+            wake_time,
+            bed_time,
+            firstFocusPeriod.start,
+            firstFocusPeriod.end,
           );
           setChartData(fallbackData);
         }
       }
-
     } catch (error) {
       console.error("エラーが発生しました:", error);
       setError("プラン生成中にエラーが発生しました");
