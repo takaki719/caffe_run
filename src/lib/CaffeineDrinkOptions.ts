@@ -13,18 +13,45 @@ export interface DrinkOption {
 
 export const DRINK_OPTIONS: DrinkOption[] = [
   {
-    name: "コーヒー",
-    defaultMlPerCup: 120,
-    caffeineMgPer100ml: 67,
-    cupPresets: [1, 2, 3], // 「1杯」「2杯」「3杯」
-    enableCustomMl: true, // 任意mlも入力可能
+    name: "ブレンドコーヒー",
+    defaultMlPerCup: 200,
+    caffeineMgPer100ml: 40,
+    cupPresets: [1, 2, 3],
+    enableCustomMl: true
+  },
+  {
+    name: "エスプレッソ",
+    defaultMlPerCup: 30,
+    caffeineMgPer100ml: 212,
+    cupPresets: [1, 2, 3],
+    enableCustomMl: true
+  },
+  {
+    name: "紅茶",
+    defaultMlPerCup: 250,
+    caffeineMgPer100ml: 20,
+    cupPresets: [1, 2, 3],
+    enableCustomMl: true
+  },
+  {
+    name: "緑茶",
+    defaultMlPerCup: 250,
+    caffeineMgPer100ml: 12,
+    cupPresets: [1, 2, 3],
+    enableCustomMl: true
+  },
+  {
+    name: "コーラ",
+    defaultMlPerCup: 330,
+    caffeineMgPer100ml: 10,
+    cupPresets: [1, 2, 3],
+    enableCustomMl: true
   },
   {
     name: "エナジードリンク",
-    defaultMlPerCup: 200,
-    caffeineMgPer100ml: 40,
-    cupPresets: [0.5, 1], // 「半分（0.5杯）」「1本（1杯）」
-    enableCustomMl: true,
-  },
-  // 他も同様
+    defaultMlPerCup: 250,
+    caffeineMgPer100ml: 32,
+    cupPresets: [1, 2, 3],
+    enableCustomMl: true
+  }
 ];
