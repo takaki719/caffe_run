@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { DRINK_OPTIONS, DrinkOption } from "../lib/caffeine-drink-options";
+import { DRINK_OPTIONS, DrinkOption } from "@/lib/caffeineDrinkOptions";
 import CaffeineDrinkSelect from "./CaffeineDrinkSelect";
 import CaffeineLogTable, { CaffeineLogEntry } from "./CaffeineLogTable";
 
@@ -55,10 +55,11 @@ const CaffeineLogForm: React.FC = () => {
     }
     setError("");
 
-    // カフェイン量計算
+    /**
+     * カフェイン量の計算→カフェイン摂取量のログ
+     * // グラフの描画にかかわってくるのでバックエンドとAPI連携させる必要あり
+     */
     const caffeineMg = calcCaffeineMg(selectedDrink, totalMl);
-
-    // ログ追加
     setLogs((prev) => [
       ...prev,
       {
