@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 // 変更後のRecommendation型
 export interface Recommendation {
@@ -42,11 +42,15 @@ export interface RecommendedPlanListProps {
 const RecommendedPlanList: React.FC<RecommendedPlanListProps> = ({
   recommendations,
 }) => {
-  // 現在時刻でソート
-  const sorted = getSortedByCurrentTime(recommendations, new Date());
+  const [sortedRecs, setSortedRecs] = useState(recommendations);
 
-  // ★次の1件だけを抽出
-  const nextRec = sorted.length > 0 ? sorted[0] : null;
+  useEffect(() => {
+    // この中身は、ブラウザ(クライアント)での最初の描画が終わった後に一度だけ実行される
+    const sorted = getSortedByCurrentTime(recommendations, new Date());
+    setSortedRecs(sorted); // 並び替えた結果をstateにセット
+  }, [recommendations]); // recommendationsプロパティが変わった時に再実行
+
+  const nextRec = sortedRecs.length > 0 ? sortedRecs[0] : null;
 
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col gap-2">
