@@ -45,10 +45,10 @@ export class CaffeineOptimizer {
         if (dose2 > 0 && limitedTimeSlots.length > 1) {
           candidateSchedule.push({ time: limitedTimeSlots[1], mg: dose2 });
         }
+        
+        // 摂取量が同じなら、後の時間の方が有利なので、このチェックは単純化のためコメントアウトも可
+        if(candidateSchedule.length === 1 && dose2 > 0) continue;
 
-        // Skip schedules with only one dose if the second dose is non-zero.
-        if (this.shouldSkipSingleDoseSchedule(candidateSchedule, dose2))
-          continue;
 
         const totalCaffeine = candidateSchedule.reduce(
           (sum, d) => sum + d.mg,
