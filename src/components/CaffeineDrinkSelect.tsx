@@ -1,5 +1,5 @@
 import React from "react";
-import type { DrinkOption } from "@/lib/caffeineDrinkOptions";
+import type { DrinkOption } from "@/lib/CaffeineDrinkOptions";
 
 interface Props {
   drinkOptions: DrinkOption[];

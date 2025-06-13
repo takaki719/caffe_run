@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { DRINK_OPTIONS, DrinkOption } from "@/lib/caffeineDrinkOptions";
+import { DRINK_OPTIONS, DrinkOption } from "@/lib/CaffeineDrinkOptions";
 import CaffeineDrinkSelect from "./CaffeineDrinkSelect";
 import CaffeineLogTable, { CaffeineLogEntry } from "./CaffeineLogTable";
 
