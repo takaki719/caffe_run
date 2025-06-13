@@ -2,11 +2,7 @@
 // --------------------------------------------------
 // APIエンドポイントのメイン処理
 
-import {
-  SleepPeriod,
-  CaffeineDose,
-  OptimizationParams,
-} from "@/lib/optimizer/interfaces";
+import { SleepPeriod, OptimizationParams } from "@/lib/optimizer/interfaces";
 import { PerformanceModel } from "@/lib/optimizer/PerformanceModel";
 import { CaffeineOptimizer } from "@/lib/optimizer/CaffeineOptimizer";
 import { NextResponse } from "next/server";
