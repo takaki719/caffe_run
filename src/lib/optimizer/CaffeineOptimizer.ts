@@ -45,10 +45,10 @@ export class CaffeineOptimizer {
         if (dose2 > 0 && limitedTimeSlots.length > 1) {
           candidateSchedule.push({ time: limitedTimeSlots[1], mg: dose2 });
         }
-        
-        // Skip schedules with only one dose if the second dose is non-zero.
-        if (this.shouldSkipSingleDoseSchedule(candidateSchedule, dose2)) continue;
 
+        // Skip schedules with only one dose if the second dose is non-zero.
+        if (this.shouldSkipSingleDoseSchedule(candidateSchedule, dose2))
+          continue;
 
         const totalCaffeine = candidateSchedule.reduce(
           (sum, d) => sum + d.mg,
