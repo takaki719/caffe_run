@@ -59,12 +59,13 @@ const HomePage: React.FC = () => {
     return true;
   };
 
-  // モックデータ(APIの実装が終わり次第削除予定)
+  /** モックデータ(APIの実装が終わり次第削除予定)
+   * APIで受け取るrecommandationsデータのプロパティは時間とカフェイン量
+   * caffeine-drink-options.tsをもとに別のところで何杯・何を飲むかを決める
+   */
   const recommendations: Recommendation[] = [
-    { time: "08:00", item: "ドリップコーヒー", amount: "1杯" },
-    { time: "14:00", item: "エナジードリンク", amount: "半分" },
-    { time: "20:30", item: "カフェラテ", amount: "1杯" },
-    { time: "23:00", item: "カフェインレスコーヒー", amount: "1杯" },
+    { time: "14:00", caffeineAmount: 150 },
+    { time: "20:30", caffeineAmount: 200 },
   ];
 
   const handleGeneratePlan = async () => {

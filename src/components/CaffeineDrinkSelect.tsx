@@ -1,20 +1,18 @@
 import React from "react";
-import type { DrinkOption } from "../lib/caffeine-drink-options";
+import type { DrinkOption } from "@/lib/CaffeineDrinkOptions";
 
-// 親コンポーネントから受け取るpropsの型定義
 interface Props {
-  drinkOptions: DrinkOption[]; // 選択肢として表示するドリンクデータ一覧
-  drink: string; // 選択中の飲料名
-  mode: "preset" | "custom"; // 杯数or量(ml)の入力モード
-  setMode: (m: "preset" | "custom") => void; // 入力モード変更関数
-  cups: number | string; // 選択中の杯数
-  setCups: (n: number) => void; // 杯数変更関数
-  ml: number; // 量(ml)の値
-  setMl: (n: number) => void; // 量(ml)変更関数
-  onDrinkChange: (drink: string) => void; // 飲料選択変更ハンドラ
+  drinkOptions: DrinkOption[];
+  drink: string;
+  mode: "preset" | "custom";
+  setMode: (m: "preset" | "custom") => void;
+  cups: number | string;
+  setCups: (n: number) => void;
+  ml: number;
+  setMl: (n: number) => void;
+  onDrinkChange: (drink: string) => void;
 }
 
-// カフェイン摂取飲料＋量選択UI
 const CaffeineDrinkSelect: React.FC<Props> = ({
   drinkOptions,
   drink,
@@ -26,11 +24,21 @@ const CaffeineDrinkSelect: React.FC<Props> = ({
   setMl,
   onDrinkChange,
 }) => {
-  // 現在選択中の飲料オブジェクト取得（未選択時は0番目）
+  // 選択中の飲料情報
   const selected =
     drinkOptions.find((d) => d.name === drink) || drinkOptions[0];
-  // 任意ml入力の可否
   const enableCustom = selected.enableCustomMl !== false;
+
+  // 杯数入力時のカフェイン量計算
+  const cupsNum = mode === "preset" ? Number(cups) : 0;
+  const totalMl =
+    mode === "preset" ? cupsNum * selected.defaultMlPerCup : Number(ml);
+
+  // カフェイン含有量計算
+  const caffeineMg =
+    totalMl && selected.caffeineMgPer100ml
+      ? Math.round((selected.caffeineMgPer100ml * totalMl) / 100)
+      : 0;
 
   return (
     <div className="flex flex-col gap-2 flex-1">
@@ -42,7 +50,6 @@ const CaffeineDrinkSelect: React.FC<Props> = ({
           value={drink}
           onChange={(e) => onDrinkChange(e.target.value)}
         >
-          {/* 選択肢一覧を動的生成 */}
           <option value="" disabled className="text-gray-400">
             選択してください
           </option>
@@ -79,23 +86,34 @@ const CaffeineDrinkSelect: React.FC<Props> = ({
 
         {/* 杯数入力（セレクトボックス） */}
         {mode === "preset" ? (
-          <select
-            className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 text-gray-900 placeholder-gray-400"
-            value={cups}
-            onChange={(e) => setCups(Number(e.target.value))}
-          >
-            <option value="" disabled className="text-gray-400">
-              選択してください
-            </option>
-            {selected.cupPresets.map((n) => (
-              <option key={n} value={n}>
-                {n === 0.5 ? "半分" : `${n}杯`}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center mt-2 gap-3">
+            <select
+              className="w-28 px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 text-gray-900 placeholder-gray-400"
+              value={cups}
+              onChange={(e) => setCups(Number(e.target.value))}
+            >
+              {selected.cupPresets.map((n) => (
+                <option key={n} value={n}>
+                  {n === 0.5 ? "半分" : `${n}杯`}
+                </option>
+              ))}
+            </select>
+            {/* 「hoge杯 = fuga ml」 */}
+            <span className="text-sm text-gray-500">
+              {cups &&
+                cups !== "" &&
+                `${cups}杯 = ${cupsNum * selected.defaultMlPerCup}ml`}
+              {/* カフェイン含有量表示 */}
+              {cups && cups !== "" && (
+                <span className="text-sm text-gray-500">
+                  （カフェイン: {caffeineMg}mg）
+                </span>
+              )}
+            </span>
+          </div>
         ) : (
           // 任意ml入力
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2 flex items-center gap-3">
             <input
               type="number"
               min={10}
@@ -106,6 +124,12 @@ const CaffeineDrinkSelect: React.FC<Props> = ({
               placeholder="入力してください"
             />
             <span className="text-gray-600">ml</span>
+            {/* カフェイン含有量表示 */}
+            {ml > 0 && (
+              <span className="text-sm text-gray-500">
+                （カフェイン: {caffeineMg}mg）
+              </span>
+            )}
           </div>
         )}
 

@@ -1,9 +1,9 @@
 import React from "react";
 
+// 変更後のRecommendation型
 export interface Recommendation {
   time: string; // "08:00"
-  item: string; // "ドリップコーヒー"
-  amount: string; // 例: 1杯
+  caffeineAmount: number; // 例: 150
 }
 
 /**
@@ -68,9 +68,12 @@ const RecommendedPlanList: React.FC<RecommendedPlanListProps> = ({
           {/* 内容 */}
           <div className="flex items-center justify-center gap-1 w-full">
             <span className="text-gray-800 font-semibold text-sm">
-              {nextRec.item}
+              カフェイン
             </span>
-            <span className="text-gray-500 text-sm">{nextRec.amount}</span>
+            <span className="text-blue-500 font-bold text-base">
+              {nextRec.caffeineAmount}mg
+            </span>
+            <span className="text-gray-500 text-sm">推奨</span>
           </div>
         </div>
       )}
