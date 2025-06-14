@@ -1,41 +1,62 @@
-import { useState } from "react";
+// hooks/useFocusPeriods.ts
+"use client";
+import { useState, useEffect } from "react";
 
 export interface FocusPeriod {
   start: string;
   end: string;
 }
 
-/**
- * フォーカス時間帯を管理するカスタムフック
- */
-export function useFocusPeriods(initial?: FocusPeriod[]) {
-  const [periods, setPeriods] = useState<FocusPeriod[]>(
-    initial ?? [{ start: "", end: "" }],
-  );
+const STORAGE_KEY = "focusPeriods";
 
-  /** 新しいフォーカス時間帯を追加 */
-  const addFocusPeriod = () => {
-    setPeriods((prev) => [...prev, { start: "", end: "" }]);
-  };
+export function useFocusPeriods() {
+  const [focusPeriods, setFocusPeriods] = useState<FocusPeriod[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  /** インデックス指定で時間帯を削除 */
-  const removeFocusPeriod = (index: number) => {
-    setPeriods((prev) => prev.filter((_, i) => i !== index));
-  };
+  // localStorage から読み込み
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          console.log("読み込み成功:", parsed);
+          setFocusPeriods(parsed);
+        } catch (e) {
+          console.error("パース失敗:", e);
+        }
+      } else {
+        setFocusPeriods([{ start: "", end: "" }]); // 初期値セット
+      }
+      setIsInitialized(true);
+    }
+  }, []);
 
-  /** インデックスとキーを指定して時間帯を更新 */
+  // localStorage に保存
+  useEffect(() => {
+    if (isInitialized && typeof window !== "undefined") {
+      console.log("保存:", focusPeriods);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(focusPeriods));
+    }
+  }, [focusPeriods, isInitialized]);
+
+  const addFocusPeriod = () =>
+    setFocusPeriods((prev) => [...prev, { start: "", end: "" }]);
+
+  const removeFocusPeriod = (idx: number) =>
+    setFocusPeriods((prev) => prev.filter((_, i) => i !== idx));
+
   const updateFocusPeriod = (
-    index: number,
+    idx: number,
     key: "start" | "end",
     value: string,
-  ) => {
-    setPeriods((prev) =>
-      prev.map((p, i) => (i === index ? { ...p, [key]: value } : p)),
+  ) =>
+    setFocusPeriods((prev) =>
+      prev.map((p, i) => (i === idx ? { ...p, [key]: value } : p)),
     );
-  };
 
   return {
-    focusPeriods: periods,
+    focusPeriods,
     addFocusPeriod,
     removeFocusPeriod,
     updateFocusPeriod,
