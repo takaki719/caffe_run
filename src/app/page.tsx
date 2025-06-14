@@ -8,7 +8,7 @@ import { calcFocusData, FocusDataPoint } from "@/lib/calcFocusData";
 import RecommendedPlanList from "../components/NextCaffeineTime";
 import CaffeineLogForm from "../components/CaffeineLogForm";
 import SleepForm from "../components/SleepForm";
-import FocusForm, { FocusPeriod } from "../components/FocusForm";
+import FocusForm from "../components/FocusForm";
 import { useFocusPeriods } from "@/hooks/UseFocusPeriods";
 import { useSleepTimes } from "@/hooks/UseSleepTimes";
 
