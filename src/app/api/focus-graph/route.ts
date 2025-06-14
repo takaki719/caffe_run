@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
     // --- 2. 「シミュレーション結果」のグラフデータを計算 ---
     const firstFocusPeriod = focus_periods.find((p) => p.start && p.end);
-    let simulationData: any[] = [];
+    let simulationData: { time: string; value: number }[] = [];
     if (firstFocusPeriod) {
       const rawSimulationData = calcFocusData(
         wake_time,

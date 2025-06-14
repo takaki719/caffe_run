@@ -24,14 +24,14 @@ const HomePage: React.FC = () => {
   const [isLogFormOpen, setIsLogFormOpen] = useState(false);
 
   // --- グラフ関連のstate定義 ---
+  type GraphPoint = { time: string; value: number };
   const [graphData, setGraphData] = useState<{
-    simulation: any[];
-    current: any[];
+    simulation: GraphPoint[];
+    current: GraphPoint[];
   }>({ simulation: [], current: [] });
   const [activeGraph, setActiveGraph] = useState<"simulation" | "current">(
     "simulation",
   );
-
   // LocalStorageからのデータ読み込み処理
   useEffect(() => {
     if (typeof window !== "undefined") {
