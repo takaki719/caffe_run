@@ -9,18 +9,18 @@ import RecommendedPlanList from "../components/NextCaffeineTime";
 import CaffeineLogForm from "../components/CaffeineLogForm";
 import SleepForm from "../components/SleepForm";
 import FocusForm, { FocusPeriod } from "../components/FocusForm";
-import { useFocusPeriods } from "@/hooks/useFocusPeriods";
+import { useFocusPeriods } from "@/hooks/UseFocusPeriods";
+import { useSleepTimes } from "@/hooks/UseSleepTimes";
 
 // モックデータの型定義(APIの実装が終わり次第削除予定)
 import type { Recommendation } from "../components/NextCaffeineTime";
 
 const HomePage: React.FC = () => {
-  const [bed_time, setBedTime] = useState("");
-  const [wake_time, setWakeTime] = useState("");
+  // 睡眠時間の状態管理
+  const { bedTime, wakeTime, setBedTime, setWakeTime } = useSleepTimes();
 
   // 集中時間の追加・削除・データ保持のカスタムフック
-  const { focusPeriods, addFocusPeriod, removeFocusPeriod, updateFocusPeriod } =
-    useFocusPeriods();
+  const { focusPeriods, addFocusPeriod, removeFocusPeriod, updateFocusPeriod } = useFocusPeriods();
 
   // エラー / ローディング / グラフデータ / 摂取記録フォームの開閉
   const [error, setError] = useState("");
@@ -30,11 +30,12 @@ const HomePage: React.FC = () => {
 
   // 睡眠時間・集中時間が入力されているかをチェックする関数
   const isValid = () => {
-    if (!bed_time || !wake_time) return false;
-    const hasValidFocus = focusPeriods.some((p) => p.start && p.end);
-    if (!hasValidFocus) return false;
-    return true;
-  };
+    return (
+      !!bedTime &&
+      !!wakeTime &&
+      focusPeriods.some((p) => p.start && p.end)
+    );
+  }
 
   /** モックデータ(APIの実装が終わり次第削除予定)
    * APIで受け取るrecommandationsデータのプロパティは時間とカフェイン量
@@ -55,8 +56,8 @@ const HomePage: React.FC = () => {
     setIsLoading(true);
 
     const planData = {
-      bed_time,
-      wake_time,
+      bedTime,
+      wakeTime,
       focus_periods: focusPeriods,
     };
 
@@ -84,8 +85,8 @@ const HomePage: React.FC = () => {
         const firstFocusPeriod = focusPeriods.find((p) => p.start && p.end);
         if (firstFocusPeriod) {
           const fallbackData = calcFocusData(
-            wake_time,
-            bed_time,
+            wakeTime,
+            bedTime,
             firstFocusPeriod.start,
             firstFocusPeriod.end,
           );
@@ -133,8 +134,8 @@ const HomePage: React.FC = () => {
           <main className="flex flex-col items-center flex-1 w-full max-w-2xl mx-auto">
             {/*  睡眠時間入力フォーム */}
             <SleepForm
-              bedTime={bed_time}
-              wakeTime={wake_time}
+              bedTime={bedTime}
+              wakeTime={wakeTime}
               setBedTime={setBedTime}
               setWakeTime={setWakeTime}
               disabled={isLoading}
