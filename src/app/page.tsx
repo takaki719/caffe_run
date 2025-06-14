@@ -21,7 +21,8 @@ const HomePage: React.FC = () => {
   const { bedTime, wakeTime, setBedTime, setWakeTime } = useSleepTimes();
 
   // 集中時間の追加・削除・データ保持のカスタムフック
-  const { focusPeriods, addFocusPeriod, removeFocusPeriod, updateFocusPeriod } = useFocusPeriods();
+  const { focusPeriods, addFocusPeriod, removeFocusPeriod, updateFocusPeriod } =
+    useFocusPeriods();
 
   // エラー / ローディング / グラフデータ / 摂取記録フォームの開閉
   const [error, setError] = useState("");
@@ -32,11 +33,9 @@ const HomePage: React.FC = () => {
   // 睡眠時間・集中時間が入力されているかをチェックする関数
   const isValid = () => {
     return (
-      !!bedTime &&
-      !!wakeTime &&
-      focusPeriods.some((p) => p.start && p.end)
+      !!bedTime && !!wakeTime && focusPeriods.some((p) => p.start && p.end)
     );
-  }
+  };
 
   /** モックデータ(APIの実装が終わり次第削除予定)
    * APIで受け取るrecommandationsデータのプロパティは時間とカフェイン量
@@ -167,14 +166,14 @@ const HomePage: React.FC = () => {
             </div>
           </section>
 
-            {/* 集中セクション */}
-            <FocusForm
-              focusPeriods={focusPeriods}
-              addFocusPeriod={addFocusPeriod}
-              removeFocusPeriod={removeFocusPeriod}
-              updateFocusPeriod={updateFocusPeriod}
-              disabled={isLoading}
-            />
+          {/* 集中セクション */}
+          <FocusForm
+            focusPeriods={focusPeriods}
+            addFocusPeriod={addFocusPeriod}
+            removeFocusPeriod={removeFocusPeriod}
+            updateFocusPeriod={updateFocusPeriod}
+            disabled={isLoading}
+          />
 
           {/* エラー表示 */}
           {error && (
