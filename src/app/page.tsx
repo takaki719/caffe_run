@@ -151,7 +151,7 @@ const HomePage: React.FC = () => {
               </label>
               <input
                 type="time"
-                value={bed_time}
+                value={bedTime}
                 onChange={(e) => setBedTime(e.target.value)}
                 className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
                 disabled={isLoading}
@@ -159,7 +159,7 @@ const HomePage: React.FC = () => {
               <span className="text-gray-500">～</span>
               <input
                 type="time"
-                value={wake_time}
+                value={wakeTime}
                 onChange={(e) => setWakeTime(e.target.value)}
                 className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
                 disabled={isLoading}
