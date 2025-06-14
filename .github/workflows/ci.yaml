@@ -4,7 +4,6 @@ on: [push, pull_request]
 
 jobs:
   build:
-    needs: format  # formatチェックが通ってからbuildを実行
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
