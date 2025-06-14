@@ -43,6 +43,7 @@ npm run dev
 
 ```bash
 npm run format
+npm run lint
 ```
 
 ---
