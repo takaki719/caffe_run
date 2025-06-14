@@ -15,7 +15,7 @@ export interface FocusFormProps {
   disabled?: boolean;
 }
 
-const FocusForm: React.FC<FocusFormProps> = ({
+export const FocusForm: React.FC<FocusFormProps> = ({
   focusPeriods,
   addFocusPeriod,
   removeFocusPeriod,
