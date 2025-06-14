@@ -25,7 +25,7 @@ const SleepForm: React.FC<SleepFormProps> = ({
         type="time"
         value={bedTime}
         onChange={(e) => setBedTime(e.target.value)}
-        className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
+        className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black"
         disabled={disabled}
       />
       <span className="text-gray-500">～</span>
@@ -33,7 +33,7 @@ const SleepForm: React.FC<SleepFormProps> = ({
         type="time"
         value={wakeTime}
         onChange={(e) => setWakeTime(e.target.value)}
-        className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
+        className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black"
         disabled={disabled}
       />
     </div>
