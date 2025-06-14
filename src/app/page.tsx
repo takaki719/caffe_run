@@ -11,9 +11,8 @@ import SleepForm from "../components/SleepForm";
 import FocusForm, { FocusPeriod } from "../components/FocusForm";
 import { useFocusPeriods } from "@/hooks/UseFocusPeriods";
 import { useSleepTimes } from "@/hooks/UseSleepTimes";
-import Summery from "@/components/Summery";
 
-// 次に何を飲むのかのモックデータの型定義(APIの実装が終わり次第削除予定)
+// モックデータの型定義(APIの実装が終わり次第削除予定)
 import type { Recommendation } from "../components/NextCaffeineTime";
 
 const HomePage: React.FC = () => {
@@ -103,105 +102,81 @@ const HomePage: React.FC = () => {
 
   return (
     <div>
-      <TopBackButton />
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 py-8">
-        {/* Unityモデル枠 */}
-        <div className="w-full max-w-2xl flex justify-center">
-          <UnityModel />
-        </div>
-        <div className="w-full max-w-4xl mx-auto flex flex-row items-start justify-center gap-1 mt-8 px-0">
-          {/* 次のカフェイン摂取時間 */}
-          <div className="flex-1">
+      <div>
+        <TopBackButton />
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 py-8">
+          {/* Unityモデル枠 */}
+          <div className="w-full max-w-2xl flex justify-center">
+            <UnityModel />
+          </div>
+          {/* 次のコーヒー摂取時間 */}
+          <div className="w-full max-w-4xl mx-auto px-4 mt-8">
             <RecommendedPlanList recommendations={recommendations} />
           </div>
-          {/* カフェイン摂取量サマリー */}
-          <div className="flex-1">
-            <Summery caffeineData={[10, 60, 90]} />
-          </div>
-        </div>
-        {/* カフェイン摂取記録フォーム（タイトル＆開閉ボタン） */}
-        <div className="w-full max-w-2xl mx-auto mt-8 mb-2">
-          <div className="flex items-center mb-2">
-            {/* 1. 円形ボタン 2. 左側に配置 */}
-            <button
-              type="button"
-              className={`
-                  mr-3 w-8 h-8 flex items-center justify-center rounded-full 
-                  bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold 
-                  transition text-xl
-                `}
-              onClick={() => setIsLogFormOpen((prev) => !prev)}
-              aria-label={isLogFormOpen ? "閉じる" : "開く"}
-            >
-              {isLogFormOpen ? "-" : "+"}
-            </button>
-            <h2 className="text-lg font-bold text-gray-800">
-              カフェイン摂取記録
-            </h2>
-          </div>
-          {isLogFormOpen && <CaffeineLogForm />}
-        </div>
-        <main className="flex flex-col items-center flex-1 w-full max-w-2xl mx-auto">
-          {/* 睡眠セクション */}
-          <section className="w-full mb-8 mt-8">
-            <div className="flex items-center gap-3 w-full">
-              <label className="text-gray-600 text-sm font-medium min-w-[95px]">
-                睡眠時間
-              </label>
-              <input
-                type="time"
-                value={bedTime}
-                onChange={(e) => setBedTime(e.target.value)}
-                className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
-                disabled={isLoading}
-              />
-              <span className="text-gray-500">～</span>
-              <input
-                type="time"
-                value={wakeTime}
-                onChange={(e) => setWakeTime(e.target.value)}
-                className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24"
-                disabled={isLoading}
-              />
+
+          <div className="w-full max-w-2xl mx-auto mt-8 mb-2">
+            {/* カフェイン摂取記録フォームの開閉 */}
+            <div className="flex items-center mb-2">
+              <button
+                className="mr-3 w-8 h-8 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold transition text-xl"
+                onClick={() => setIsLogFormOpen((p) => !p)}
+              >
+                {isLogFormOpen ? "-" : "+"}
+              </button>
+              <h2 className="text-lg font-bold text-gray-800">
+                カフェイン摂取記録
+              </h2>
             </div>
-          </section>
+            {isLogFormOpen && <CaffeineLogForm />}
+          </div>
 
-          {/* 集中セクション */}
-          <FocusForm
-            focusPeriods={focusPeriods}
-            addFocusPeriod={addFocusPeriod}
-            removeFocusPeriod={removeFocusPeriod}
-            updateFocusPeriod={updateFocusPeriod}
-            disabled={isLoading}
-          />
-
-          {/* エラー表示 */}
-          {error && (
-            <div className="text-red-600 font-semibold mb-3">{error}</div>
-          )}
-
-          {/* ボタン */}
-          <div className="w-full flex justify-center mt-8 mb-6">
-            <BlueButton
-              label={isLoading ? "計画生成中..." : "カフェイン計画を生成する"}
-              href="#"
-              onClick={handleGeneratePlan}
+          <main className="flex flex-col items-center flex-1 w-full max-w-2xl mx-auto">
+            {/*  睡眠時間入力フォーム */}
+            <SleepForm
+              bedTime={bedTime}
+              wakeTime={wakeTime}
+              setBedTime={setBedTime}
+              setWakeTime={setWakeTime}
               disabled={isLoading}
             />
-          </div>
 
-          {/* 集中度グラフ */}
-          {chartData.length > 0 && (
-            <div className="w-full max-w-2xl flex justify-center mt-8">
-              <div className="w-full">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-                  カフェイン効果予測
-                </h3>
-                <Chart data={chartData} />
-              </div>
+            {/* 集中セクション */}
+            <FocusForm
+              focusPeriods={focusPeriods}
+              addFocusPeriod={addFocusPeriod}
+              removeFocusPeriod={removeFocusPeriod}
+              updateFocusPeriod={updateFocusPeriod}
+              disabled={isLoading}
+            />
+
+            {/* エラー表示 */}
+            {error && (
+              <div className="text-red-600 font-semibold mb-3">{error}</div>
+            )}
+
+            {/* ボタン */}
+            <div className="w-full flex justify-center mt-8 mb-6">
+              <BlueButton
+                label={isLoading ? "計画生成中..." : "カフェイン計画を生成する"}
+                href="#"
+                onClick={handleGeneratePlan}
+                disabled={isLoading}
+              />
             </div>
-          )}
-        </main>
+
+            {/* 集中度グラフ */}
+            {chartData.length > 0 && (
+              <div className="w-full max-w-2xl flex justify-center mt-8">
+                <div className="w-full">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+                    カフェイン効果予測
+                  </h3>
+                  <Chart data={chartData} />
+                </div>
+              </div>
+            )}
+          </main>
+        </div>
       </div>
     </div>
   );
