@@ -13,8 +13,11 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install dependencies with retry
+        run: |
+          for i in 1 2 3; do
+            npm ci && break || sleep 10
+          done
 
       - name: Run build
         run: npm run build
