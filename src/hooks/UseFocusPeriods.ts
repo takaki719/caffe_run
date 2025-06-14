@@ -46,7 +46,11 @@ export function useFocusPeriods() {
   const removeFocusPeriod = (idx: number) =>
     setFocusPeriods((prev) => prev.filter((_, i) => i !== idx));
 
-  const updateFocusPeriod = (idx: number, key: "start" | "end", value: string) =>
+  const updateFocusPeriod = (
+    idx: number,
+    key: "start" | "end",
+    value: string,
+  ) =>
     setFocusPeriods((prev) =>
       prev.map((p, i) => (i === idx ? { ...p, [key]: value } : p)),
     );
