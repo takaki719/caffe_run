@@ -56,19 +56,40 @@ export async function POST(request: Request) {
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    // 時刻の前後関係を比較するために、一旦同じ日付のDateオブジェクトに変換
+    const bedTimeOnSameDay = timeToDate(bed_time, today);
+    const wakeTimeOnSameDay = timeToDate(wake_time, today);
+
+    // 就寝時刻が起床時刻より後（例: 23:00 > 07:00）なら、就寝日は昨日とする
+    // そうでなければ（例: 01:00 < 09:00）、就寝日も今日とする
+    const bedTimeDate = bedTimeOnSameDay > wakeTimeOnSameDay ? yesterday : today;
 
     const sleepHistory: SleepPeriod[] = [
       {
-        start: timeToDate(bed_time, yesterday), // 就寝は昨日
-        end: timeToDate(wake_time, today), // 起床は今日
+        start: timeToDate(bed_time, bedTimeDate), // 日またぎを考慮した就寝時刻
+        end: timeToDate(wake_time, today),       // 起床は常に「今日」
       },
     ];
 
     const params: OptimizationParams = {
-      timeWindows: validFocusPeriods.map((p: FocusPeriodRequest) => ({
-        start: timeToDate(p.start, today),
-        end: timeToDate(p.end, today),
-      })),
+      timeWindows: validFocusPeriods.map((p: FocusPeriodRequest) => {
+        const startDate = timeToDate(p.start, today);
+        let endDate = timeToDate(p.end, today);
+
+        // 集中時間の開始時刻が終了時刻より後の場合（例: 23:00 > 05:00）、
+        // 日をまたいだと判断し、終了日を明日に設定する
+        if (startDate > endDate) {
+          endDate = timeToDate(p.end, tomorrow);
+        }
+
+        return {
+          start: startDate,
+          end: endDate,
+        };
+      }),
       targetPerformance: 0.6,
       maxDosePerIntake: 200,
       minTimeBetweenDosesHours: 0.5, // 間隔を短くして柔軟性を高める
@@ -105,13 +126,6 @@ export async function POST(request: Request) {
         focus: Math.round(performance * 100), // キーを "focus" に変更し、値を0-100の範囲にする
       });
     }
-
-    // --- ここから変更点 ---
-
-    // --------------------------------------------------
-    /*
-    const doseToPlanItem = (dose: CaffeineDose) => { ... }; // この関数を削除
-    */
 
     // --- 最終的なレスポンス ---
     const responseData = {

@@ -67,7 +67,7 @@ export class CaffeineOptimizer {
     const timeSlots: Date[] = [];
     params.timeWindows.forEach((window) => {
       // 集中時間の30分前から候補時間を生成するように変更
-      const startTime = new Date(window.start.getTime() - 30 * 60 * 1000);
+      const startTime = new Date(window.start.getTime() - 240 * 60 * 1000);
       let t = startTime;
 
       while (t < window.end) {
