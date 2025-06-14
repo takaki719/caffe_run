@@ -9,6 +9,7 @@ import RecommendedPlanList from "../components/NextCaffeineTime";
 import CaffeineLogForm from "../components/CaffeineLogForm";
 import SleepForm from "../components/SleepForm";
 import FocusForm, { FocusPeriod } from "../components/FocusForm";
+import { useFocusPeriods } from "@/hooks/useFocusPeriods";
 
 // モックデータの型定義(APIの実装が終わり次第削除予定)
 import type { Recommendation } from "../components/NextCaffeineTime";
@@ -17,40 +18,19 @@ const HomePage: React.FC = () => {
   const [bed_time, setBedTime] = useState("");
   const [wake_time, setWakeTime] = useState("");
 
-  // 集中時間（可変リスト）
-  const [focusPeriods, setFocusPeriods] = useState<FocusPeriod[]>([
-    { start: "", end: "" },
-  ]);
+  // 集中時間の追加・削除・データ保持のカスタムフック
+  const {
+    focusPeriods,
+    addFocusPeriod,
+    removeFocusPeriod,
+    updateFocusPeriod,
+  } = useFocusPeriods();
 
-  // エラーメッセージ
+  // エラー / ローディング / グラフデータ / 摂取記録フォームの開閉 
   const [error, setError] = useState("");
-
-  // API読み込み状態
   const [isLoading, setIsLoading] = useState(false);
-
-  // グラフデータの状態管理
   const [chartData, setChartData] = useState<FocusDataPoint[]>([]);
-
-  // 摂取記録フォームの開閉state
   const [isLogFormOpen, setIsLogFormOpen] = useState(false);
-
-  // 集中時間の追加
-  const addFocusPeriod = () =>
-    setFocusPeriods((prev) => [...prev, { start: "", end: "" }]);
-
-  // 集中帯削除
-  const removeFocusPeriod = (idx: number) =>
-    setFocusPeriods((prev) => prev.filter((_, i) => i !== idx));
-
-  const updateFocusPeriod = (
-    idx: number,
-    key: "start" | "end",
-    value: string,
-  ) => {
-    setFocusPeriods((prev) =>
-      prev.map((p, i) => (i === idx ? { ...p, [key]: value } : p)),
-    );
-  };
 
   // 睡眠時間・集中時間が入力されているかをチェックする関数
   const isValid = () => {
