@@ -8,14 +8,29 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  Legend, // Legendを追加
 } from "recharts";
-import type { FocusDataPoint } from "../lib/calcFocusData";
+
+// グラフの点の型定義（APIの返り値に合わせる）
+type DataPoint = {
+  time: string;
+  value: number; // ★キーの名前が'value'であることを定義
+};
 
 type Props = {
-  data: FocusDataPoint[];
+  data: DataPoint[];
 };
 
 const Chart: React.FC<Props> = ({ data }) => {
+  // データがない場合はメッセージを表示
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full text-gray-400">
+        プランを生成するとグラフが表示されます
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-2xl shadow-md p-4 flex flex-col items-center justify-center min-h-[240px] h-[320px] sm:h-[420px] w-full">
       <h2 className="text-base sm:text-lg font-bold mb-4 text-gray-700">
@@ -28,11 +43,13 @@ const Chart: React.FC<Props> = ({ data }) => {
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="time" tick={{ fontSize: 12 }} minTickGap={8} />
-          <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} width={28} />
+          <YAxis domain={[0, 120]} tick={{ fontSize: 12 }} width={28} />
           <Tooltip />
+          <Legend />
           <Line
             type="monotone"
-            dataKey="focus"
+            dataKey="value" // ★★★ ここを "focus" から "value" に変更 ★★★
+            name="覚醒度"
             stroke="#6366f1"
             strokeWidth={3}
             dot={{ r: 2 }}

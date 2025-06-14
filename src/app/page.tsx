@@ -4,7 +4,6 @@ import BlueButton from "../components/BlueButton";
 import UnityModel from "../components/UnityModel";
 import TopBackButton from "@/components/TopBackButton";
 import Chart from "@/components/Chart";
-import { calcFocusData, FocusDataPoint } from "@/lib/calcFocusData";
 import RecommendedPlanList from "../components/NextCaffeineTime";
 import CaffeineLogForm from "../components/CaffeineLogForm";
 import SleepForm from "../components/SleepForm";
@@ -12,62 +11,64 @@ import FocusForm from "../components/FocusForm";
 import { useFocusPeriods } from "@/hooks/UseFocusPeriods";
 import { useSleepTimes } from "@/hooks/UseSleepTimes";
 import Summery from "../components/Summery";
-
-// モックデータの型定義(APIの実装が終わり次第削除予定)
 import type { Recommendation } from "../components/NextCaffeineTime";
 
 const HomePage: React.FC = () => {
-  // 睡眠時間の状態管理
+  // developブランチの新しいカスタムフックで状態を管理
   const { bedTime, wakeTime, setBedTime, setWakeTime } = useSleepTimes();
-
-  // 集中時間の追加・削除・データ保持のカスタムフック
   const { focusPeriods, addFocusPeriod, removeFocusPeriod, updateFocusPeriod } =
     useFocusPeriods();
 
-  // エラー / ローディング / グラフデータ / 摂取記録フォームの開閉
+  // あなたが追加した、エラー、ローディング、グラフ関連のstate
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [chartData, setChartData] = useState<FocusDataPoint[]>([]);
   const [isLogFormOpen, setIsLogFormOpen] = useState(false);
+  type GraphPoint = { time: string; value: number };
+  const [graphData, setGraphData] = useState<{
+    simulation: GraphPoint[];
+    current: GraphPoint[];
+  }>({ simulation: [], current: [] });
+  const [activeGraph, setActiveGraph] = useState<"simulation" | "current">(
+    "simulation",
+  );
 
-  // 睡眠時間・集中時間が入力されているかをチェックする関数
+  // 入力チェック関数を、developブランチの変数名(camelCase)に合わせる
   const isValid = () => {
     return (
       !!bedTime && !!wakeTime && focusPeriods.some((p) => p.start && p.end)
     );
   };
 
-  /** モックデータ(APIの実装が終わり次第削除予定)
-   * APIで受け取るrecommandationsデータのプロパティは時間とカフェイン量
-   * caffeine-drink-options.tsをもとに別のところで何杯・何を飲むかを決める
-   */
   const recommendations: Recommendation[] = [
-    { time: "14:00", caffeineAmount: 150 },
-    { time: "20:30", caffeineAmount: 200 },
+    { time: "14:00", caffeineAmount: 95 },
+    { time: "20:30", caffeineAmount: 30 },
   ];
 
+  // あなたが実装したAPI呼び出し関数を、developブランチの変数名に合わせる
   const handleGeneratePlan = async () => {
     if (!isValid()) {
       setError("集中時間・睡眠時間を入力してください");
       return;
     }
-
     setError("");
     setIsLoading(true);
-
-    const planData = {
-      bedTime,
-      wakeTime,
-      focus_periods: focusPeriods,
-    };
+    setGraphData({ simulation: [], current: [] });
 
     try {
-      const response = await fetch("/api/plan", {
+      const savedLogs = window.localStorage.getItem("caffeine-logs");
+      const caffeine_logs = savedLogs ? JSON.parse(savedLogs) : [];
+
+      const requestData = {
+        bed_time: bedTime, // 変数名を修正
+        wake_time: wakeTime, // 変数名を修正
+        focus_periods: focusPeriods,
+        caffeine_logs,
+      };
+
+      const response = await fetch("/api/focus-graph", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(planData),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
@@ -75,24 +76,13 @@ const HomePage: React.FC = () => {
       }
 
       const result = await response.json();
+      
+      setGraphData({
+        simulation: result.simulationData || [],
+        current: result.currentStatusData || [],
+      });
+      setActiveGraph("simulation");
 
-      // APIレスポンスからグラフデータを更新
-      if (result.data) {
-        setChartData(result.data);
-      } else {
-        // フォールバック：APIレスポンスが期待した形式でない場合
-        // 最初の集中時間を使用してグラフデータを生成
-        const firstFocusPeriod = focusPeriods.find((p) => p.start && p.end);
-        if (firstFocusPeriod) {
-          const fallbackData = calcFocusData(
-            wakeTime,
-            bedTime,
-            firstFocusPeriod.start,
-            firstFocusPeriod.end,
-          );
-          setChartData(fallbackData);
-        }
-      }
     } catch (error) {
       console.error("エラーが発生しました:", error);
       setError("プラン生成中にエラーが発生しました");
@@ -106,29 +96,27 @@ const HomePage: React.FC = () => {
       <div>
         <TopBackButton />
         <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 py-8">
-          {/* Unityモデル枠 */}
           <div className="w-full max-w-2xl flex justify-center">
             <UnityModel />
           </div>
-
+          
+          {/* developブランチの新しいレイアウトを採用 */}
           <div className="w-full max-w-4xl mx-auto flex flex-row items-start justify-center gap-1 mt-8 px-0">
-            {/* 次のカフェイン摂取時間 */}
             <div className="flex-1">
               <RecommendedPlanList recommendations={recommendations} />
             </div>
-            {/* カフェイン摂取量サマリー */}
             <div className="flex-1">
-              <Summery caffeineData={[10, 60, 90]} />
+              <Summery caffeineData={[10, 60, 90]} /> {/* サマリーのデータは仮 */}
             </div>
           </div>
-          {/* 次のコーヒー摂取時間 */}
 
           <div className="w-full max-w-2xl mx-auto mt-8 mb-2">
-            {/* カフェイン摂取記録フォームの開閉 */}
             <div className="flex items-center mb-2">
               <button
+                type="button"
                 className="mr-3 w-8 h-8 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold transition text-xl"
                 onClick={() => setIsLogFormOpen((p) => !p)}
+                aria-label={isLogFormOpen ? "閉じる" : "開く"}
               >
                 {isLogFormOpen ? "-" : "+"}
               </button>
@@ -140,7 +128,8 @@ const HomePage: React.FC = () => {
           </div>
 
           <main className="flex flex-col items-center flex-1 w-full max-w-2xl mx-auto">
-            {/*  睡眠時間入力フォーム */}
+            
+            {/* developブランチの新しいフォームコンポーネントを使用 */}
             <SleepForm
               bedTime={bedTime}
               wakeTime={wakeTime}
@@ -148,8 +137,6 @@ const HomePage: React.FC = () => {
               setWakeTime={setWakeTime}
               disabled={isLoading}
             />
-
-            {/* 集中セクション */}
             <FocusForm
               focusPeriods={focusPeriods}
               addFocusPeriod={addFocusPeriod}
@@ -158,12 +145,10 @@ const HomePage: React.FC = () => {
               disabled={isLoading}
             />
 
-            {/* エラー表示 */}
             {error && (
               <div className="text-red-600 font-semibold mb-3">{error}</div>
             )}
 
-            {/* ボタン */}
             <div className="w-full flex justify-center mt-8 mb-6">
               <BlueButton
                 label={isLoading ? "計画生成中..." : "カフェイン計画を生成する"}
@@ -173,14 +158,28 @@ const HomePage: React.FC = () => {
               />
             </div>
 
-            {/* 集中度グラフ */}
-            {chartData.length > 0 && (
-              <div className="w-full max-w-2xl flex justify-center mt-8">
+            {/* あなたが実装したグラフ表示部分 */}
+            {(graphData.simulation.length > 0 || graphData.current.length > 0) && (
+              <div className="w-full max-w-2xl flex flex-col items-center justify-center mt-8">
+                <div className="flex justify-center gap-4 mb-4">
+                  <button 
+                    onClick={() => setActiveGraph('simulation')}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === 'simulation' ? 'bg-indigo-500 text-white shadow' : 'bg-gray-200 text-gray-700'}`}
+                  >
+                    理想の覚醒度
+                  </button>
+                  <button 
+                    onClick={() => setActiveGraph('current')}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === 'current' ? 'bg-teal-500 text-white shadow' : 'bg-gray-200 text-gray-700'}`}
+                  >
+                    現在の覚醒度
+                  </button>
+                </div>
                 <div className="w-full">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
                     カフェイン効果予測
                   </h3>
-                  <Chart data={chartData} />
+                  <Chart data={graphData[activeGraph]} />
                 </div>
               </div>
             )}
