@@ -11,6 +11,7 @@ import SleepForm from "../components/SleepForm";
 import FocusForm from "../components/FocusForm";
 import { useFocusPeriods } from "@/hooks/UseFocusPeriods";
 import { useSleepTimes } from "@/hooks/UseSleepTimes";
+import Summery from "../components/Summery";
 
 // モックデータの型定義(APIの実装が終わり次第削除予定)
 import type { Recommendation } from "../components/NextCaffeineTime";
@@ -109,10 +110,18 @@ const HomePage: React.FC = () => {
           <div className="w-full max-w-2xl flex justify-center">
             <UnityModel />
           </div>
-          {/* 次のコーヒー摂取時間 */}
-          <div className="w-full max-w-4xl mx-auto px-4 mt-8">
-            <RecommendedPlanList recommendations={recommendations} />
+
+          <div className="w-full max-w-4xl mx-auto flex flex-row items-start justify-center gap-1 mt-8 px-0">
+            {/* 次のカフェイン摂取時間 */}
+            <div className="flex-1">
+              <RecommendedPlanList recommendations={recommendations} />
+            </div>
+            {/* カフェイン摂取量サマリー */}
+            <div className="flex-1">
+              <Summery caffeineData={[10, 60, 90]} />
+            </div>
           </div>
+          {/* 次のコーヒー摂取時間 */}
 
           <div className="w-full max-w-2xl mx-auto mt-8 mb-2">
             {/* カフェイン摂取記録フォームの開閉 */}
