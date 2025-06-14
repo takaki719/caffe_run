@@ -10,13 +10,13 @@ export interface CaffeineLogEntry {
   caffeineMg: number; // 総カフェイン量（mg）
 }
 
-// props型：摂取履歴配列
 interface Props {
   logs: CaffeineLogEntry[];
+  onDeleteLog: (index: number) => void;
 }
 
 // カフェイン摂取履歴テーブル本体コンポーネント
-const CaffeineLogTable: React.FC<Props> = ({ logs }) => {
+const CaffeineLogTable: React.FC<Props> = ({ logs, onDeleteLog }) => {
   // テーブルの開閉状態を管理
   const [open, setOpen] = useState(true);
 
@@ -42,13 +42,16 @@ const CaffeineLogTable: React.FC<Props> = ({ logs }) => {
           // 履歴テーブル本体
           <table className="w-full text-sm">
             <thead>
-              <tr>
-                <th className="text-left py-2 text-gray-500">時間</th>
-                <th className="text-left py-2 text-gray-500">飲料名</th>
-                <th className="text-left py-2 text-gray-500">摂取量</th>
-                <th className="text-left py-2 text-gray-500">
+              <tr className="border-b">
+                <th className="text-left p-2 text-gray-500">時間</th>
+                <th className="text-left p-2 text-gray-500">飲料名</th>
+                <th className="text-left p-2 text-gray-500">杯数/量</th>
+                <th className="text-left p-2 text-gray-500">総摂取ml</th>
+                <th className="text-left p-2 text-gray-500">
                   カフェイン量(mg)
                 </th>
+                {/* ADDED: 削除ボタン用の見出しを追加 */}
+                <th className="text-left p-2 text-gray-500">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -58,17 +61,29 @@ const CaffeineLogTable: React.FC<Props> = ({ logs }) => {
                   key={idx}
                   className="border-b last:border-none text-gray-900"
                 >
-                  <td className="py-2">{log.time}</td>
-                  <td className="py-2">{log.drink}</td>
-                  <td className="py-2">
+                  <td className="p-2">{log.time}</td>
+                  <td className="p-2">{log.drink}</td>
+                  <td className="p-2">
                     {/* プリセット時は杯数、カスタム時はmlで表示 */}
                     {log.mode === "preset"
                       ? log.cups !== undefined
                         ? `${log.cups}杯`
                         : "-"
-                      : `${log.ml}ml`}
+                      : `${log.ml}ml（手入力）`}
                   </td>
                   <td className="py-2">{log.caffeineMg}</td>
+                  <td className="p-2">{log.ml}</td>
+                  <td className="p-2">{log.caffeineMg}</td>
+                  {/* ADDED: 削除ボタンを追加 */}
+                  <td className="p-2">
+                    <button
+                      type="button"
+                      onClick={() => onDeleteLog(idx)}
+                      className="text-red-500 hover:text-red-700 text-xs font-semibold"
+                    >
+                      削除
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
