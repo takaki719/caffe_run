@@ -30,14 +30,17 @@ export class PerformanceModel {
         : new Date().getTime();
 
     // targetTimeより前の直近の起床時刻を取得する
-    const relevantSleepPeriods = sleepHistory.filter(s => s.end <= targetTime);
+    const relevantSleepPeriods = sleepHistory.filter(
+      (s) => s.end <= targetTime,
+    );
     relevantSleepPeriods.sort((a, b) => b.end.getTime() - a.end.getTime());
-    
+
     // 適切な睡眠履歴がない場合は、デフォルトで午前6時起床と仮定する
-    const wakeUpTime = relevantSleepPeriods.length > 0
+    const wakeUpTime =
+      relevantSleepPeriods.length > 0
         ? relevantSleepPeriods[0].end
         : new Date(new Date(targetTime).setHours(6, 0, 0, 0));
-    
+
     let state: ModelState = {
       time: new Date(firstSleepStart), // 履歴の開始時刻からシミュレーション
       processS: initialProcessS,
@@ -59,20 +62,26 @@ export class PerformanceModel {
       }
 
       // step関数にwakeUpTimeを渡す
-      state = this.step(state, this.isSleeping(state.time, sleepHistory), wakeUpTime);
+      state = this.step(
+        state,
+        this.isSleeping(state.time, sleepHistory),
+        wakeUpTime,
+      );
       state.time = nextTime;
     }
     // パフォーマンス計算に起床時刻を渡す
     return this.calculatePerformance(state, wakeUpTime);
-
   }
 
-  
   /**
    * 1タイムステップ分、状態を進める
    */
   // 引数に `wakeUpTime` を追加
-  private step(currentState: ModelState, isSleeping: boolean, wakeUpTime: Date): ModelState {
+  private step(
+    currentState: ModelState,
+    isSleeping: boolean,
+    wakeUpTime: Date,
+  ): ModelState {
     const dt = C.TIME_STEP_SECONDS / 3600; // 時間単位に変換
     const nextState = { ...currentState };
 
@@ -82,18 +91,21 @@ export class PerformanceModel {
     } else {
       // --- 2プロセスモデルの統合ロジック ---
       // 現在の概日リズム(Process C)を計算
-      const currentHours = currentState.time.getHours() + currentState.time.getMinutes() / 60;
+      const currentHours =
+        currentState.time.getHours() + currentState.time.getMinutes() / 60;
       const PEAK_HOURS_AFTER_WAKE = 2; // パフォーマンス計算時と値を合わせる
       const wakeUpHours = wakeUpTime.getHours() + wakeUpTime.getMinutes() / 60;
       const peakTime = wakeUpHours + PEAK_HOURS_AFTER_WAKE;
-      const processC = 0.5 * (1 + Math.sin((currentHours - peakTime) * (Math.PI / 12)));
+      const processC =
+        0.5 * (1 + Math.sin((currentHours - peakTime) * (Math.PI / 12)));
 
       // Process C の値に応じて、Process S の上昇率を変動させる
       // Process C が高い（覚醒度が高い）時 → 上昇率は低く
       // Process C が低い（覚醒度が低い）時 → 上昇率は高く
       // 例: processCが1.0の時、上昇率は基本値の0.7倍。0.0の時、1.3倍。
       const modulationFactor = 1.3 - 0.6 * processC;
-      const modulatedIncreaseRate = C.PROCESS_S_INCREASE_RATE * modulationFactor;
+      const modulatedIncreaseRate =
+        C.PROCESS_S_INCREASE_RATE * modulationFactor;
 
       nextState.processS += modulatedIncreaseRate * dt;
     }
@@ -118,7 +130,7 @@ export class PerformanceModel {
   // 引数に `wakeUpTime` を追加
   private calculatePerformance(state: ModelState, wakeUpTime: Date): number {
     const hours = state.time.getHours() + state.time.getMinutes() / 60;
-    
+
     // 覚醒度のピークは起床から数時間後と仮定する
     // 元のモデルではピークが8時であり、一般的な起床時刻を6時と仮定すると、ピークは起床の2時間後
     const PEAK_HOURS_AFTER_WAKE = 2;

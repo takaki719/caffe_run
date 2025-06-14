@@ -65,12 +65,13 @@ export async function POST(request: Request) {
 
     // 就寝時刻が起床時刻より後（例: 23:00 > 07:00）なら、就寝日は昨日とする
     // そうでなければ（例: 01:00 < 09:00）、就寝日も今日とする
-    const bedTimeDate = bedTimeOnSameDay > wakeTimeOnSameDay ? yesterday : today;
+    const bedTimeDate =
+      bedTimeOnSameDay > wakeTimeOnSameDay ? yesterday : today;
 
     const sleepHistory: SleepPeriod[] = [
       {
         start: timeToDate(bed_time, bedTimeDate), // 日またぎを考慮した就寝時刻
-        end: timeToDate(wake_time, today),       // 起床は常に「今日」
+        end: timeToDate(wake_time, today), // 起床は常に「今日」
       },
     ];
 
