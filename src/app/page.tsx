@@ -19,14 +19,10 @@ const HomePage: React.FC = () => {
   const [wake_time, setWakeTime] = useState("");
 
   // 集中時間の追加・削除・データ保持のカスタムフック
-  const {
-    focusPeriods,
-    addFocusPeriod,
-    removeFocusPeriod,
-    updateFocusPeriod,
-  } = useFocusPeriods();
+  const { focusPeriods, addFocusPeriod, removeFocusPeriod, updateFocusPeriod } =
+    useFocusPeriods();
 
-  // エラー / ローディング / グラフデータ / 摂取記録フォームの開閉 
+  // エラー / ローディング / グラフデータ / 摂取記録フォームの開閉
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [chartData, setChartData] = useState<FocusDataPoint[]>([]);

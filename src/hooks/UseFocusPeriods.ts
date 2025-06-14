@@ -10,7 +10,7 @@ export interface FocusPeriod {
  */
 export function useFocusPeriods(initial?: FocusPeriod[]) {
   const [periods, setPeriods] = useState<FocusPeriod[]>(
-    initial ?? [{ start: "", end: "" }]
+    initial ?? [{ start: "", end: "" }],
   );
 
   /** 新しいフォーカス時間帯を追加 */
@@ -27,10 +27,10 @@ export function useFocusPeriods(initial?: FocusPeriod[]) {
   const updateFocusPeriod = (
     index: number,
     key: "start" | "end",
-    value: string
+    value: string,
   ) => {
     setPeriods((prev) =>
-      prev.map((p, i) => (i === index ? { ...p, [key]: value } : p))
+      prev.map((p, i) => (i === index ? { ...p, [key]: value } : p)),
     );
   };
 
