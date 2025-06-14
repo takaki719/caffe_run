@@ -13,19 +13,22 @@ export class CaffeineOptimizer {
   }
 
   /**
-   * スケジュールのパフォーマンスを評価し、成功した集中時間帯の数を返す
-   * @returns {number} 成功したウィンドウの数
+   * スケジュールのパフォーマンスを評価し、成功した集中時間帯の数と、その間の最低パフォーマンスを返す
+   * @returns {{ successfulWindows: number, minimumPerformance: number }} 評価結果
    */
   private evaluateSchedulePerformance(
     schedule: CaffeineDose[],
     sleepHistory: SleepPeriod[],
     params: OptimizationParams,
-  ): number {
+  ): { successfulWindows: number; minimumPerformance: number } {
     const { timeWindows, targetPerformance } = params;
     let successfulWindows = 0;
+    let overallMinimumPerformance = 1.0; // パフォーマンスの最低値を記録（1.0から開始）
 
     for (const window of timeWindows) {
       let isWindowSuccessful = true;
+      let windowMinimumPerformance = 1.0;
+
       for (
         let t = window.start.getTime();
         t <= window.end.getTime();
@@ -36,16 +39,32 @@ export class CaffeineOptimizer {
           sleepHistory,
           schedule,
         );
+        // このウィンドウ内の最低パフォーマンスを更新
+        windowMinimumPerformance = Math.min(
+          windowMinimumPerformance,
+          performance,
+        );
         if (performance < targetPerformance) {
-          isWindowSuccessful = false; // このウィンドウは失敗
-          break; // 次のウィンドウのチェックへ
+          isWindowSuccessful = false;
         }
       }
+
       if (isWindowSuccessful) {
         successfulWindows++;
+        // 全ての成功したウィンドウを通しての最低パフォーマンスを更新
+        overallMinimumPerformance = Math.min(
+          overallMinimumPerformance,
+          windowMinimumPerformance,
+        );
       }
     }
-    return successfulWindows;
+
+    // 成功したウィンドウが一つもなければ、最低パフォーマンスは0とする
+    if (successfulWindows === 0) {
+      return { successfulWindows, minimumPerformance: 0 };
+    }
+
+    return { successfulWindows, minimumPerformance: overallMinimumPerformance };
   }
 
   /**
@@ -56,8 +75,9 @@ export class CaffeineOptimizer {
     params: OptimizationParams,
   ): CaffeineDose[] | null {
     let bestSchedule: CaffeineDose[] | null = null;
-    let maxWindowsAchieved = 0; // 達成したウィンドウ数の最大値
-    let minCaffeineForMaxWindows = Infinity; // 最大ウィンドウ達成時の最小カフェイン量
+    let maxWindowsAchieved = 0;
+    let bestMinimumPerformance = 0; // ★ 最低パフォーマンスの最高値を記録
+    let minCaffeineForMaxWindows = Infinity;
 
     const doseOptions = [50, 100, 150, 200].filter(
       (d) => d <= params.maxDosePerIntake,
@@ -66,55 +86,57 @@ export class CaffeineOptimizer {
 
     const timeSlots: Date[] = [];
     params.timeWindows.forEach((window) => {
-      // 集中時間の30分前から候補時間を生成するように変更
-      const startTime = new Date(window.start.getTime() - 240 * 60 * 1000);
-      let t = startTime;
-
+      const primarySlot = new Date(window.start.getTime() - 30 * 60 * 1000);
+      if (!timeSlots.some((t) => t.getTime() === primarySlot.getTime())) {
+        timeSlots.push(primarySlot);
+      }
+      let t = new Date(window.start.getTime());
       while (t < window.end) {
-        const lastSlotTime =
-          timeSlots.length > 0 ? timeSlots[timeSlots.length - 1].getTime() : 0;
-        if (
-          t.getTime() - lastSlotTime <
-          params.minTimeBetweenDosesHours * 3600 * 1000
-        ) {
-          t = new Date(
-            lastSlotTime + params.minTimeBetweenDosesHours * 3600 * 1000,
-          );
-          if (t < startTime) t = startTime; // 開始時刻より前に戻らないように
-          continue;
-        }
-        timeSlots.push(new Date(t));
-        t = new Date(
-          t.getTime() + params.minTimeBetweenDosesHours * 3600 * 1000,
+        const isTooClose = timeSlots.some(
+          (existingSlot) =>
+            Math.abs(existingSlot.getTime() - t.getTime()) <
+            params.minTimeBetweenDosesHours * 3600 * 1000,
         );
+        if (!isTooClose) {
+          timeSlots.push(new Date(t));
+        }
+        t = new Date(t.getTime() + 60 * 60 * 1000);
       }
     });
 
+    timeSlots.sort((a, b) => a.getTime() - b.getTime());
     const searchSlots = timeSlots.slice(0, 8);
 
-    // スケジュールを評価し、最良であれば更新するヘルパー関数
     const evaluateAndUpdateBest = (schedule: CaffeineDose[]) => {
-      const achievedWindows = this.evaluateSchedulePerformance(
-        schedule,
-        sleepHistory,
-        params,
-      );
+      const {
+        successfulWindows,
+        minimumPerformance,
+      } = // ★ 最低パフォーマンスを取得
+        this.evaluateSchedulePerformance(schedule, sleepHistory, params);
 
-      // 全く達成できないスケジュールは無視
-      if (achievedWindows === 0) return;
+      if (successfulWindows === 0) return;
 
       const totalCaffeine = schedule.reduce((sum, d) => sum + d.mg, 0);
 
-      if (achievedWindows > maxWindowsAchieved) {
-        // ★ より多くのウィンドウを達成したので、無条件で更新
-        maxWindowsAchieved = achievedWindows;
+      // --- ★ 評価ロジックを「最低パフォーマンス」優先に変更 ---
+      // 1. 達成ウィンドウ数が多いものを優先
+      if (successfulWindows > maxWindowsAchieved) {
+        maxWindowsAchieved = successfulWindows;
+        bestMinimumPerformance = minimumPerformance;
         minCaffeineForMaxWindows = totalCaffeine;
         bestSchedule = schedule;
-      } else if (achievedWindows === maxWindowsAchieved) {
-        // ★ 同じウィンドウ達成数なら、より少ないカフェイン量のものを採用
-        if (totalCaffeine < minCaffeineForMaxWindows) {
+      } else if (successfulWindows === maxWindowsAchieved) {
+        // 2. ウィンドウ数が同じなら、「最低パフォーマンス」が高いものを優先
+        if (minimumPerformance > bestMinimumPerformance) {
+          bestMinimumPerformance = minimumPerformance;
           minCaffeineForMaxWindows = totalCaffeine;
           bestSchedule = schedule;
+        } else if (minimumPerformance === bestMinimumPerformance) {
+          // 3. 最低パフォーマンスも同じなら、カフェイン量が少ないものを優先
+          if (totalCaffeine < minCaffeineForMaxWindows) {
+            minCaffeineForMaxWindows = totalCaffeine;
+            bestSchedule = schedule;
+          }
         }
       }
     };
@@ -141,9 +163,6 @@ export class CaffeineOptimizer {
         }
       }
     }
-
-    // (計算負荷に応じて3回摂取のパターンも同様に追加可能)
-
     return bestSchedule;
   }
 }

@@ -91,15 +91,14 @@ export async function POST(request: Request) {
           end: endDate,
         };
       }),
-      targetPerformance: 0.6,
+      targetPerformance: 0.65,
       maxDosePerIntake: 200,
       minTimeBetweenDosesHours: 0.5, // 間隔を短くして柔軟性を高める
     };
 
     // --- 最適化の実行 ---
     const optimizer = new CaffeineOptimizer();
-    const optimalSchedule =
-      optimizer.findOptimalSchedule(sleepHistory, params) || [];
+    const optimalSchedule = optimizer.findOptimalSchedule(sleepHistory, params);
 
     // --- パフォーマンス予測グラフの生成 ---
     const model = new PerformanceModel();
@@ -117,27 +116,31 @@ export async function POST(request: Request) {
       const performance = model.predict(
         currentTime,
         sleepHistory,
-        optimalSchedule,
+        optimalSchedule || [],
       );
       predictedFocusData.push({
         time: currentTime.toLocaleTimeString("ja-JP", {
           hour: "2-digit",
           minute: "2-digit",
         }),
-        focus: Math.round(performance * 100), // キーを "focus" に変更し、値を0-100の範囲にする
+        focus: Math.max(5, Math.round(performance * 100)), // キーを "focus" に変更し、値を0-100の範囲にする
       });
     }
 
     // --- 最終的なレスポンス ---
+    const isRecommended = optimalSchedule && optimalSchedule.length > 0;
+
     const responseData = {
-      // optimalScheduleのmap処理を直接書き換える
-      caffeinePlan: optimalSchedule.map((dose) => ({
-        time: dose.time.toLocaleTimeString("ja-JP", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        mg: dose.mg, // mgの値をそのまま返す
-      })),
+      recommended: isRecommended,
+      caffeinePlan: isRecommended
+        ? optimalSchedule.map((dose) => ({
+            time: dose.time.toLocaleTimeString("ja-JP", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            caffeineAmount: dose.mg, // フロントの型に合わせて "caffeineAmount" に変更
+          }))
+        : [],
       data: predictedFocusData,
     };
 
