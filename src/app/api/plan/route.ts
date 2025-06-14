@@ -6,12 +6,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { wakeTime, bedTime, focus_periods } = body;
 
-    if (
-      !wakeTime ||
-      !bedTime ||
-      !focus_periods ||
-      focus_periods.length === 0
-    ) {
+    if (!wakeTime || !bedTime || !focus_periods || focus_periods.length === 0) {
       return NextResponse.json(
         { error: "必要なデータが不足しています。" },
         { status: 400 },
