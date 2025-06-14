@@ -4,14 +4,9 @@ import { calcFocusData } from "../../../lib/calcFocusData";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { wake_time, bed_time, focus_periods } = body;
+    const { wakeTime, bedTime, focus_periods } = body;
 
-    if (
-      !wake_time ||
-      !bed_time ||
-      !focus_periods ||
-      focus_periods.length === 0
-    ) {
+    if (!wakeTime || !bedTime || !focus_periods || focus_periods.length === 0) {
       return NextResponse.json(
         { error: "必要なデータが不足しています。" },
         { status: 400 },
@@ -24,8 +19,8 @@ export async function POST(request: Request) {
     const firstFocusPeriod = focus_periods[0];
 
     const focusData = calcFocusData(
-      wake_time,
-      bed_time,
+      wakeTime,
+      bedTime,
       firstFocusPeriod.start,
       firstFocusPeriod.end,
     );
