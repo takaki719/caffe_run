@@ -6,7 +6,6 @@ import { SleepPeriod, OptimizationParams } from "@/lib/optimizer/interfaces";
 import { PerformanceModel } from "@/lib/optimizer/PerformanceModel";
 import { CaffeineOptimizer } from "@/lib/optimizer/CaffeineOptimizer";
 import { NextResponse } from "next/server";
-import { calcCurrentStatus } from "@/lib/calcCurrentStatus";
 
 // --- 型定義（フロントエンドからのリクエストボディ） ---
 export type FocusPeriodRequest = {
@@ -29,7 +28,7 @@ const timeToDate = (timeStr: string, date: Date): Date => {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { bed_time, wake_time, focus_periods, caffeine_logs } = body;
+    const { bed_time, wake_time, focus_periods } = body;
 
     // --- バリデーション ---
     if (
@@ -52,11 +51,6 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    const currentStatusData = calcCurrentStatus(
-      caffeine_logs || [],
-      wake_time,
-      bed_time,
-    );
 
     // --- データの前処理 ---
     const today = new Date();
@@ -132,23 +126,41 @@ export async function POST(request: Request) {
         value: Math.max(5, Math.round(performance * 100)), // キーを "focus" に変更し、値を0-100の範囲にする
       });
     }
+    // --- 2. カフェインを摂取しなかった場合の覚醒度（現在の覚醒度グラフ用）---
+    const noCaffeineData: { time: string; value: number }[] = [];
+    for (
+      let t = dayStart.getTime();
+      t <= dayEnd.getTime();
+      t += 15 * 60 * 1000
+    ) {
+      const currentTime = new Date(t);
+      // model.predictの第3引数（カフェイン履歴）に空の配列[]を渡す
+      const performance = model.predict(currentTime, sleepHistory, []);
+      noCaffeineData.push({
+        time: currentTime.toLocaleTimeString("ja-JP", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        value: Math.max(5, Math.round(performance * 100)),
+      });
+    }
 
     // --- 最終的なレスポンス ---
     const isRecommended = optimalSchedule && optimalSchedule.length > 0;
 
     const responseData = {
-      recommended: isRecommended,
+      recommended: isRecommended, // ここで推奨フラグをセット
       caffeinePlan: isRecommended
         ? optimalSchedule.map((dose) => ({
             time: dose.time.toLocaleTimeString("ja-JP", {
               hour: "2-digit",
-              minute: "2-digit",
+              minute: "2-digit", //ここで時間をフロントエントに返してる
             }),
-            caffeineAmount: dose.mg,
+            caffeineAmount: dose.mg, //同様にカフェイン量を返している
           }))
         : [],
       simulationData: simulationData,
-      currentStatusData: currentStatusData,
+      currentStatusData: noCaffeineData,
     };
 
     return NextResponse.json(responseData);

@@ -44,11 +44,11 @@ const HomePage: React.FC = () => {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
 
   // 入力チェック関数を、developブランチの変数名(camelCase)に合わせる
-  const isValid = () => {
+  const isValid = useCallback(() => {
     return (
       !!bedTime && !!wakeTime && focusPeriods.some((p) => p.start && p.end)
     );
-  };
+  }, [bedTime, wakeTime, focusPeriods]);
 
   // あなたが実装したAPI呼び出し関数を、developブランチの変数名に合わせる
   // handleGeneratePlan を useCallback に変更
@@ -96,7 +96,7 @@ const HomePage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [bedTime, wakeTime, focusPeriods]);
+  }, [bedTime, wakeTime, focusPeriods, isValid]);
 
   // handleGeneratePlan を useEffect の依存に追加
   useEffect(() => {
