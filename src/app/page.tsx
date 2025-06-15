@@ -38,6 +38,7 @@ const HomePage: React.FC = () => {
     const completed = localStorage.getItem("initial-setup-complete");
     if (!completed) {
       setShowSettingModal(true);
+      handleGeneratePlan();
     }
   }, []);
   // 入力チェック関数を、developブランチの変数名(camelCase)に合わせる
