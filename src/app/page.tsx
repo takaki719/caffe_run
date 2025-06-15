@@ -13,6 +13,8 @@ import { useFocusPeriods } from "@/hooks/UseFocusPeriods";
 import { useSleepTimes } from "@/hooks/UseSleepTimes";
 import Summery from "../components/Summery";
 import type { Recommendation } from "../components/NextCaffeineTime";
+import { useCaffeineAmounts } from "../hooks/UseCaffeineAmounts";
+import { useCaffeineLogs } from "@/hooks/UseCaffeineLogs";
 
 const HomePage: React.FC = () => {
   // developブランチの新しいカスタムフックで状態を管理
@@ -20,6 +22,10 @@ const HomePage: React.FC = () => {
   // 状態の初期化（localStorageの値を優先）
   const { focusPeriods, addFocusPeriod, removeFocusPeriod, updateFocusPeriod } =
     useFocusPeriods();
+
+  // カフェイン摂取量の履歴を取得
+  const [logs, setLogs] = useCaffeineLogs();
+  const amounts = useCaffeineAmounts(logs);
 
   // あなたが追加した、エラー、ローディング、グラフ関連のstate
   const [error, setError] = useState("");
@@ -86,7 +92,6 @@ const HomePage: React.FC = () => {
 
       const result = await response.json();
 
-
       setGraphData({
         simulation: result.simulationData || [],
         current: result.currentStatusData || [],
@@ -119,8 +124,7 @@ const HomePage: React.FC = () => {
                 <RecommendedPlanList recommendations={recommendations} />
               </div>
               <div className="flex-1">
-                <Summery caffeineData={[10, 60, 90]} />{" "}
-                {/* サマリーのデータは仮 */}
+                <Summery caffeineData={amounts} /> {/* サマリーのデータは仮 */}
               </div>
             </div>
 
@@ -138,7 +142,9 @@ const HomePage: React.FC = () => {
                   カフェイン摂取記録
                 </h2>
               </div>
-              {isLogFormOpen && <CaffeineLogForm />}
+              {isLogFormOpen && (
+                <CaffeineLogForm logs={logs} setLogs={setLogs} />
+              )}
             </div>
 
             <main className="flex flex-col items-center flex-1 w-full max-w-2xl mx-auto">
@@ -208,4 +214,3 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
-
