@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import SettingModal from "../components/SettingModal"; // 追加
 import BlueButton from "../components/BlueButton";
 import UnityModel from "../components/UnityModel";
@@ -60,7 +60,8 @@ const HomePage: React.FC = () => {
   ];
 
   // あなたが実装したAPI呼び出し関数を、developブランチの変数名に合わせる
-  const handleGeneratePlan = async () => {
+  // handleGeneratePlan を useCallback に変更
+  const handleGeneratePlan = useCallback(async () => {
     if (!isValid()) {
       setError("集中時間・睡眠時間を入力してください");
       return;
@@ -103,8 +104,16 @@ const HomePage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [bedTime, wakeTime, focusPeriods]);
 
+  // handleGeneratePlan を useEffect の依存に追加
+  useEffect(() => {
+    const completed = localStorage.getItem("initial-setup-complete");
+    if (!completed) {
+      setShowSettingModal(true);
+      handleGeneratePlan();
+    }
+  }, [handleGeneratePlan]);
   return (
     <div>
       <div>
