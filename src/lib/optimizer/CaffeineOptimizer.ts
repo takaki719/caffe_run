@@ -79,7 +79,7 @@ export class CaffeineOptimizer {
     let bestMinimumPerformance = 0; // ★ 最低パフォーマンスの最高値を記録
     let minCaffeineForMaxWindows = Infinity;
 
-    const doseOptions = [50, 100, 150, 200].filter(
+    const doseOptions = [25, 50, 75, 100, 125, 150, 175, 200].filter(
       (d) => d <= params.maxDosePerIntake,
     );
     if (doseOptions.length === 0) return null;
@@ -105,7 +105,7 @@ export class CaffeineOptimizer {
     });
 
     timeSlots.sort((a, b) => a.getTime() - b.getTime());
-    const searchSlots = timeSlots.slice(0, 8);
+    const searchSlots = timeSlots.slice(0, 12);
 
     const evaluateAndUpdateBest = (schedule: CaffeineDose[]) => {
       const {
@@ -162,6 +162,15 @@ export class CaffeineOptimizer {
           }
         }
       }
+    }
+    if (!bestSchedule && params.timeWindows.length > 0) {
+      const firstFocusStart = params.timeWindows[0].start;
+      const intakeTime = new Date(firstFocusStart.getTime() - 30 * 60 * 1000);
+
+      // 100mgをデフォルト摂取量とするが、1回の最大摂取量を超えないように調整
+      const fallbackDose = Math.min(100, params.maxDosePerIntake);
+
+      bestSchedule = [{ time: intakeTime, mg: fallbackDose }];
     }
     return bestSchedule;
   }

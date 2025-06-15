@@ -6,6 +6,8 @@ import { SleepPeriod, OptimizationParams } from "@/lib/optimizer/interfaces";
 import { PerformanceModel } from "@/lib/optimizer/PerformanceModel";
 import { CaffeineOptimizer } from "@/lib/optimizer/CaffeineOptimizer";
 import { NextResponse } from "next/server";
+import { calcCurrentStatus } from "@/lib/calcCurrentStatus";
+
 
 // --- 型定義（フロントエンドからのリクエストボディ） ---
 export type FocusPeriodRequest = {
@@ -28,7 +30,7 @@ const timeToDate = (timeStr: string, date: Date): Date => {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { bed_time, wake_time, focus_periods } = body;
+    const { bed_time, wake_time, focus_periods, caffeine_logs } = body;
 
     // --- バリデーション ---
     if (
@@ -51,6 +53,11 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+    const currentStatusData = calcCurrentStatus(
+      caffeine_logs || [],
+      wake_time,
+      bed_time,
+    );
 
     // --- データの前処理 ---
     const today = new Date();
@@ -102,7 +109,7 @@ export async function POST(request: Request) {
 
     // --- パフォーマンス予測グラフの生成 ---
     const model = new PerformanceModel();
-    const predictedFocusData: { time: string; focus: number }[] = [];
+    const simulationData: { time: string; value: number }[] = [];
     const dayStart = timeToDate(wake_time, today);
     const dayEnd = new Date(dayStart);
     dayEnd.setHours(dayEnd.getHours() + 18);
@@ -118,12 +125,12 @@ export async function POST(request: Request) {
         sleepHistory,
         optimalSchedule || [],
       );
-      predictedFocusData.push({
+      simulationData.push({
         time: currentTime.toLocaleTimeString("ja-JP", {
           hour: "2-digit",
           minute: "2-digit",
         }),
-        focus: Math.max(5, Math.round(performance * 100)), // キーを "focus" に変更し、値を0-100の範囲にする
+        value: Math.max(5, Math.round(performance * 100)), // キーを "focus" に変更し、値を0-100の範囲にする
       });
     }
 
@@ -138,10 +145,11 @@ export async function POST(request: Request) {
               hour: "2-digit",
               minute: "2-digit",
             }),
-            caffeineAmount: dose.mg, // フロントの型に合わせて "caffeineAmount" に変更
+            caffeineAmount: dose.mg,
           }))
         : [],
-      data: predictedFocusData,
+      simulationData: simulationData,
+      currentStatusData: currentStatusData,
     };
 
     return NextResponse.json(responseData);

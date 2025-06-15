@@ -32,17 +32,14 @@ const HomePage: React.FC = () => {
     "simulation",
   );
 
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+
   // 入力チェック関数を、developブランチの変数名(camelCase)に合わせる
   const isValid = () => {
     return (
       !!bedTime && !!wakeTime && focusPeriods.some((p) => p.start && p.end)
     );
   };
-
-  const recommendations: Recommendation[] = [
-    { time: "14:00", caffeineAmount: 95 },
-    { time: "20:30", caffeineAmount: 30 },
-  ];
 
   // あなたが実装したAPI呼び出し関数を、developブランチの変数名に合わせる
   const handleGeneratePlan = async () => {
@@ -65,7 +62,7 @@ const HomePage: React.FC = () => {
         caffeine_logs,
       };
 
-      const response = await fetch("/api/focus-graph", {
+      const response = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestData),
@@ -76,13 +73,13 @@ const HomePage: React.FC = () => {
       }
 
       const result = await response.json();
-      
+
       setGraphData({
         simulation: result.simulationData || [],
         current: result.currentStatusData || [],
       });
+      setRecommendations(result.caffeinePlan || []);
       setActiveGraph("simulation");
-
     } catch (error) {
       console.error("エラーが発生しました:", error);
       setError("プラン生成中にエラーが発生しました");
@@ -99,14 +96,15 @@ const HomePage: React.FC = () => {
           <div className="w-full max-w-2xl flex justify-center">
             <UnityModel />
           </div>
-          
+
           {/* developブランチの新しいレイアウトを採用 */}
           <div className="w-full max-w-4xl mx-auto flex flex-row items-start justify-center gap-1 mt-8 px-0">
             <div className="flex-1">
               <RecommendedPlanList recommendations={recommendations} />
             </div>
             <div className="flex-1">
-              <Summery caffeineData={[10, 60, 90]} /> {/* サマリーのデータは仮 */}
+              <Summery caffeineData={[10, 60, 90]} />{" "}
+              {/* サマリーのデータは仮 */}
             </div>
           </div>
 
@@ -128,7 +126,6 @@ const HomePage: React.FC = () => {
           </div>
 
           <main className="flex flex-col items-center flex-1 w-full max-w-2xl mx-auto">
-            
             {/* developブランチの新しいフォームコンポーネントを使用 */}
             <SleepForm
               bedTime={bedTime}
@@ -159,18 +156,19 @@ const HomePage: React.FC = () => {
             </div>
 
             {/* あなたが実装したグラフ表示部分 */}
-            {(graphData.simulation.length > 0 || graphData.current.length > 0) && (
+            {(graphData.simulation.length > 0 ||
+              graphData.current.length > 0) && (
               <div className="w-full max-w-2xl flex flex-col items-center justify-center mt-8">
                 <div className="flex justify-center gap-4 mb-4">
-                  <button 
-                    onClick={() => setActiveGraph('simulation')}
-                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === 'simulation' ? 'bg-indigo-500 text-white shadow' : 'bg-gray-200 text-gray-700'}`}
+                  <button
+                    onClick={() => setActiveGraph("simulation")}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === "simulation" ? "bg-indigo-500 text-white shadow" : "bg-gray-200 text-gray-700"}`}
                   >
                     理想の覚醒度
                   </button>
-                  <button 
-                    onClick={() => setActiveGraph('current')}
-                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === 'current' ? 'bg-teal-500 text-white shadow' : 'bg-gray-200 text-gray-700'}`}
+                  <button
+                    onClick={() => setActiveGraph("current")}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === "current" ? "bg-teal-500 text-white shadow" : "bg-gray-200 text-gray-700"}`}
                   >
                     現在の覚醒度
                   </button>
