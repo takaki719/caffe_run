@@ -17,6 +17,7 @@ import type { Recommendation } from "../components/NextCaffeineTime";
 const HomePage: React.FC = () => {
   // developブランチの新しいカスタムフックで状態を管理
   const { bedTime, wakeTime, setBedTime, setWakeTime } = useSleepTimes();
+  // 状態の初期化（localStorageの値を優先）
   const { focusPeriods, addFocusPeriod, removeFocusPeriod, updateFocusPeriod } =
     useFocusPeriods();
 
@@ -83,6 +84,7 @@ const HomePage: React.FC = () => {
       }
 
       const result = await response.json();
+
 
       setGraphData({
         simulation: result.simulationData || [],
@@ -205,3 +207,4 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
+

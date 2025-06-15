@@ -69,7 +69,7 @@ export function useFocusPeriods(
 
   /** インデックスとキーを指定して時間帯を更新 */
   const updateFocusPeriod = (
-    index: number,
+    idx: number,
     key: "start" | "end",
     value: string,
   ) => {
@@ -83,7 +83,7 @@ export function useFocusPeriods(
   };
 
   return {
-    focusPeriods: periods,
+    focusPeriods,
     addFocusPeriod,
     removeFocusPeriod,
     updateFocusPeriod,
