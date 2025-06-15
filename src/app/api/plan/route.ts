@@ -8,7 +8,6 @@ import { CaffeineOptimizer } from "@/lib/optimizer/CaffeineOptimizer";
 import { NextResponse } from "next/server";
 import { calcCurrentStatus } from "@/lib/calcCurrentStatus";
 
-
 // --- 型定義（フロントエンドからのリクエストボディ） ---
 export type FocusPeriodRequest = {
   start: string; // "09:00"
