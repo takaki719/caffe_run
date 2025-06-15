@@ -178,13 +178,15 @@ export class CaffeineOptimizer {
       bestSchedule = [];
     }
 
+    const finalSchedule = bestSchedule;
+
     params.timeWindows.forEach((window) => {
       // このウィンドウをカバーする提案がすでにあるかチェック
-      const isWindowCovered = bestSchedule.some((dose) => {
+      const isWindowCovered = finalSchedule.some((dose) => {
         const doseTime = dose.time.getTime();
         const windowStartTime = window.start.getTime();
         const windowEndTime = window.end.getTime();
-        // 集中開始2時間前から、集中終了までの間に摂取提案があれば「カバーされている」と見なす
+        // 集中開始1時間前から、集中終了までの間に摂取提案があれば「カバーされている」と見なす
         return (
           doseTime >= windowStartTime - 1 * 3600 * 1000 &&
           doseTime <= windowEndTime
@@ -196,14 +198,13 @@ export class CaffeineOptimizer {
         const intakeTime = new Date(window.start.getTime() - 30 * 60 * 1000);
         // 1回の最大摂取量を超えないように100mgを提案
         const fallbackDose = Math.min(100, params.maxDosePerIntake);
-        bestSchedule.push({ time: intakeTime, mg: fallbackDose });
+        finalSchedule.push({ time: intakeTime, mg: fallbackDose });
       }
     });
 
     // 最終的なスケジュールを時系列順に並び替える
-    if (bestSchedule) {
-      bestSchedule.sort((a, b) => a.time.getTime() - b.time.getTime());
-    }
-    return bestSchedule;
+    finalSchedule.sort((a, b) => a.time.getTime() - b.time.getTime());
+
+    return finalSchedule;
   }
 }
