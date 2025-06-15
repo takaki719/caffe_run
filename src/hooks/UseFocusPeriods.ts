@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export interface FocusPeriod {
   start: string;
@@ -8,19 +8,63 @@ export interface FocusPeriod {
 /**
  * フォーカス時間帯を管理するカスタムフック
  */
-export function useFocusPeriods(initial?: FocusPeriod[]) {
+export function useFocusPeriods(
+  initial?: FocusPeriod[],
+  skipStorage?: boolean,
+) {
   const [periods, setPeriods] = useState<FocusPeriod[]>(
-    initial ?? [{ start: "", end: "" }],
+    initial ?? [{ start: "09:00", end: "12:00" }],
   );
+
+  const loadFromStorage = () => {
+    const savedPeriods = localStorage.getItem("focusPeriods");
+    if (savedPeriods) {
+      try {
+        const parsedPeriods = JSON.parse(savedPeriods);
+        if (Array.isArray(parsedPeriods) && parsedPeriods.length > 0) {
+          setPeriods(parsedPeriods);
+        }
+      } catch (error) {
+        console.warn("Failed to load focus periods from localStorage:", error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (!skipStorage) {
+      loadFromStorage();
+    }
+
+    // カスタムイベントを監視してlocalStorageの変更を検知
+    const handleStorageChange = () => {
+      if (!skipStorage) {
+        loadFromStorage();
+      }
+    };
+
+    window.addEventListener("focusPeriodsUpdated", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("focusPeriodsUpdated", handleStorageChange);
+    };
+  }, [skipStorage]);
 
   /** 新しいフォーカス時間帯を追加 */
   const addFocusPeriod = () => {
-    setPeriods((prev) => [...prev, { start: "", end: "" }]);
+    setPeriods((prev) => {
+      const newPeriods = [...prev, { start: "", end: "" }];
+      localStorage.setItem("focusPeriods", JSON.stringify(newPeriods));
+      return newPeriods;
+    });
   };
 
   /** インデックス指定で時間帯を削除 */
   const removeFocusPeriod = (index: number) => {
-    setPeriods((prev) => prev.filter((_, i) => i !== index));
+    setPeriods((prev) => {
+      const newPeriods = prev.filter((_, i) => i !== index);
+      localStorage.setItem("focusPeriods", JSON.stringify(newPeriods));
+      return newPeriods;
+    });
   };
 
   /** インデックスとキーを指定して時間帯を更新 */
@@ -29,9 +73,13 @@ export function useFocusPeriods(initial?: FocusPeriod[]) {
     key: "start" | "end",
     value: string,
   ) => {
-    setPeriods((prev) =>
-      prev.map((p, i) => (i === index ? { ...p, [key]: value } : p)),
-    );
+    setPeriods((prev) => {
+      const newPeriods = prev.map((p, i) =>
+        i === index ? { ...p, [key]: value } : p,
+      );
+      localStorage.setItem("focusPeriods", JSON.stringify(newPeriods));
+      return newPeriods;
+    });
   };
 
   return {
