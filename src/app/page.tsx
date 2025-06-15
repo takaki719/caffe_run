@@ -24,7 +24,7 @@ const HomePage: React.FC = () => {
   // あなたが追加した、エラー、ローディング、グラフ関連のstate
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isLogFormOpen, setIsLogFormOpen] = useState(false);
+  const [isLogFormOpen, setIsLogFormOpen] = useState(true);
   const [showSettingModal, setShowSettingModal] = useState(false);
   type GraphPoint = { time: string; value: number };
   const [graphData, setGraphData] = useState<{
