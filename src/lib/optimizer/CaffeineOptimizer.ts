@@ -79,9 +79,11 @@ export class CaffeineOptimizer {
     let bestMinimumPerformance = 0; // ★ 最低パフォーマンスの最高値を記録
     let minCaffeineForMaxWindows = Infinity;
 
-    const doseOptions = [50, 100, 150, 200].filter(
+    const defaultDoseOptions = [50, 100, 150, 200];
+    const doseOptions = (params.doseOptions ?? defaultDoseOptions).filter(
       (d) => d <= params.maxDosePerIntake,
     );
+
     if (doseOptions.length === 0) return null;
 
     const timeSlots: Date[] = [];
@@ -163,14 +165,19 @@ export class CaffeineOptimizer {
         }
       }
     }
+    // フォールバックで使用する摂取量を決定（パラメータで指定されていなければ100mg）
+    const doseForFallback = params.fallbackDose ?? 100;
+    const finalFallbackDose = Math.min(
+      doseForFallback,
+      params.maxDosePerIntake,
+    );
+
     if (!bestSchedule && params.timeWindows.length > 0) {
       const firstFocusStart = params.timeWindows[0].start;
       const intakeTime = new Date(firstFocusStart.getTime() - 30 * 60 * 1000);
 
-      // 100mgをデフォルト摂取量とするが、1回の最大摂取量を超えないように調整
-      const fallbackDose = Math.min(100, params.maxDosePerIntake);
-
-      bestSchedule = [{ time: intakeTime, mg: fallbackDose }];
+      // 1回の最大摂取量を超えないように調整したフォールバック量を適用
+      bestSchedule = [{ time: intakeTime, mg: finalFallbackDose }];
     }
     // 強制的なフォールバック提案ロジック
     // 各集中時間帯に対して、すでに提案があるかチェックする
@@ -196,12 +203,10 @@ export class CaffeineOptimizer {
       // もしカバーされていない場合、フォールバックの提案を追加する
       if (!isWindowCovered) {
         const intakeTime = new Date(window.start.getTime() - 30 * 60 * 1000);
-        // 1回の最大摂取量を超えないように100mgを提案
-        const fallbackDose = Math.min(100, params.maxDosePerIntake);
-        finalSchedule.push({ time: intakeTime, mg: fallbackDose });
+        // 1回の最大摂取量を超えないように調整したフォールバック量を適用
+        finalSchedule.push({ time: intakeTime, mg: finalFallbackDose });
       }
     });
-
     // 最終的なスケジュールを時系列順に並び替える
     finalSchedule.sort((a, b) => a.time.getTime() - b.time.getTime());
 

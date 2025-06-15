@@ -68,12 +68,26 @@ export async function POST(request: Request) {
     const bedTimeDate =
       bedTimeOnSameDay > wakeTimeOnSameDay ? yesterday : today;
 
+    const finalBedTime = timeToDate(bed_time, bedTimeDate);
+    const finalWakeTime = timeToDate(wake_time, today);
+
     const sleepHistory: SleepPeriod[] = [
       {
-        start: timeToDate(bed_time, bedTimeDate), // 日またぎを考慮した就寝時刻
-        end: timeToDate(wake_time, today), // 起床は常に「今日」
+        start: finalBedTime,
+        end: finalWakeTime,
       },
     ];
+
+    // 睡眠時間を計算 (時間単位)
+    const sleepDurationMs = finalWakeTime.getTime() - finalBedTime.getTime();
+    const sleepDurationHours = sleepDurationMs / (1000 * 60 * 60);
+
+    const SHORT_SLEEP_THRESHOLD_HOURS = 5;
+    const isShortSleep = sleepDurationHours < SHORT_SLEEP_THRESHOLD_HOURS;
+
+    // 睡眠時間に応じてフォールバック量と、最適化で試行する選択肢を変更する
+    const fallbackDose = isShortSleep ? 200 : 100;
+    const doseOptions = isShortSleep ? [150, 200] : [50, 100, 150, 200];
 
     const params: OptimizationParams = {
       timeWindows: validFocusPeriods.map((p: FocusPeriodRequest) => {
@@ -91,9 +105,11 @@ export async function POST(request: Request) {
           end: endDate,
         };
       }),
-      targetPerformance: 0.65,
+      targetPerformance: 0.7,
       maxDosePerIntake: 200,
       minTimeBetweenDosesHours: 0.5, // 間隔を短くして柔軟性を高める
+      fallbackDose: fallbackDose,
+      doseOptions: doseOptions,
     };
 
     // --- 最適化の実行 ---
