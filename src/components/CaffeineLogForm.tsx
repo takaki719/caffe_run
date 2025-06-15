@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { DRINK_OPTIONS, DrinkOption } from "../lib/CaffeineDrinkOptions";
 import CaffeineDrinkSelect from "./CaffeineDrinkSelect";
 import CaffeineLogTable, { CaffeineLogEntry } from "./CaffeineLogTable";
-import { useCaffeineLogs } from "../hooks/UseCaffeineLogs"; // カスタムフックをインポート
 
 // ドリンク摂取量(ml)からカフェイン摂取量(mg)へ計算する関数
 function calcCaffeineMg(drink: DrinkOption, ml: number): number {
