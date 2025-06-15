@@ -12,7 +12,7 @@ export function useFocusPeriods(
   initial?: FocusPeriod[],
   skipStorage?: boolean,
 ) {
-  const [periods, setPeriods] = useState<FocusPeriod[]>(
+  const [focusPeriods, setPeriods] = useState<FocusPeriod[]>(
     initial ?? [{ start: "09:00", end: "12:00" }],
   );
 
@@ -75,7 +75,7 @@ export function useFocusPeriods(
   ) => {
     setPeriods((prev) => {
       const newPeriods = prev.map((p, i) =>
-        i === index ? { ...p, [key]: value } : p,
+        i === idx ? { ...p, [key]: value } : p,
       );
       localStorage.setItem("focusPeriods", JSON.stringify(newPeriods));
       return newPeriods;
