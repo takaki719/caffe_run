@@ -43,7 +43,7 @@ const Chart: React.FC<Props> = ({ data }) => {
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="time" tick={{ fontSize: 12 }} minTickGap={8} />
-          <YAxis domain={[0, 120]} tick={{ fontSize: 12 }} width={28} />
+          <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} width={28} />
           <Tooltip />
           <Legend />
           <Line
