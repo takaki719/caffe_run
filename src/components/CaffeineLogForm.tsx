@@ -1,7 +1,8 @@
+"use client";
 import React, { useState } from "react";
 import { DRINK_OPTIONS, DrinkOption } from "../lib/CaffeineDrinkOptions";
 import CaffeineDrinkSelect from "./CaffeineDrinkSelect";
-import CaffeineLogTable from "./CaffeineLogTable";
+import CaffeineLogTable, { CaffeineLogEntry } from "./CaffeineLogTable";
 import { useCaffeineLogs } from "../hooks/UseCaffeineLogs"; // カスタムフックをインポート
 
 // ドリンク摂取量(ml)からカフェイン摂取量(mg)へ計算する関数
@@ -17,15 +18,20 @@ function getNowTimeString(): string {
   return `${hh}:${mm}`;
 }
 
+interface Props {
+  logs: CaffeineLogEntry[] | null;
+  setLogs: React.Dispatch<React.SetStateAction<CaffeineLogEntry[] | null>>;
+}
+
 // カフェイン摂取記録フォームのコンポーネント
-const CaffeineLogForm: React.FC = () => {
+const CaffeineLogForm: React.FC<Props> = ({ logs, setLogs }) => {
   const [time, setTime] = useState(getNowTimeString());
   const [drinkName, setDrinkName] = useState(DRINK_OPTIONS[0].name);
   const [mode, setMode] = useState<"preset" | "custom">("preset");
   const [cups, setCups] = useState(DRINK_OPTIONS[0].cupPresets[0]);
   const [ml, setMl] = useState(DRINK_OPTIONS[0].defaultMlPerCup);
 
-  const [logs, setLogs] = useCaffeineLogs(); // カスタムフックから状態取得
+  // const [logs, setLogs] = useCaffeineLogs(); // カスタムフックから状態取得
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -68,10 +74,8 @@ const CaffeineLogForm: React.FC = () => {
     setTimeout(() => setSuccess(""), 2000);
   };
 
-  const handleDeleteLog = (indexToDelete: number) => {
-    setLogs((prev) =>
-      prev ? prev.filter((_, index) => index !== indexToDelete) : [],
-    );
+  const handleDeleteLog = (idx: number) => {
+    setLogs((prev) => (prev ? prev.filter((_, i) => i !== idx) : []));
   };
 
   return (
