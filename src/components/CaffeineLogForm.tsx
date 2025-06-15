@@ -106,7 +106,7 @@ const CaffeineLogForm: React.FC = () => {
         caffeineMg,
       },
     ]);
-    setTime("");
+    setTime(getNowTimeString());
     setSuccess("カフェイン摂取履歴を登録しました");
     setTimeout(() => setSuccess(""), 2000);
   };
