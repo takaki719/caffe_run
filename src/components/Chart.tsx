@@ -49,7 +49,7 @@ const Chart: React.FC<Props> = ({ data }) => {
           <Line
             type="monotone"
             dataKey="value" // ★★★ ここを "focus" から "value" に変更 ★★★
-            name="覚醒度"
+            name="集中度"
             stroke="#6366f1"
             strokeWidth={3}
             dot={{ r: 2 }}
