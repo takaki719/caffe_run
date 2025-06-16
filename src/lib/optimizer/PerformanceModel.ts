@@ -16,8 +16,6 @@ interface ModelState {
 export class PerformanceModel {
   /**
    * 睡眠履歴とカフェイン履歴から未来のパフォーマンスを予測する
-   * ★★★ エラー修正箇所 ★★★
-   * 変数 'state' が2回宣言されていた問題を修正
    */
   public predict(
     targetTime: Date,
