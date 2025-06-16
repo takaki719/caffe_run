@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -31,6 +31,11 @@ const Chart: React.FC<Props> = ({ data }) => {
     );
   }
 
+  const hourlyData = useMemo(
+    () => data.filter((d) => d.time.endsWith(":00")),
+    [data],
+  );
+
   return (
     <div className="bg-white rounded-2xl shadow-md p-4 flex flex-col items-center justify-center min-h-[240px] h-[320px] sm:h-[420px] w-full">
       <h2 className="text-base sm:text-lg font-bold mb-4 text-gray-700">
@@ -38,7 +43,7 @@ const Chart: React.FC<Props> = ({ data }) => {
       </h2>
       <ResponsiveContainer width="100%" height="80%">
         <LineChart
-          data={data}
+          data={hourlyData}
           margin={{ top: 8, right: 8, left: 4, bottom: 8 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
