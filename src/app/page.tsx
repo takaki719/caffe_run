@@ -42,6 +42,7 @@ const HomePage: React.FC = () => {
   );
 
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [warnings, setWarnings] = useState<string[]>([]); // 警告メッセージ用のstateを追加
 
   // 入力チェック関数を、developブランチの変数名(camelCase)に合わせる
   const isValid = useCallback(() => {
@@ -89,6 +90,7 @@ const HomePage: React.FC = () => {
         current: result.currentStatusData || [],
       });
       setRecommendations(result.caffeinePlan || []);
+      setWarnings(result.warnings || []); // APIからの警告をstateにセット
       setActiveGraph("simulation");
     } catch (error) {
       console.error("エラーが発生しました:", error);
@@ -163,6 +165,7 @@ const HomePage: React.FC = () => {
                 removeFocusPeriod={removeFocusPeriod}
                 updateFocusPeriod={updateFocusPeriod}
                 disabled={isLoading}
+                warnings={warnings}
               />
 
               {error && (

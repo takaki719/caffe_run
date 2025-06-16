@@ -13,6 +13,7 @@ export interface FocusFormProps {
   removeFocusPeriod: (idx: number) => void;
   updateFocusPeriod: (idx: number, key: "start" | "end", value: string) => void;
   disabled?: boolean;
+  warnings?: string[];
 }
 
 export const FocusForm: React.FC<FocusFormProps> = ({
@@ -21,39 +22,51 @@ export const FocusForm: React.FC<FocusFormProps> = ({
   removeFocusPeriod,
   updateFocusPeriod,
   disabled = false,
+  warnings,
 }) => {
   return (
     <section className="w-full mb-8">
       <div className="flex flex-col gap-4">
         {focusPeriods.map((period, idx) => (
-          <div key={idx} className="flex items-center gap-3 w-full">
-            <label className="text-gray-600 text-sm font-medium min-w-[95px]">
-              集中時間
-            </label>
-            <input
-              type="time"
-              value={period.start}
-              onChange={(e) => updateFocusPeriod(idx, "start", e.target.value)}
-              className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black"
-              disabled={disabled}
-            />
-            <span className="text-gray-500">～</span>
-            <input
-              type="time"
-              value={period.end}
-              onChange={(e) => updateFocusPeriod(idx, "end", e.target.value)}
-              className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black"
-              disabled={disabled}
-            />
-            {focusPeriods.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeFocusPeriod(idx)}
-                className="ml-2 text-red-500 font-bold text-lg px-2 rounded hover:bg-red-100"
+          <div key={idx} className="flex flex-col">
+            <div className="flex items-center gap-3 w-full">
+              <label className="text-gray-600 text-sm font-medium min-w-[95px]">
+                集中時間
+              </label>
+              <input
+                type="time"
+                value={period.start}
+                onChange={(e) =>
+                  updateFocusPeriod(idx, "start", e.target.value)
+                }
+                className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black"
                 disabled={disabled}
-              >
-                ×
-              </button>
+              />
+              <span className="text-gray-500">～</span>
+              <input
+                type="time"
+                value={period.end}
+                onChange={(e) => updateFocusPeriod(idx, "end", e.target.value)}
+                className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black"
+                disabled={disabled}
+              />
+              {focusPeriods.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeFocusPeriod(idx)}
+                  className="ml-2 text-red-500 font-bold text-lg px-2 rounded hover:bg-red-100"
+                  disabled={disabled}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            {/* 警告メッセージがある場合に表示する */}
+            {warnings && warnings[idx] && (
+              <div className="mt-1 pl-[107px] text-red-500 text-xs font-semibold">
+                {/* 107px = 95px(labelの幅) + 12px(gapの約半分) でインデント調整 */}
+                {warnings[idx]}
+              </div>
             )}
           </div>
         ))}
