@@ -120,8 +120,8 @@ const HomePage: React.FC = () => {
             </div>
 
             {/* developブランチの新しいレイアウトを採用 */}
-            <div className="w-full max-w-4xl mx-auto flex flex-row items-start justify-center gap-1 mt-8 px-0">
-              <div className="flex-1">
+            <div className="w-full max-w-2xl mx-auto flex flex-row items-center justify-center gap-1 mt-8 px-0">
+              <div className="flex-2">
                 <RecommendedPlanList recommendations={recommendations} />
               </div>
               <div className="flex-1">
