@@ -24,10 +24,9 @@ type Props = {
 const Chart: React.FC<Props> = ({ data }) => {
   // データを1時間ごとにフィルタリング
   const hourlyData = useMemo(
-    () => data.filter((d) => d.time.endsWith(":00")),
+    () => data.filter((d) => d.time.endsWith(":00") || d.time.endsWith(":30")),
     [data],
   );
-
 
   // データがない場合はメッセージを表示
   if (!data || data.length === 0) {
