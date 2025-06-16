@@ -40,24 +40,15 @@ const HomePage: React.FC = () => {
   const [activeGraph, setActiveGraph] = useState<"simulation" | "current">(
     "simulation",
   );
-  useEffect(() => {
-    const completed = localStorage.getItem("initial-setup-complete");
-    if (!completed) {
-      setShowSettingModal(true);
-      handleGeneratePlan();
-    }
-  }, []);
+
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+
   // 入力チェック関数を、developブランチの変数名(camelCase)に合わせる
-  const isValid = () => {
+  const isValid = useCallback(() => {
     return (
       !!bedTime && !!wakeTime && focusPeriods.some((p) => p.start && p.end)
     );
-  };
-
-  const recommendations: Recommendation[] = [
-    { time: "14:00", caffeineAmount: 95 },
-    { time: "20:30", caffeineAmount: 30 },
-  ];
+  }, [bedTime, wakeTime, focusPeriods]);
 
   // あなたが実装したAPI呼び出し関数を、developブランチの変数名に合わせる
   // handleGeneratePlan を useCallback に変更
@@ -81,7 +72,7 @@ const HomePage: React.FC = () => {
         caffeine_logs,
       };
 
-      const response = await fetch("/api/focus-graph", {
+      const response = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestData),
@@ -97,6 +88,7 @@ const HomePage: React.FC = () => {
         simulation: result.simulationData || [],
         current: result.currentStatusData || [],
       });
+      setRecommendations(result.caffeinePlan || []);
       setActiveGraph("simulation");
     } catch (error) {
       console.error("エラーが発生しました:", error);
@@ -104,7 +96,7 @@ const HomePage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [bedTime, wakeTime, focusPeriods]);
+  }, [bedTime, wakeTime, focusPeriods, isValid]);
 
   // handleGeneratePlan を useEffect の依存に追加
   useEffect(() => {
