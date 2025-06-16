@@ -189,13 +189,13 @@ const HomePage: React.FC = () => {
                       onClick={() => setActiveGraph("simulation")}
                       className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === "simulation" ? "bg-indigo-500 text-white shadow" : "bg-gray-200 text-gray-700"}`}
                     >
-                      理想の覚醒度
+                      理想の集中度
                     </button>
                     <button
                       onClick={() => setActiveGraph("current")}
                       className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === "current" ? "bg-teal-500 text-white shadow" : "bg-gray-200 text-gray-700"}`}
                     >
-                      現在の覚醒度
+                      現在の集中度
                     </button>
                   </div>
                   <div className="w-full">
