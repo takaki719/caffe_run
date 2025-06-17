@@ -24,8 +24,10 @@ const Warnings: React.FC<WarningsProps> = ({
 
   // props が変わったときにも反映
   useEffect(() => {
-    setShow(hasFailure);
-  }, [hasFailure]);
+    if (hasFailure) {
+      setShow(true);
+    }
+  }, [hasFailure, minPerformances, targetPerformance]);
 
   // 自動で数秒後に消したい場合
   useEffect(() => {
@@ -68,7 +70,9 @@ const Warnings: React.FC<WarningsProps> = ({
           </svg>
 
           <p className="flex-1 text-center text-sm md:text-base lg:text-lg font-semibold">
-            入力された集中時間のうち、目標値を下回る時間帯があります。
+            入力された集中時間のうち、
+            <br />
+            目標値を下回る時間帯があります。
           </p>
         </div>
       </Transition>
