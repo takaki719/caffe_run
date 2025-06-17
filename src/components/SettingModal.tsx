@@ -62,8 +62,8 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
           removeFocusPeriod={removeFocusPeriod}
           updateFocusPeriod={updateFocusPeriod}
           disabled={false}
-          minPerformances={[]}
-          targetPerformance={}
+          minPerformances={[]} 
+          targetPerformance={0.7} 
         />
 
         {error && (
