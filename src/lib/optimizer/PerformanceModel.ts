@@ -152,7 +152,7 @@ export class PerformanceModel {
   private calculatePerformance(state: ModelState, wakeUpTime: Date): number {
     const hours = state.time.getHours() + state.time.getMinutes() / 60;
 
-    const PEAK_HOURS_AFTER_WAKE = 2;
+    const PEAK_HOURS_AFTER_WAKE = 1;
     const wakeUpHours = wakeUpTime.getHours() + wakeUpTime.getMinutes() / 60;
     const peakTime = wakeUpHours + PEAK_HOURS_AFTER_WAKE;
 
