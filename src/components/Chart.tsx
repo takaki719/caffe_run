@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo } from "react";
+import React from "react"; // useMemoは不要になったので削除
 import {
   LineChart,
   Line,
@@ -8,13 +8,13 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
-  Legend, // Legendを追加
+  Legend,
 } from "recharts";
 
 // グラフの点の型定義（APIの返り値に合わせる）
 type DataPoint = {
   time: string;
-  value: number; // ★キーの名前が'value'であることを定義
+  value: number;
 };
 
 type Props = {
@@ -22,13 +22,8 @@ type Props = {
 };
 
 const Chart: React.FC<Props> = ({ data }) => {
-  // データを1時間ごとにフィルタリング
-  const hourlyData = useMemo(
-    () => data.filter((d) => d.time.endsWith(":00") || d.time.endsWith(":30")),
-    [data],
-  );
+  // ★★★ useMemoとhourlyDataの行を削除しました ★★★
 
-  // データがない場合はメッセージを表示
   if (!data || data.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400">
@@ -44,7 +39,7 @@ const Chart: React.FC<Props> = ({ data }) => {
       </h2>
       <ResponsiveContainer width="100%" height="80%">
         <LineChart
-          data={hourlyData}
+          data={data}
           margin={{ top: 8, right: 8, left: 4, bottom: 8 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
@@ -54,7 +49,7 @@ const Chart: React.FC<Props> = ({ data }) => {
           <Legend />
           <Line
             type="monotone"
-            dataKey="value" // ★★★ ここを "focus" から "value" に変更 ★★★
+            dataKey="value"
             name="集中度"
             stroke="#6366f1"
             strokeWidth={3}

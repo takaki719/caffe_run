@@ -1,46 +1,39 @@
-// hooks/useSleepTimes.ts
 import { useState, useEffect } from "react";
 
-export const useSleepTimes = () => {
-  const [bedTime, setBedTime] = useState<string>("23:00");
-  const [wakeTime, setWakeTime] = useState<string>("07:00");
+const SLEEP_TIME_KEY = "caffe-run-sleep-time";
 
-  const loadFromStorage = () => {
-    const savedBed = localStorage.getItem("bedTime");
-    const savedWake = localStorage.getItem("wakeTime");
-    if (savedBed) setBedTime(savedBed);
-    if (savedWake) setWakeTime(savedWake);
-  };
+export function useSleepTimes() {
+  const [bedTime, setBedTime] = useState("");
+  const [wakeTime, setWakeTime] = useState("");
 
+  // LocalStorageからデータを読み込むuseEffect
   useEffect(() => {
-    loadFromStorage();
+    if (typeof window !== "undefined") {
+      try {
+        const savedData = window.localStorage.getItem(SLEEP_TIME_KEY);
+        if (savedData) {
+          const { bedTime: savedBed, wakeTime: savedWake } =
+            JSON.parse(savedData);
+          setBedTime(savedBed || "");
+          setWakeTime(savedWake || "");
+        }
+      } catch (e) {
+        console.error("Failed to load sleep times from local storage", e);
+      }
+    }
+  }, []); // 初回のみ実行
 
-    // カスタムイベントを監視してlocalStorageの変更を検知
-    const handleStorageChange = () => {
-      loadFromStorage();
-    };
+  // LocalStorageへデータを保存するuseEffect
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const data = JSON.stringify({ bedTime, wakeTime });
+        window.localStorage.setItem(SLEEP_TIME_KEY, data);
+      } catch (e) {
+        console.error("Failed to save sleep times to local storage", e);
+      }
+    }
+  }, [bedTime, wakeTime]); // bedTimeかwakeTimeが変わるたびに実行
 
-    window.addEventListener("sleepTimesUpdated", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("sleepTimesUpdated", handleStorageChange);
-    };
-  }, []);
-
-  // 保存時にlocalStorageにも書き込む（任意）
-  const updateBedTime = (time: string) => {
-    setBedTime(time);
-    localStorage.setItem("bedTime", time);
-  };
-  const updateWakeTime = (time: string) => {
-    setWakeTime(time);
-    localStorage.setItem("wakeTime", time);
-  };
-
-  return {
-    bedTime,
-    wakeTime,
-    setBedTime: updateBedTime,
-    setWakeTime: updateWakeTime,
-  };
-};
+  return { bedTime, wakeTime, setBedTime, setWakeTime };
+}

@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
-import SettingModal from "../components/SettingModal"; // 追加
+import SettingModal from "../components/SettingModal";
 import BlueButton from "../components/BlueButton";
 import UnityModel from "../components/UnityModel";
 import TopBackButton from "@/components/TopBackButton";
@@ -22,12 +22,11 @@ const HomePage: React.FC = () => {
   // 状態の初期化（localStorageの値を優先）
   const { focusPeriods, addFocusPeriod, removeFocusPeriod, updateFocusPeriod } =
     useFocusPeriods();
-
   // カフェイン摂取量の履歴を取得
   const [logs, setLogs] = useCaffeineLogs();
   const amounts = useCaffeineAmounts(logs);
 
-  // あなたが追加した、エラー、ローディング、グラフ関連のstate
+  // エラー、ローディング、グラフ関連のstate
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isLogFormOpen, setIsLogFormOpen] = useState(true);
@@ -40,9 +39,10 @@ const HomePage: React.FC = () => {
   const [activeGraph, setActiveGraph] = useState<"simulation" | "current">(
     "simulation",
   );
-
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [warnings, setWarnings] = useState<string[]>([]); // 警告メッセージ用のstateを追加
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [subscriptionError, setSubscriptionError] = useState("");
 
   // 入力チェック関数を、developブランチの変数名(camelCase)に合わせる
   const isValid = useCallback(() => {
@@ -51,8 +51,53 @@ const HomePage: React.FC = () => {
     );
   }, [bedTime, wakeTime, focusPeriods]);
 
-  // あなたが実装したAPI呼び出し関数を、developブランチの変数名に合わせる
-  // handleGeneratePlan を useCallback に変更
+  const handleSubscribe = useCallback(async () => {
+    if (isSubscribing) return;
+    setIsSubscribing(true);
+    setSubscriptionError("");
+
+    const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      setSubscriptionError("このブラウザはプッシュ通知に対応していません。");
+      setIsSubscribing(false);
+      return;
+    }
+
+    if (!VAPID_PUBLIC_KEY) {
+      setSubscriptionError("VAPIDキーが設定されていません。");
+      setIsSubscribing(false);
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        // ユーザーが許可しなかった場合は、静かに処理を終える
+        setIsSubscribing(false);
+        return;
+      }
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: VAPID_PUBLIC_KEY,
+      });
+
+      await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(subscription),
+      });
+      alert("プッシュ通知が有効になりました！");
+    } catch (error) {
+      console.error("プッシュ通知の購読に失敗しました:", error);
+      if (error instanceof Error) setSubscriptionError(error.message);
+      else setSubscriptionError("不明なエラーが発生しました。");
+    } finally {
+      setIsSubscribing(false);
+    }
+  }, [isSubscribing]);
+
   const handleGeneratePlan = useCallback(async () => {
     if (!isValid()) {
       setError("集中時間・睡眠時間を入力してください");
@@ -65,10 +110,9 @@ const HomePage: React.FC = () => {
     try {
       const savedLogs = window.localStorage.getItem("caffeine-logs");
       const caffeine_logs = savedLogs ? JSON.parse(savedLogs) : [];
-
       const requestData = {
-        bed_time: bedTime, // 変数名を修正
-        wake_time: wakeTime, // 変数名を修正
+        bed_time: bedTime,
+        wake_time: wakeTime,
         focus_periods: focusPeriods,
         caffeine_logs,
       };
@@ -90,24 +134,37 @@ const HomePage: React.FC = () => {
         current: result.currentStatusData || [],
       });
       setRecommendations(result.caffeinePlan || []);
-      setWarnings(result.warnings || []); // APIからの警告をstateにセット
+      setWarnings(result.warnings || []);
       setActiveGraph("simulation");
+      if (
+        result.caffeinePlan.length > 0 &&
+        window.Notification &&
+        Notification.permission === "default"
+      ) {
+        // ブラウザの通知許可ダイアログを直接呼び出す
+        await handleSubscribe();
+      }
     } catch (error) {
       console.error("エラーが発生しました:", error);
       setError("プラン生成中にエラーが発生しました");
     } finally {
       setIsLoading(false);
     }
-  }, [bedTime, wakeTime, focusPeriods, isValid]);
+  }, [bedTime, wakeTime, focusPeriods, isValid, handleSubscribe]);
 
-  // handleGeneratePlan を useEffect の依存に追加
   useEffect(() => {
     const completed = localStorage.getItem("initial-setup-complete");
-    if (!completed) {
-      setShowSettingModal(true);
+    if (completed) {
+      // 2回目以降の訪問者なら、自動でプランを生成して表示する
       handleGeneratePlan();
+    } else {
+      // 初回訪問者なら、設定モーダルを表示するだけ
+      setShowSettingModal(true);
     }
+    // `handleGeneratePlan`は`useCallback`でラップされているため、
+    // 依存配列に含めるのがReactのルールとして正しい作法です。
   }, [handleGeneratePlan]);
+
   return (
     <div>
       <div>
@@ -121,13 +178,12 @@ const HomePage: React.FC = () => {
               <UnityModel />
             </div>
 
-            {/* developブランチの新しいレイアウトを採用 */}
             <div className="w-full max-w-2xl mx-auto flex flex-row items-center justify-center gap-1 mt-8 px-0">
               <div className="flex-2">
                 <RecommendedPlanList recommendations={recommendations} />
               </div>
               <div className="flex-1">
-                <Summery caffeineData={amounts} /> {/* サマリーのデータは仮 */}
+                <Summery caffeineData={amounts} />
               </div>
             </div>
 
@@ -151,7 +207,6 @@ const HomePage: React.FC = () => {
             </div>
 
             <main className="flex flex-col items-center flex-1 w-full max-w-2xl mx-auto">
-              {/* developブランチの新しいフォームコンポーネントを使用 */}
               <SleepForm
                 bedTime={bedTime}
                 wakeTime={wakeTime}
@@ -171,6 +226,11 @@ const HomePage: React.FC = () => {
               {error && (
                 <div className="text-red-600 font-semibold mb-3">{error}</div>
               )}
+              {subscriptionError && (
+                <div className="text-red-600 font-semibold mb-3">
+                  {subscriptionError}
+                </div>
+              )}
 
               <div className="w-full flex justify-center mt-8 mb-6">
                 <BlueButton
@@ -183,7 +243,6 @@ const HomePage: React.FC = () => {
                 />
               </div>
 
-              {/* あなたが実装したグラフ表示部分 */}
               {(graphData.simulation.length > 0 ||
                 graphData.current.length > 0) && (
                 <div className="w-full max-w-2xl flex flex-col items-center justify-center mt-8">
