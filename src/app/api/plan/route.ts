@@ -82,7 +82,7 @@ export async function POST(request: Request) {
     const sleepDurationMs = finalWakeTime.getTime() - finalBedTime.getTime();
     const sleepDurationHours = sleepDurationMs / (1000 * 60 * 60);
 
-    const SHORT_SLEEP_THRESHOLD_HOURS = 5;
+    const SHORT_SLEEP_THRESHOLD_HOURS = 24;
     const isShortSleep = sleepDurationHours < SHORT_SLEEP_THRESHOLD_HOURS;
 
     // 睡眠時間に応じてフォールバック量と、最適化で試行する選択肢を変更する
