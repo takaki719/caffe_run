@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Warnings from "./Warnings";
 
 export interface FocusPeriod {
   start: string;
@@ -13,7 +14,10 @@ export interface FocusFormProps {
   removeFocusPeriod: (idx: number) => void;
   updateFocusPeriod: (idx: number, key: "start" | "end", value: string) => void;
   disabled?: boolean;
-  warnings?: string[];
+
+  // 追加：警告用データを受け取る
+  minPerformances: number[];
+  targetPerformance: number;
 }
 
 export const FocusForm: React.FC<FocusFormProps> = ({
@@ -22,10 +26,17 @@ export const FocusForm: React.FC<FocusFormProps> = ({
   removeFocusPeriod,
   updateFocusPeriod,
   disabled = false,
-  warnings,
+  minPerformances = [],
+  targetPerformance,
 }) => {
   return (
-    <section className="w-full mb-8">
+    <section className="w-full mb-8 relative">
+      {/* 画面上部からのポップアップ警告 */}
+      <Warnings
+        minPerformances={minPerformances}
+        targetPerformance={targetPerformance}
+      />
+
       <div className="flex flex-col gap-4">
         {focusPeriods.map((period, idx) => (
           <div key={idx} className="flex flex-col">
@@ -61,15 +72,9 @@ export const FocusForm: React.FC<FocusFormProps> = ({
                 </button>
               )}
             </div>
-            {/* 警告メッセージがある場合に表示する */}
-            {warnings && warnings[idx] && (
-              <div className="mt-1 pl-[107px] text-red-500 text-xs font-semibold">
-                {/* 107px = 95px(labelの幅) + 12px(gapの約半分) でインデント調整 */}
-                {warnings[idx]}
-              </div>
-            )}
           </div>
         ))}
+
         <button
           type="button"
           onClick={addFocusPeriod}
