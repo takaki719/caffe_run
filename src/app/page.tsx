@@ -15,6 +15,7 @@ import Summery from "../components/Summery";
 import type { Recommendation } from "../components/NextCaffeineTime";
 import { useCaffeineAmounts } from "../hooks/UseCaffeineAmounts";
 import { useCaffeineLogs } from "@/hooks/UseCaffeineLogs";
+import { useUnityContext } from "react-unity-webgl";
 
 const HomePage: React.FC = () => {
   // developブランチの新しいカスタムフックで状態を管理
@@ -40,6 +41,12 @@ const HomePage: React.FC = () => {
   const [activeGraph, setActiveGraph] = useState<"simulation" | "current">(
     "simulation",
   );
+  const { unityProvider, sendMessage, isLoaded } = useUnityContext({
+    loaderUrl: "/unity/Build/public.loader.js", // Unityビルドファイルのパス
+    dataUrl: "/unity/Build/public.data",
+    frameworkUrl: "/unity/Build/public.framework.js",
+    codeUrl: "/unity/Build/public.wasm",
+  });
 
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [minPerformances, setMinPerformances] = useState<number[]>([]);
@@ -105,6 +112,45 @@ const HomePage: React.FC = () => {
     }
   }, [bedTime, wakeTime, focusPeriods, isValid]);
 
+  // --- 集中度をUnityに定期的に送信するuseEffectを追加 ---
+  useEffect(() => {
+    // 5秒ごとに実行するタイマー
+    const interval = setInterval(() => {
+      // Unityがロード済みで、グラフデータが存在する場合のみ実行
+      if (isLoaded && graphData.simulation.length > 0) {
+        const now = new Date();
+        const currentTimeStr = now.toLocaleTimeString("ja-JP", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        // グラフデータから現在時刻に最も近いデータポイントを探す
+        const currentPoint = graphData.simulation.find(
+          (p) => p.time === currentTimeStr,
+        );
+
+        if (currentPoint) {
+          const concentrationValue = currentPoint.value; // 集中度の値 (0-100)
+
+          console.log(`Sending to Unity: ${concentrationValue}`); // デバッグ用
+
+          // Unityのメソッドを呼び出す
+          // 第1引数: GameObject名 ("PerformanceController")
+          // 第2引数: C#スクリプトのメソッド名 ("UpdateConcentration")
+          // 第3引数: 送信する値 (数値を文字列に変換)
+          sendMessage(
+            "PerformanceController",
+            "UpdateConcentration",
+            concentrationValue.toString(),
+          );
+        }
+      }
+    }, 5000); // 5000ms = 5秒
+
+    // コンポーネントがアンマウントされるときにタイマーをクリア
+    return () => clearInterval(interval);
+  }, [isLoaded, graphData.simulation, sendMessage]); // 依存配列に設定
+
   // handleGeneratePlan を useEffect の依存に追加
   useEffect(() => {
     const completed = localStorage.getItem("initial-setup-complete");
@@ -123,7 +169,8 @@ const HomePage: React.FC = () => {
         {!showSettingModal && (
           <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 py-8">
             <div className="w-full max-w-2xl flex justify-center">
-              <UnityModel />
+              {/* UnityModelにunityProviderを渡す */}
+              <UnityModel unityProvider={unityProvider} />
             </div>
 
             {/* developブランチの新しいレイアウトを採用 */}
