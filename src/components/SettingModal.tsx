@@ -7,7 +7,7 @@ import { useSleepTimes } from "@/hooks/UseSleepTimes";
 import { useFocusPeriods } from "@/hooks/UseFocusPeriods";
 
 interface SettingModalProps {
-  onClose: () => void;
+  onClose: (minPerformances: number[], targetPerformance: number) => void;
 }
 
 const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
@@ -16,6 +16,9 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     useFocusPeriods([{ start: "09:00", end: "12:00" }], true);
 
   const [error, setError] = useState("");
+  // 取得したパフォーマンスデータ用ステート
+  const [minPerformances, setMinPerformances] = useState<number[]>([]);
+  const [targetPerformance, setTargetPerformance] = useState<number>(0.7);
 
   const isValid = () => {
     return (
@@ -23,7 +26,7 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     );
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!isValid()) {
       setError("全ての情報を入力してください");
       return;
@@ -39,8 +42,32 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     window.dispatchEvent(new CustomEvent("sleepTimesUpdated"));
     window.dispatchEvent(new CustomEvent("focusPeriodsUpdated"));
 
-    setError("");
-    onClose(); // モーダルを閉じる
+    try {
+      const response = await fetch("/api/plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bed_time: bedTime,
+          wake_time: wakeTime,
+          focus_periods: focusPeriods,
+          caffeine_logs: [], // 初回はログなし
+        }),
+      });
+      if (!response.ok) throw new Error("API error");
+      const json = await response.json();
+      const mins = json.minPerformances || [];
+      const tgt = json.targetPerformance ?? 0.7;
+      setMinPerformances(mins);
+      setTargetPerformance(tgt);
+      setError("");
+    } catch (e) {
+      console.error(e);
+      setError("初期プラン取得中にエラーが発生しました");
+      return;
+    }
+
+    // 取得データを引数に渡してモーダルを閉じる
+    onClose(minPerformances, targetPerformance);
   };
 
   return (
@@ -62,8 +89,6 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
           removeFocusPeriod={removeFocusPeriod}
           updateFocusPeriod={updateFocusPeriod}
           disabled={false}
-          minPerformances={[]} 
-          targetPerformance={0.7} 
         />
 
         {error && (

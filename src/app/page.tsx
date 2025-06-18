@@ -1,4 +1,5 @@
 "use client";
+// メモ；warningコンポーネントを独立化させる
 import React, { useState, useEffect, useCallback } from "react";
 import SettingModal from "../components/SettingModal"; // 追加
 import BlueButton from "../components/BlueButton";
@@ -164,7 +165,16 @@ const HomePage: React.FC = () => {
       <div>
         <TopBackButton />
         {showSettingModal && (
-          <SettingModal onClose={() => setShowSettingModal(false)} />
+          <SettingModal
+            onClose={(mins, tgt) => {
+              // 親で受け取ってモーダルを閉じつつ警告データを保存
+              setMinPerformances(mins);
+              setTargetPerformance(tgt);
+              setShowSettingModal(false);
+              // 続けて一度プラン生成も行う (モーダル内で生成済みなら不要)
+              // handleGeneratePlan();
+            }}
+          />
         )}
         {!showSettingModal && (
           <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 py-8">
@@ -217,8 +227,6 @@ const HomePage: React.FC = () => {
                 removeFocusPeriod={removeFocusPeriod}
                 updateFocusPeriod={updateFocusPeriod}
                 disabled={isLoading}
-                minPerformances={minPerformances}
-                targetPerformance={targetPerformance}
               />
 
               {error && (
