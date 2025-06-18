@@ -1,44 +1,66 @@
 // src/app/api/cron/check-notifications/route.ts
 import { NextResponse } from "next/server";
-import { schedules } from "@/lib/store";
+import { kv } from "@vercel/kv";
 import webpush from "web-push";
+import type { PushSubscription } from "web-push";
+
+interface NotificationSchedule {
+  subscriptions: PushSubscription[];
+  notifyAt: string; // ISO文字列
+  payload: string;
+}
 
 export async function GET() {
   const now = new Date();
 
-  // 送信すべき通知をフィルタリング
-  const dueSchedules = schedules.filter((s) => s.notifyAt <= now);
-  if (dueSchedules.length === 0) {
+  const schedules: NotificationSchedule[] = await kv.lrange("schedules", 0, -1);
+
+  if (schedules.length === 0) {
     return NextResponse.json({ message: "送信する通知はありません。" });
   }
 
-  console.log(`${dueSchedules.length}件の通知を送信します...`);
-
-  // VAPIDキーを設定
-  webpush.setVapidDetails(
-    "hituyonai@gmail.com", // プッシュサービスがサーバーから問題のある通知が大量に送られた場合に、サーバーの管理者に連絡するための連絡先
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-    process.env.VAPID_PRIVATE_KEY!,
+  const dueSchedules = schedules.filter((s) => new Date(s.notifyAt) <= now);
+  const remainingSchedules = schedules.filter(
+    (s) => new Date(s.notifyAt) > now,
   );
 
-  // 通知を送信
-  const sendPromises = dueSchedules.map((schedule) =>
-    webpush
-      .sendNotification(schedule.subscription, schedule.payload)
-      .catch((err) =>
-        console.error(
-          `ID ${schedule.subscription.endpoint.slice(-5)} への送信に失敗:`,
-          err,
-        ),
-      ),
-  );
+  if (dueSchedules.length > 0) {
+    console.log(`${dueSchedules.length}件の予約を実行します...`);
 
-  await Promise.all(sendPromises);
+    if (
+      !process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
+      !process.env.VAPID_PRIVATE_KEY
+    ) {
+      console.error("VAPIDキーが設定されていません。");
+      return NextResponse.json(
+        { message: "VAPIDキーが未設定です。" },
+        { status: 500 },
+      );
+    }
 
-  // 送信済みのスケジュールを削除
-  const remainingSchedules = schedules.filter((s) => s.notifyAt > now);
-  schedules.length = 0; // 配列をクリア
-  schedules.push(...remainingSchedules); // 未送信のものだけを戻す
+    webpush.setVapidDetails(
+      "mailto:your-email@example.com",
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY,
+    );
 
-  return NextResponse.json({ success: true, sent: dueSchedules.length });
+    for (const schedule of dueSchedules) {
+      for (const sub of schedule.subscriptions) {
+        await webpush
+          .sendNotification(sub, schedule.payload)
+          .catch((err) => console.error(`送信に失敗:`, err.body));
+      }
+    }
+  }
+
+  await kv.del("schedules");
+  if (remainingSchedules.length > 0) {
+    await kv.lpush("schedules", ...remainingSchedules);
+  }
+
+  return NextResponse.json({
+    success: true,
+    sent: dueSchedules.length,
+    remaining: remainingSchedules.length,
+  });
 }

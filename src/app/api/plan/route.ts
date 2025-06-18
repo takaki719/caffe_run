@@ -2,7 +2,8 @@ import { SleepPeriod, OptimizationParams } from "@/lib/optimizer/interfaces";
 import { PerformanceModel } from "@/lib/optimizer/PerformanceModel";
 import { CaffeineOptimizer } from "@/lib/optimizer/CaffeineOptimizer";
 import { NextResponse } from "next/server";
-import { subscriptions, schedules } from "@/lib/store";
+import type { PushSubscription } from "web-push";
+import { kv } from "@vercel/kv";
 
 // --- 型定義（フロントエンドからのリクエストボディ） ---
 export type FocusPeriodRequest = {
@@ -190,30 +191,26 @@ export async function POST(request: Request) {
     // 通知予約ロジック
     if (isRecommended) {
       const firstIntake = optimalSchedule[0];
-      const optimalTime: Date = firstIntake.time; // Dateオブジェクトを直接取得
-      const amount = firstIntake.mg;
-
-      const notifyAt = new Date(optimalTime.getTime() - 5 * 60 * 1000); // 5分前に通知予約
-
-      console.log(
-        `最適時間: ${optimalTime.toLocaleString("ja-JP")}, 通知予約時間: ${notifyAt.toLocaleString("ja-JP")}`,
-      );
-
+      const notifyAt = new Date(firstIntake.time.getTime() - 5 * 60 * 1000);
       const payload = JSON.stringify({
-        title: "Caffe-Run そろそろカフェインの時間です！☕",
-        body: `5分後に ${amount}mg カフェイン摂取してね`,
-        url: "/", // 通知クリックで開くURL
+        title: "Caffe-Run そろそろ準備の時間です！☕",
+        body: `5分後に ${firstIntake.mg}mg のカフェイン摂取がおすすめです！`,
+        url: "/",
       });
 
-      // 保存されているすべての購読情報に対して通知を予約
-      subscriptions.forEach((sub) => {
-        schedules.push({
-          subscription: sub,
-          notifyAt: notifyAt,
+      const subscriptions: PushSubscription[] =
+        await kv.smembers("subscriptions");
+      console.log(`取得した購読情報: ${subscriptions.length}件`);
+
+      if (subscriptions.length > 0) {
+        const schedule = {
+          subscriptions: subscriptions,
+          notifyAt: notifyAt.toISOString(),
           payload: payload,
-        });
-      });
-      console.log(`${subscriptions.size}件の通知を予約しました。`);
+        };
+        await kv.lpush("schedules", schedule);
+        console.log(`${subscriptions.length}件の通知を予約しました。`);
+      }
     }
 
     const responseData = {
@@ -231,7 +228,6 @@ export async function POST(request: Request) {
       currentStatusData: noCaffeineData,
       warnings: warnings,
     };
-    //console.log("サーバーが返すデータ:", JSON.stringify(responseData, null, 2));
 
     return NextResponse.json(responseData);
   } catch (error) {
