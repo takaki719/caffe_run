@@ -84,7 +84,7 @@ export async function POST(request: Request) {
     const isShortSleep = sleepDurationHours < SHORT_SLEEP_THRESHOLD_HOURS;
 
     // 睡眠時間に応じてフォールバック量と、最適化で試行する選択肢を変更する
-    const fallbackDose = isShortSleep ? 200 : 100;
+    const fallbackDose = isShortSleep ? 200 : 200;
     const doseOptions = isShortSleep ? [150, 200] : [50, 100, 150, 200];
 
     const params: OptimizationParams = {
@@ -135,6 +135,7 @@ export async function POST(request: Request) {
         currentTime,
         sleepHistory,
         optimalSchedule || [],
+        params.timeWindows,
       );
 
       // 現在時刻がどの集中時間帯に含まれるかチェックし、最低パフォーマンスを更新
@@ -175,7 +176,12 @@ export async function POST(request: Request) {
     ) {
       const currentTime = new Date(t);
       // model.predictの第3引数（カフェイン履歴）に空の配列[]を渡す
-      const performance = model.predict(currentTime, sleepHistory, []);
+      const performance = model.predict(
+        currentTime,
+        sleepHistory,
+        [],
+        params.timeWindows,
+      );
       noCaffeineData.push({
         time: currentTime.toLocaleTimeString("ja-JP", {
           hour: "2-digit",

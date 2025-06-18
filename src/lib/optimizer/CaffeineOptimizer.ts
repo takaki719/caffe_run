@@ -38,6 +38,7 @@ export class CaffeineOptimizer {
           new Date(t),
           sleepHistory,
           schedule,
+          params.timeWindows,
         );
         // このウィンドウ内の最低パフォーマンスを更新
         windowMinimumPerformance = Math.min(
@@ -74,6 +75,15 @@ export class CaffeineOptimizer {
     sleepHistory: SleepPeriod[],
     params: OptimizationParams,
   ): CaffeineDose[] | null {
+    const noCaffeinePerformance = this.evaluateSchedulePerformance(
+      [],
+      sleepHistory,
+      params,
+    );
+    // もし全ての集中時間で目標を達成できるなら、カフェインは不要
+    if (noCaffeinePerformance.successfulWindows === params.timeWindows.length) {
+      return []; // 空の配列を返し、「カフェイン不要」と判断
+    }
     let bestSchedule: CaffeineDose[] | null = null;
     let maxWindowsAchieved = 0;
     let bestMinimumPerformance = 0; // ★ 最低パフォーマンスの最高値を記録
@@ -121,28 +131,27 @@ export class CaffeineOptimizer {
       const totalCaffeine = schedule.reduce((sum, d) => sum + d.mg, 0);
 
       // --- ★ 評価ロジックを「最低パフォーマンス」優先に変更 ---
-      // 1. 達成ウィンドウ数が多いものを優先
+      // 1. 成功した時間帯の数が多いものを最優先
       if (successfulWindows > maxWindowsAchieved) {
         maxWindowsAchieved = successfulWindows;
-        bestMinimumPerformance = minimumPerformance;
         minCaffeineForMaxWindows = totalCaffeine;
+        bestMinimumPerformance = minimumPerformance;
         bestSchedule = schedule;
       } else if (successfulWindows === maxWindowsAchieved) {
-        // 2. ウィンドウ数が同じなら、「最低パフォーマンス」が高いものを優先
-        if (minimumPerformance > bestMinimumPerformance) {
-          bestMinimumPerformance = minimumPerformance;
+        // 2. 成功した時間帯の数が同じなら、カフェイン総量が少ないものを優先
+        if (totalCaffeine < minCaffeineForMaxWindows) {
           minCaffeineForMaxWindows = totalCaffeine;
+          bestMinimumPerformance = minimumPerformance;
           bestSchedule = schedule;
-        } else if (minimumPerformance === bestMinimumPerformance) {
-          // 3. 最低パフォーマンスも同じなら、カフェイン量が少ないものを優先
-          if (totalCaffeine < minCaffeineForMaxWindows) {
-            minCaffeineForMaxWindows = totalCaffeine;
+        } else if (totalCaffeine === minCaffeineForMaxWindows) {
+          // 3. カフェイン総量も同じなら、パフォーマンスが高いものを優先（タイブレーク）
+          if (minimumPerformance > bestMinimumPerformance) {
+            bestMinimumPerformance = minimumPerformance;
             bestSchedule = schedule;
           }
         }
       }
     };
-
     // 1回摂取の全パターンを試す
     for (const slot of searchSlots) {
       for (const dose of doseOptions) {
@@ -165,8 +174,8 @@ export class CaffeineOptimizer {
         }
       }
     }
-    // フォールバックで使用する摂取量を決定（パラメータで指定されていなければ100mg）
-    const doseForFallback = params.fallbackDose ?? 100;
+    // フォールバックで使用する摂取量を決定（パラメータで指定されていなければ200mg）
+    const doseForFallback = params.fallbackDose ?? 200;
     const finalFallbackDose = Math.min(
       doseForFallback,
       params.maxDosePerIntake,
