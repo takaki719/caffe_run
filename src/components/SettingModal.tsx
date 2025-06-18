@@ -57,7 +57,7 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
         />
 
         <FocusForm
-          focusPeriods={focusPeriods}
+          focusPeriods={focusPeriods }
           addFocusPeriod={addFocusPeriod}
           removeFocusPeriod={removeFocusPeriod}
           updateFocusPeriod={updateFocusPeriod}
