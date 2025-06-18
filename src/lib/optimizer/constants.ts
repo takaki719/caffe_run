@@ -4,9 +4,9 @@
 // --------------------------------------------------
 
 /** 睡眠圧Sの上昇率 (単位時間あたり) - 値を小さくして疲れにくくする */
-export const PROCESS_S_INCREASE_RATE = 0.02; // 0.05から変更
+export const PROCESS_S_INCREASE_RATE = 0.025; // 0.05から変更
 /** 睡眠圧Sの減衰率 (指数関数的減衰) */
-export const PROCESS_S_DECAY_RATE = 0.2;
+export const PROCESS_S_DECAY_RATE = 0.3;
 /** カフェインの吸収速度 (胃→血漿) */
 export const CAFFEINE_ABSORPTION_RATE = 1.5;
 /** カフェインの排出速度 (半減期 約5.7時間に対応) */
