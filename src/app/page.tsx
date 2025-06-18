@@ -1,5 +1,4 @@
 "use client";
-// メモ；warningコンポーネントを独立化させる
 import React, { useState, useEffect, useCallback } from "react";
 import SettingModal from "../components/SettingModal"; // 追加
 import BlueButton from "../components/BlueButton";
@@ -17,6 +16,7 @@ import type { Recommendation } from "../components/NextCaffeineTime";
 import { useCaffeineAmounts } from "../hooks/UseCaffeineAmounts";
 import { useCaffeineLogs } from "@/hooks/UseCaffeineLogs";
 import { useUnityContext } from "react-unity-webgl";
+import Warnings from "@/components/Warnings";
 
 const HomePage: React.FC = () => {
   // developブランチの新しいカスタムフックで状態を管理
@@ -163,7 +163,10 @@ const HomePage: React.FC = () => {
   return (
     <div>
       <div>
-        <TopBackButton />
+        <Warnings
+          minPerformances={minPerformances}
+          targetPerformance={targetPerformance}
+        />
         {showSettingModal && (
           <SettingModal
             onClose={(mins, tgt) => {
