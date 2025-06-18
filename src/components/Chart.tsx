@@ -45,7 +45,15 @@ const Chart: React.FC<Props> = ({ data }) => {
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="time" tick={{ fontSize: 12 }} minTickGap={8} />
           <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} width={28} />
-          <Tooltip />
+          <Tooltip
+            contentStyle={{
+              color: "#000",
+              backgroundColor: "#fff",
+              borderRadius: "0.75rem",
+              border: "1px solid #eee",
+            }}
+            labelStyle={{ color: "#000" }} // ここでラベル（時刻）の文字色だけ黒に
+          />
           <Legend />
           <Line
             type="monotone"
