@@ -16,15 +16,9 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     useFocusPeriods([{ start: "09:00", end: "12:00" }], true);
 
   const [error, setError] = useState("");
-  // 取得したパフォーマンスデータ用ステート
-  const [minPerformances, setMinPerformances] = useState<number[]>([]);
-  const [targetPerformance, setTargetPerformance] = useState<number>(0.7);
 
-  const isValid = () => {
-    return (
-      !!bedTime && !!wakeTime && focusPeriods.some((p) => p.start && p.end)
-    );
-  };
+  const isValid = () =>
+    !!bedTime && !!wakeTime && focusPeriods.some((p) => p.start && p.end);
 
   const handleSave = async () => {
     if (!isValid()) {
@@ -32,42 +26,40 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
       return;
     }
 
-    // 保存状態を localStorage で管理
+    // localStorage 保存…
     localStorage.setItem("initial-setup-complete", "true");
     localStorage.setItem("bedTime", bedTime);
     localStorage.setItem("wakeTime", wakeTime);
     localStorage.setItem("focusPeriods", JSON.stringify(focusPeriods));
-
-    // Page.tsxのhooksに変更を通知
     window.dispatchEvent(new CustomEvent("sleepTimesUpdated"));
     window.dispatchEvent(new CustomEvent("focusPeriodsUpdated"));
 
+    // API コールしてローカル変数に受け取る
+    let mins: number[] = [];
+    let tgt = 0.7;
     try {
-      const response = await fetch("/api/plan", {
+      const res = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           bed_time: bedTime,
           wake_time: wakeTime,
           focus_periods: focusPeriods,
-          caffeine_logs: [], // 初回はログなし
+          caffeine_logs: [],
         }),
       });
-      if (!response.ok) throw new Error("API error");
-      const json = await response.json();
-      const mins = json.minPerformances || [];
-      const tgt = json.targetPerformance ?? 0.7;
-      setMinPerformances(mins);
-      setTargetPerformance(tgt);
+      if (!res.ok) throw new Error("API error");
+      const json = await res.json();
+      mins = json.minPerformances || [];
+      tgt = json.targetPerformance ?? 0.7;
       setError("");
-    } catch (e) {
-      console.error(e);
+    } catch {
       setError("初期プラン取得中にエラーが発生しました");
       return;
     }
 
-    // 取得データを引数に渡してモーダルを閉じる
-    onClose(minPerformances, targetPerformance);
+    // **ここでローカル変数を渡す**
+    onClose(mins, tgt);
   };
 
   return (
@@ -91,12 +83,10 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
           disabled={false}
         />
 
-        {error && (
-          <div className="text-red-600 font-semibold mb-2">{error}</div>
-        )}
+        {error && <div className="text-red-600 mb-2">{error}</div>}
 
         <button
-          className="mt-4 w-full bg-blue-600 text-white rounded-md py-2 font-semibold"
+          className="mt-4 w-full bg-blue-600 text-white py-2 rounded"
           onClick={handleSave}
         >
           保存してはじめる
