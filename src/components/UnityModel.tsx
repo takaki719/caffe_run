@@ -1,9 +1,9 @@
 "use client";
 import React from "react";
-import { Unity, UnityProvider } from "react-unity-webgl";
+import { Unity } from "react-unity-webgl";
 
 interface UnityModelProps {
-  unityProvider: UnityProvider;
+  unityProvider: ReturnType<typeof import("react-unity-webgl").useUnityContext>["unityProvider"];
 }
 
 const UnityModel: React.FC<UnityModelProps> = ({ unityProvider }) => {
