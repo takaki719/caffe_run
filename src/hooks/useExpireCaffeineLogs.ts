@@ -19,33 +19,28 @@ export function useExpireCaffeineLogs(
     const wakeDate = new Date(now);
     wakeDate.setHours(h, m, 0, 0);
 
+    // wakeTimeが現在時刻を過ぎていたら、翌日に設定
     if (wakeDate.getTime() <= now.getTime()) {
       wakeDate.setDate(wakeDate.getDate() + 1);
     }
+
+    // wakeTimeの24時間後を計算
+    // const expireAt = wakeDate.getTime() + 24 * 60 * 60 * 1000; // 24時間後
+    // const delay = expireAt - now.getTime(); // 現在時刻から24時間後までのミリ秒数を計算
 
     // 開発・テスト用：1分後に削除
     const delay = 60 * 1000;
 
     const timer = setTimeout(() => {
-      // ローカルストレージからカフェインログのデータを取得
-      const savedLogs = window.localStorage.getItem(storageKey);
-      if (savedLogs) {
-        const caffeineLogs = JSON.parse(savedLogs);
-
-        // カフェイン摂取履歴が存在する場合
-        if (Array.isArray(caffeineLogs)) {
-          // ここでカフェイン摂取履歴を削除（例えば、ログの配列を空にする）
-          // 削除するロジックをカスタマイズ
-          window.localStorage.setItem(storageKey, JSON.stringify([])); // 空の配列に設定
-          console.log(
-            `Expired: cleared ${storageKey} at ${new Date().toISOString()}`,
-          );
-        }
-      }
+      // すべてのローカルストレージデータを削除
+      window.localStorage.clear();
+      console.log(
+        `Expired: cleared all localStorage at ${new Date().toISOString()}`,
+      );
 
       onExpire?.(); // コールバックがあれば呼び出す
     }, delay);
 
-    return () => clearTimeout(timer);
+    return () => clearTimeout(timer); // クリーンアップ処理
   }, [wakeTime, storageKey, onExpire]);
 }
