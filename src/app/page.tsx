@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
-import SettingModal from "../components/SettingModal"; // 追加
+import SettingModal from "../components/SettingModal";
 import BlueButton from "../components/BlueButton";
 import UnityModel from "../components/UnityModel";
 import Chart from "@/components/Chart";
@@ -16,6 +16,7 @@ import { useCaffeineAmounts } from "../hooks/UseCaffeineAmounts";
 import { useCaffeineLogs } from "@/hooks/UseCaffeineLogs";
 import { useUnityContext } from "react-unity-webgl";
 import Warnings from "@/components/Warnings";
+import NotificationInitializer from "@/components/NotificationInitializer";
 
 const HomePage: React.FC = () => {
   // developブランチの新しいカスタムフックで状態を管理
@@ -42,10 +43,10 @@ const HomePage: React.FC = () => {
     "simulation",
   );
   const { unityProvider, sendMessage, isLoaded } = useUnityContext({
-    loaderUrl: "/unity/Build/public.loader.js", // Unityビルドファイルのパス
-    dataUrl: "/unity/Build/public.data",
-    frameworkUrl: "/unity/Build/public.framework.js",
-    codeUrl: "/unity/Build/public.wasm",
+    loaderUrl: "/unity/Build/Downloads.loader.js",
+    dataUrl: "/unity/Build/Downloads.data",
+    frameworkUrl: "/unity/Build/Downloads.framework.js",
+    codeUrl: "/unity/Build/Downloads.wasm",
   });
 
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
@@ -159,6 +160,7 @@ const HomePage: React.FC = () => {
   }, []);
   return (
     <div>
+      <NotificationInitializer />
       <Warnings
         minPerformances={minPerformances}
         targetPerformance={targetPerformance}
