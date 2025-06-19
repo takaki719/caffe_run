@@ -25,11 +25,8 @@ export function useExpireCaffeineLogs(
     }
 
     // wakeTimeの24時間後を計算
-    // const expireAt = wakeDate.getTime() + 24 * 60 * 60 * 1000; // 24時間後
-    // const delay = expireAt - now.getTime(); // 現在時刻から24時間後までのミリ秒数を計算
-
-    // 開発・テスト用：1分後に削除
-    const delay = 60 * 1000;
+    const expireAt = wakeDate.getTime() + 24 * 60 * 60 * 1000; // 24時間後
+    const delay = expireAt - now.getTime(); // 現在時刻から24時間後までのミリ秒数を計算
 
     const timer = setTimeout(() => {
       // すべてのローカルストレージデータを削除
