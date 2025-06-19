@@ -54,15 +54,13 @@ const HomePage: React.FC = () => {
   const [minPerformances, setMinPerformances] = useState<number[]>([]);
   const [targetPerformance, setTargetPerformance] = useState<number>(0.7);
 
-  // 起床時刻＋24時間で caffeine-logs を自動消去&ポップアップ表示
+  // 起床時刻＋24時間でローカルストレージ内のすべてのデータを自動消去&ポップアップ表示
+  // 次のカフェイン摂取時間や摂取履歴も削除される
   const [showExpirePopup, setShowExpirePopup] = useState(false);
   useExpireCaffeineLogs(wakeTime, "caffeine-logs", () => {
     setShowExpirePopup(true); // カフェイン摂取履歴削除後にポップアップを表示
-    // ローカルストレージから最新のカフェイン履歴を再取得して表示を更新
-    const updatedLogs = JSON.parse(
-      localStorage.getItem("caffeine-logs") || "[]",
-    );
-    setLogs(updatedLogs); // setLogsで履歴のステートを更新
+    setLogs([]); // 摂取履歴をリセット
+    setRecommendations([]); // 推奨プランもリセット
   });
 
   // ローカルストレージから初期データを取得
