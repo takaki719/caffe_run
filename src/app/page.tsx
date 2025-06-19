@@ -42,10 +42,10 @@ const HomePage: React.FC = () => {
     "simulation",
   );
   const { unityProvider, sendMessage, isLoaded } = useUnityContext({
-    loaderUrl: "/unity/Build/public.loader.js",
-    dataUrl: "/unity/Build/public.data",
-    frameworkUrl: "/unity/Build/public.framework.js",
-    codeUrl: "/unity/Build/public.wasm",
+    loaderUrl: "/unity/Build/Downloads.loader.js",
+    dataUrl: "/unity/Build/Downloads.data",
+    frameworkUrl: "/unity/Build/Downloads.framework.js",
+    codeUrl: "/unity/Build/Downloads.wasm",
   });
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [warnings, setWarnings] = useState<string[]>([])
