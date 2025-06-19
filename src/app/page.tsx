@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import SettingModal from "../components/SettingModal"; // 追加
 import BlueButton from "../components/BlueButton";
 import UnityModelWrapper from "@/components/UnityModelWrapper";
+import TopBackButton from "@/components/TopBackButton";
 import Chart from "@/components/Chart";
 import RecommendedPlanList from "../components/NextCaffeineTime";
 import CaffeineLogForm from "../components/CaffeineLogForm";
@@ -160,6 +161,7 @@ const HomePage: React.FC = () => {
         minPerformances={minPerformances}
         targetPerformance={targetPerformance}
       />
+      <TopBackButton />
       {showSettingModal && (
         <SettingModal
           onClose={(mins, tgt) => {
