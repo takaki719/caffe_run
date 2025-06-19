@@ -17,6 +17,8 @@ import { useCaffeineAmounts } from "../hooks/UseCaffeineAmounts";
 import { useCaffeineLogs } from "@/hooks/UseCaffeineLogs";
 import { useUnityContext } from "react-unity-webgl";
 import Warnings from "@/components/Warnings";
+import { useExpireCaffeineLogs } from "@/hooks/useExpireCaffeineLogs";
+import ExpirePopup from "@/components/ExpirePopup";
 
 const HomePage: React.FC = () => {
   // developブランチの新しいカスタムフックで状態を管理
@@ -51,6 +53,25 @@ const HomePage: React.FC = () => {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [minPerformances, setMinPerformances] = useState<number[]>([]);
   const [targetPerformance, setTargetPerformance] = useState<number>(0.7);
+
+  // 起床時刻＋24時間で caffeine-logs を自動消去&ポップアップ表示
+  const [showExpirePopup, setShowExpirePopup] = useState(false);
+  useExpireCaffeineLogs(wakeTime, "caffeine-logs", () => {
+    setShowExpirePopup(true); // カフェイン摂取履歴削除後にポップアップを表示
+    // ローカルストレージから最新のカフェイン履歴を再取得して表示を更新
+    const updatedLogs = JSON.parse(
+      localStorage.getItem("caffeine-logs") || "[]",
+    );
+    setLogs(updatedLogs); // setLogsで履歴のステートを更新
+  });
+
+  // ローカルストレージから初期データを取得
+  useEffect(() => {
+    const savedLogs = localStorage.getItem("caffeine-logs");
+    if (savedLogs) {
+      setLogs(JSON.parse(savedLogs));
+    }
+  }, []);
 
   // 入力チェック関数を、developブランチの変数名(camelCase)に合わせる
   const isValid = useCallback(() => {
@@ -160,6 +181,9 @@ const HomePage: React.FC = () => {
         minPerformances={minPerformances}
         targetPerformance={targetPerformance}
       />
+      {showExpirePopup && (
+        <ExpirePopup onClose={() => setShowExpirePopup(false)} />
+      )}
       <TopBackButton />
       {showSettingModal && (
         <SettingModal
