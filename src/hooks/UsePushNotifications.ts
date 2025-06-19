@@ -21,9 +21,11 @@ export const usePushNotifications = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<PushSubscription | null>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [permissionStatus, setPermissionStatus] = useState<NotificationPermission | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
+  // 1. ユーザーIDのセットアップとService Workerの登録・有効化を行うEffect
   useEffect(() => {
     let currentUserId = localStorage.getItem(USER_ID_KEY);
     if (!currentUserId) {
@@ -33,89 +35,71 @@ export const usePushNotifications = () => {
     setUserId(currentUserId);
 
     if (!("serviceWorker" in navigator && "PushManager" in window)) {
+      console.error("Push Notifications are not supported.");
       setError("Push Notifications are not supported by this browser.");
       return;
     }
 
-    setPermissionStatus(Notification.permission);
-
-    navigator.serviceWorker.getRegistration().then(registration => {
-      if (registration) {
-        registration.pushManager.getSubscription().then(sub => {
-          if (sub) {
-            setSubscription(sub);
-            setIsSubscribed(true);
-          }
-        });
-      }
-    });
+    // Service Workerを登録し、有効化されるのを待つ
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => {
+        console.log('Service Worker registration successful', reg);
+        setSwRegistration(reg); // 登録オブジェクトをstateに保存
+      })
+      .catch(err => {
+        console.error('Service Worker registration failed:', err);
+        setError('Service Worker registration failed.');
+      });
   }, []);
 
-  const subscribeToPush = useCallback(async () => {
-    if (!VAPID_PUBLIC_KEY) {
-      setError("VAPID public key is not configured.");
-      return;
-    }
-    if (!userId) {
-      setError("User ID is not set.");
+  // 2. 購読処理を行うEffect
+  const subscribe = useCallback(async () => {
+    if (!swRegistration || !userId || !VAPID_PUBLIC_KEY) {
+      // 必要なものが揃っていなければ何もしない
       return;
     }
 
-    try {
-      // 1. Service Workerを登録する
-      await navigator.serviceWorker.register('/sw.js');
-      console.log("Service worker registered.");
+    const prompted = localStorage.getItem(NOTIFICATION_PROMPTED_KEY);
+    const permission = Notification.permission;
 
-      // 2. Service Workerが有効化され、準備が完了するのを待つ
-      const registration = await navigator.serviceWorker.ready;
-      console.log("Service worker is active and ready.");
+    // 初回アクセス時のみ実行
+    if (permission === 'default' && !prompted) {
+      console.log('Conditions met, starting subscription process.');
+      localStorage.setItem(NOTIFICATION_PROMPTED_KEY, 'true');
+      
+      try {
+        // Service Workerの準備が本当に完了するのを待つ
+        const readySwRegistration = await navigator.serviceWorker.ready;
+        
+        const sub = await readySwRegistration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
 
-      // 3. 準備完了後、Push通知の購読を行う
-      const sub = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
-      console.log("PushManager subscribed successfully.");
+        console.log('PushManager subscribed successfully.');
+        await fetch('/api/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, subscription: sub }),
+        });
 
-      await fetch("/api/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, subscription: sub }),
-      });
-      console.log("Subscription sent to server.");
-
-      setSubscription(sub);
-      setIsSubscribed(true);
-      setPermissionStatus("granted");
-      setError(null);
-    } catch (err) {
-      console.error("Failed to subscribe:", err);
-      if (Notification.permission === "denied") {
-        setPermissionStatus("denied");
-      }
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred during subscription.");
+        console.log('Subscription sent to server.');
+        setSubscription(sub);
+        setIsSubscribed(true);
+      } catch (err) {
+        console.error('Failed to subscribe to push notifications:', err);
+        setError(err instanceof Error ? err.message : 'An unknown error occurred.');
       }
     }
-  }, [userId]);
+  }, [swRegistration, userId]);
 
   useEffect(() => {
-    const prompted = localStorage.getItem(NOTIFICATION_PROMPTED_KEY);
-    
-    if (permissionStatus === "default" && !prompted) {
-      subscribeToPush();
-      localStorage.setItem(NOTIFICATION_PROMPTED_KEY, "true");
-    }
-  }, [permissionStatus, subscribeToPush]);
+    subscribe();
+  }, [subscribe]);
+
 
   return {
-    userId,
-    subscribeToPush,
     isSubscribed,
-    permissionStatus,
     error,
-    subscription,
   };
 };
