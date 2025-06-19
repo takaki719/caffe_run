@@ -42,15 +42,13 @@ const HomePage: React.FC = () => {
     "simulation",
   );
   const { unityProvider, sendMessage, isLoaded } = useUnityContext({
-    loaderUrl: "/unity/Build/public.loader.js", // Unityビルドファイルのパス
-    dataUrl: "/unity/Build/public.data",
-    frameworkUrl: "/unity/Build/public.framework.js",
-    codeUrl: "/unity/Build/public.wasm",
+    loaderUrl: "/unity/Build/public.loader.js",
+    dataUrl: "/unity/Build/public.data.br",
+    frameworkUrl: "/unity/Build/public.framework.js.br",
+    codeUrl: "/unity/Build/public.wasm.br",
   });
-
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [minPerformances, setMinPerformances] = useState<number[]>([]);
-  const [targetPerformance, setTargetPerformance] = useState<number>(0.7);
+  const [warnings, setWarnings] = useState<string[]>([])
 
   // 入力チェック関数を、developブランチの変数名(camelCase)に合わせる
   const isValid = useCallback(() => {
@@ -114,49 +112,44 @@ const HomePage: React.FC = () => {
 
   // --- 集中度をUnityに定期的に送信するuseEffectを追加 ---
   useEffect(() => {
-    // 5秒ごとに実行するタイマー
-    const interval = setInterval(() => {
-      // Unityがロード済みで、グラフデータが存在する場合のみ実行
-      if (isLoaded && graphData.simulation.length > 0) {
-        const now = new Date();
-        const currentTimeStr = now.toLocaleTimeString("ja-JP", {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+    // ★ 修正点2: isLoadedでUnityの準備完了をチェック
+    if (!isLoaded || graphData[activeGraph].length === 0) {
+      return;
+    }
 
-        // グラフデータから現在時刻に最も近いデータポイントを探す
-        const currentPoint = graphData.simulation.find(
-          (p) => p.time === currentTimeStr,
+    const intervalId = setInterval(() => {
+      const now = new Date();
+      const nowStr = `${String(now.getHours()).padStart(2, "0")}:${String(
+        now.getMinutes(),
+      ).padStart(2, "0")}`;
+
+      // ★ 修正点3: グラフデータから現在時刻に一致するものを探す（シンプル版）
+      const currentPoint = graphData[activeGraph].find(p => p.time === nowStr);
+
+      if (currentPoint) {
+        // ★ 修正点1: currentPoint.value（集中度）をそのまま使う
+        const focusValue = currentPoint.value;
+
+        sendMessage(
+          'unitychan',
+          'SetAnimationSpeed',
+          focusValue.toString() // ★ 修正点1: 未定義だったconcentrationValueをfocusValueに修正
         );
-
-        if (currentPoint) {
-          const concentrationValue = currentPoint.value; // 集中度の値 (0-100)
-
-          console.log(`Sending to Unity: ${concentrationValue}`); // デバッグ用
-
-          // Unityのメソッドを呼び出す
-          // 第1引数: GameObject名 ("PerformanceController")
-          // 第2引数: C#スクリプトのメソッド名 ("UpdateConcentration")
-          // 第3引数: 送信する値 (数値を文字列に変換)
-          sendMessage(
-            "PerformanceController",
-            "UpdateConcentration",
-            concentrationValue.toString(),
-          );
-        }
       }
-    }, 5000); // 5000ms = 5秒
+    }, 2000); // 2秒ごと
 
-    // コンポーネントがアンマウントされるときにタイマーをクリア
-    return () => clearInterval(interval);
-  }, [isLoaded, graphData.simulation, sendMessage]); // 依存配列に設定
-
+    return () => clearInterval(intervalId);
+  }, [isLoaded, sendMessage, graphData, activeGraph]);
   // 初回起動時にモーダルを出す
   useEffect(() => {
     if (!localStorage.getItem("initial-setup-complete")) {
       setShowSettingModal(true);
+      //handleGeneratePlan();
+    }else {
+        // 初回設定が終わっている場合はプランを自動生成
+        handleGeneratePlan();
     }
-  }, []);
+  }, []); // handleGeneratePlanが生成されるたびに実行
   return (
     <div>
       <Warnings
