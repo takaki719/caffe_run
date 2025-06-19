@@ -1,5 +1,4 @@
-// src/hooks/usePushNotifications.ts
-import { useState, useEffect, useCallback } from "react"; // useCallbackを追加
+import { useState, useEffect, useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 const USER_ID_KEY = "caffe-run-user-id";
@@ -28,7 +27,8 @@ export const usePushNotifications = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // ユーザーIDの管理
+    console.log("usePushNotifications hook mounted.");
+
     let currentUserId = localStorage.getItem(USER_ID_KEY);
     if (!currentUserId) {
       currentUserId = uuidv4();
@@ -37,74 +37,84 @@ export const usePushNotifications = () => {
     setUserId(currentUserId);
 
     if (!("serviceWorker" in navigator && "PushManager" in window)) {
+      console.error("Push Notifications are not supported.");
       setError("Push Notifications are not supported by this browser.");
       return;
     }
 
-    // 現在の購読状態と通知許可状態を確認
-    navigator.serviceWorker.ready.then((swReg) => {
-      setPermissionStatus(Notification.permission);
-      swReg.pushManager.getSubscription().then((sub) => {
-        if (sub) {
-          setSubscription(sub);
-          setIsSubscribed(true);
-        }
-      });
+    // ★★★ 修正点 ★★★
+    // serviceWorker.readyを待たずに、まず現在の通知許可状態をセットする
+    setPermissionStatus(Notification.permission);
+    console.log("Initial permission status:", Notification.permission);
+
+    // 既存の購読情報がないか確認する
+    navigator.serviceWorker.getRegistration().then((registration) => {
+      if (registration) {
+        registration.pushManager.getSubscription().then((sub) => {
+          if (sub) {
+            console.log("Existing subscription found.");
+            setSubscription(sub);
+            setIsSubscribed(true);
+          }
+        });
+      }
     });
   }, []);
 
   const subscribeToPush = useCallback(async () => {
+    console.log("subscribeToPush called.");
     if (!VAPID_PUBLIC_KEY) {
+      console.error("VAPID public key is missing.");
       setError("VAPID public key is not configured.");
       return;
     }
-    if (!("serviceWorker" in navigator)) {
-      setError("Service Worker not supported");
-      return;
-    }
     if (!userId) {
+      console.error("User ID is not set yet.");
       setError("User ID is not set.");
       return;
     }
 
     try {
       const swReg = await navigator.serviceWorker.register("/sw.js");
+      console.log("Service worker registered.");
       const sub = await swReg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       });
+      console.log("PushManager subscribed.");
 
       await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, subscription: sub }),
       });
+      console.log("Subscription sent to server.");
 
       setSubscription(sub);
       setIsSubscribed(true);
       setPermissionStatus("granted");
       setError(null);
     } catch (err) {
-      console.error("Failed to subscribe to push notifications:", err);
-      // ユーザーが許可しなかった場合は'denied'になる
+      console.error("Failed to subscribe:", err);
       if (Notification.permission === "denied") {
         setPermissionStatus("denied");
       }
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("An unknown error occurred.");
+        setError("An unknown error occurred during subscription.");
       }
     }
   }, [userId]);
 
-  // 初回アクセス時に通知許可を促すロジック
   useEffect(() => {
-    if (
-      permissionStatus === "default" &&
-      !localStorage.getItem(NOTIFICATION_PROMPTED_KEY)
-    ) {
-      // 'default'はユーザーがまだ選択していない状態
+    const prompted = localStorage.getItem(NOTIFICATION_PROMPTED_KEY);
+    console.log(
+      `Checking if prompt is needed. Status: ${permissionStatus}, Prompted: ${prompted}`,
+    );
+
+    if (permissionStatus === "default" && !prompted) {
+      console.log("Conditions met. Triggering subscription prompt.");
       subscribeToPush();
       localStorage.setItem(NOTIFICATION_PROMPTED_KEY, "true");
     }
