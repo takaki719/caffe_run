@@ -157,16 +157,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // 最低パフォーマンスに基づいて警告メッセージを生成
-    const warnings = params.timeWindows.map((window, index) => {
-      const minPerformanceValue = windowMinPerformances[index];
-      // 最低パフォーマンスが目標値(targetPerformance)を下回っていたら警告を生成
-      if (minPerformanceValue < params.targetPerformance) {
-        return `この時間帯はパフォーマンスが${params.targetPerformance * 100}%に満たない可能性があるため、お勧めしません。`;
-      }
-      return ""; // 基準を満たしていれば空文字
-    });
-
     // --- 2. カフェインを摂取しなかった場合の覚醒度（現在の覚醒度グラフ用）---
     const noCaffeineData: { time: string; value: number }[] = [];
     for (
@@ -232,7 +222,8 @@ export async function POST(request: Request) {
         : [],
       simulationData: simulationData,
       currentStatusData: noCaffeineData,
-      warnings: warnings,
+      minPerformances,
+      targetPerformance: params.targetPerformance,
     };
 
     return NextResponse.json(responseData);
