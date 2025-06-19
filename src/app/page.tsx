@@ -188,7 +188,7 @@ const HomePage: React.FC = () => {
               <RecommendedPlanList recommendations={recommendations} />
             </div>
             <div className="flex-1">
-              <Summery caffeineData={amounts} /> {/* サマリーのデータは仮 */}
+              <Summery caffeineData={amounts} />
             </div>
           </div>
 
@@ -209,7 +209,7 @@ const HomePage: React.FC = () => {
             {isLogFormOpen && <CaffeineLogForm logs={logs} setLogs={setLogs} />}
           </div>
 
-          <main className="flex flex-col items-center flex-1 w-full max-w-2xl mx-auto">
+          <main className="flex flex-col items-start flex-1 w-full max-w-2xl mx-auto px-4">
             {/* developブランチの新しいフォームコンポーネントを使用 */}
             <SleepForm
               bedTime={bedTime}
