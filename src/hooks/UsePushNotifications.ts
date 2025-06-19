@@ -1,3 +1,4 @@
+// src/hooks/usePushNotifications.ts
 import { useState, useEffect, useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 
@@ -18,17 +19,12 @@ function urlBase64ToUint8Array(base64String: string) {
 
 export const usePushNotifications = () => {
   const [userId, setUserId] = useState<string | null>(null);
-  const [subscription, setSubscription] = useState<PushSubscription | null>(
-    null,
-  );
+  const [subscription, setSubscription] = useState<PushSubscription | null>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [permissionStatus, setPermissionStatus] =
-    useState<NotificationPermission | null>(null);
+  const [permissionStatus, setPermissionStatus] = useState<NotificationPermission | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log("usePushNotifications hook mounted.");
-
     let currentUserId = localStorage.getItem(USER_ID_KEY);
     if (!currentUserId) {
       currentUserId = uuidv4();
@@ -37,22 +33,16 @@ export const usePushNotifications = () => {
     setUserId(currentUserId);
 
     if (!("serviceWorker" in navigator && "PushManager" in window)) {
-      console.error("Push Notifications are not supported.");
       setError("Push Notifications are not supported by this browser.");
       return;
     }
 
-    // ★★★ 修正点 ★★★
-    // serviceWorker.readyを待たずに、まず現在の通知許可状態をセットする
     setPermissionStatus(Notification.permission);
-    console.log("Initial permission status:", Notification.permission);
 
-    // 既存の購読情報がないか確認する
-    navigator.serviceWorker.getRegistration().then((registration) => {
+    navigator.serviceWorker.getRegistration().then(registration => {
       if (registration) {
-        registration.pushManager.getSubscription().then((sub) => {
+        registration.pushManager.getSubscription().then(sub => {
           if (sub) {
-            console.log("Existing subscription found.");
             setSubscription(sub);
             setIsSubscribed(true);
           }
@@ -62,26 +52,30 @@ export const usePushNotifications = () => {
   }, []);
 
   const subscribeToPush = useCallback(async () => {
-    console.log("subscribeToPush called.");
     if (!VAPID_PUBLIC_KEY) {
-      console.error("VAPID public key is missing.");
       setError("VAPID public key is not configured.");
       return;
     }
     if (!userId) {
-      console.error("User ID is not set yet.");
       setError("User ID is not set.");
       return;
     }
 
     try {
-      const swReg = await navigator.serviceWorker.register("/sw.js");
+      // 1. Service Workerを登録する
+      await navigator.serviceWorker.register('/sw.js');
       console.log("Service worker registered.");
-      const sub = await swReg.pushManager.subscribe({
+
+      // 2. Service Workerが有効化され、準備が完了するのを待つ
+      const registration = await navigator.serviceWorker.ready;
+      console.log("Service worker is active and ready.");
+
+      // 3. 準備完了後、Push通知の購読を行う
+      const sub = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       });
-      console.log("PushManager subscribed.");
+      console.log("PushManager subscribed successfully.");
 
       await fetch("/api/subscribe", {
         method: "POST",
@@ -109,12 +103,8 @@ export const usePushNotifications = () => {
 
   useEffect(() => {
     const prompted = localStorage.getItem(NOTIFICATION_PROMPTED_KEY);
-    console.log(
-      `Checking if prompt is needed. Status: ${permissionStatus}, Prompted: ${prompted}`,
-    );
-
+    
     if (permissionStatus === "default" && !prompted) {
-      console.log("Conditions met. Triggering subscription prompt.");
       subscribeToPush();
       localStorage.setItem(NOTIFICATION_PROMPTED_KEY, "true");
     }
