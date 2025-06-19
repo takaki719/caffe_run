@@ -222,7 +222,7 @@ export async function POST(request: Request) {
         : [],
       simulationData: simulationData,
       currentStatusData: noCaffeineData,
-      minPerformances,
+      minPerformances: windowMinPerformances,
       targetPerformance: params.targetPerformance,
     };
 

@@ -16,6 +16,7 @@ import { useCaffeineAmounts } from "../hooks/UseCaffeineAmounts";
 import { useCaffeineLogs } from "@/hooks/UseCaffeineLogs";
 import { useUnityContext } from "react-unity-webgl";
 import Warnings from "@/components/Warnings";
+import TopBackButton from "@/components/TopBackButton";
 
 const HomePage: React.FC = () => {
   // developブランチの新しいカスタムフックで状態を管理
@@ -50,6 +51,8 @@ const HomePage: React.FC = () => {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [minPerformances, setMinPerformances] = useState<number[]>([]);
   const [targetPerformance, setTargetPerformance] = useState<number>(0.7);
+  const [subscriptionError, setSubscriptionError] = useState("");
+  const [isSubscribing, setIsSubscribing] = useState(false);
 
   // 入力チェック関数を、developブランチの変数名(camelCase)に合わせる
   const isValid = useCallback(() => {
@@ -210,6 +213,7 @@ const HomePage: React.FC = () => {
   }, []);
   return (
     <div>
+      <TopBackButton />
       <Warnings
         minPerformances={minPerformances}
         targetPerformance={targetPerformance}
@@ -277,14 +281,14 @@ const HomePage: React.FC = () => {
               disabled={isLoading}
             />
 
-              {error && (
-                <div className="text-red-600 font-semibold mb-3">{error}</div>
-              )}
-              {subscriptionError && (
-                <div className="text-red-600 font-semibold mb-3">
-                  {subscriptionError}
-                </div>
-              )}
+            {error && (
+              <div className="text-red-600 font-semibold mb-3">{error}</div>
+            )}
+            {subscriptionError && (
+              <div className="text-red-600 font-semibold mb-3">
+                {subscriptionError}
+              </div>
+            )}
 
             <div className="w-full flex justify-center mt-8 mb-6">
               <BlueButton
