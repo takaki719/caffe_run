@@ -1,11 +1,9 @@
-// /src/app/api/plan/route.ts
-// --------------------------------------------------
-// APIエンドポイントのメイン処理
-
 import { SleepPeriod, OptimizationParams } from "@/lib/optimizer/interfaces";
 import { PerformanceModel } from "@/lib/optimizer/PerformanceModel";
 import { CaffeineOptimizer } from "@/lib/optimizer/CaffeineOptimizer";
 import { NextResponse } from "next/server";
+import { kv } from "@/lib/kv";
+import { PushSubscription } from "web-push";
 
 // --- 型定義（フロントエンドからのリクエストボディ） ---
 export type FocusPeriodRequest = {
@@ -28,7 +26,7 @@ const timeToDate = (timeStr: string, date: Date): Date => {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { bed_time, wake_time, focus_periods } = body;
+    const { bed_time, wake_time, focus_periods, userId } = body;
 
     // --- バリデーション ---
     if (
@@ -112,9 +110,70 @@ export async function POST(request: Request) {
       doseOptions: doseOptions,
     };
 
+    if (!userId) {
+      return NextResponse.json(
+        { error: "userId is required" },
+        { status: 400 },
+      );
+    }
+
     // --- 最適化の実行 ---
     const optimizer = new CaffeineOptimizer();
     const optimalSchedule = optimizer.findOptimalSchedule(sleepHistory, params);
+
+    // 1. まず、このユーザーIDに関連する古いスケジュールをすべて削除する
+    const userSchedulesKey = `schedules:${userId}`;
+    await kv.del(userSchedulesKey);
+
+    // 2. 新しいカフェイン計画（optimalSchedule）が存在する場合、通知タスクを作成して登録する
+    if (optimalSchedule && optimalSchedule.length > 0) {
+      // ユーザーのPushSubscription情報をKVから取得
+      const subscription = await kv.get<PushSubscription>(`user:${userId}`);
+
+      if (subscription) {
+        const tasks = optimalSchedule.map((dose) => {
+          // DateオブジェクトからUnixタイムスタンプ（秒単位）に変換
+          const notifyAt = Math.floor(dose.time.getTime() / 1000);
+
+          const message = {
+            title: "Caffe-Run",
+            body: `カフェイン ${dose.mg}mg の摂取時間です！`,
+          };
+
+          return {
+            score: notifyAt, // Vercel KVのSorted Setで使うスコア
+            member: JSON.stringify({
+              // memberに実際のタスク情報をJSON文字列として保存
+              userId,
+              message,
+              subscription,
+            }),
+          };
+        });
+
+        // Vercel KVのSorted Setにタスクを追加
+        // userSchedulesKeyごとにスケジュールを管理することで、ユーザーごとにスケジュールを分離
+        if (tasks.length > 0) {
+          // 1. 新しいパイプラインを開始します
+          const pipeline = kv.pipeline();
+
+          // 2. 各タスクについて、パイプラインに zadd コマンドを追加していきます
+          // この呼び出し方は型がシンプルなので、エラーは発生しません。
+          tasks.forEach((task) => {
+            pipeline.zadd(userSchedulesKey, {
+              score: task.score,
+              member: task.member,
+            });
+          });
+
+          // 3. パイプラインに積まれた全てのコマンドを一度に実行します
+          await pipeline.exec();
+          console.log(
+            `Registered ${tasks.length} notification tasks for userId: ${userId}`,
+          );
+        }
+      }
+    }
 
     // --- パフォーマンス予測グラフの生成 ---
     const model = new PerformanceModel();

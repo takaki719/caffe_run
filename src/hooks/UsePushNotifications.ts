@@ -20,11 +20,9 @@ function urlBase64ToUint8Array(base64String: string) {
 export const usePushNotifications = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
   const [swRegistration, setSwRegistration] =
     useState<ServiceWorkerRegistration | null>(null);
 
-  // 1. ユーザーIDのセットアップとService Workerの登録・有効化を行うEffect
   useEffect(() => {
     let currentUserId = localStorage.getItem(USER_ID_KEY);
     if (!currentUserId) {
@@ -39,12 +37,11 @@ export const usePushNotifications = () => {
       return;
     }
 
-    // Service Workerを登録し、有効化されるのを待つ
     navigator.serviceWorker
       .register("/sw.js")
       .then((reg) => {
         console.log("Service Worker registration successful", reg);
-        setSwRegistration(reg); // 登録オブジェクトをstateに保存
+        setSwRegistration(reg);
       })
       .catch((err) => {
         console.error("Service Worker registration failed:", err);
@@ -52,25 +49,20 @@ export const usePushNotifications = () => {
       });
   }, []);
 
-  // 2. 購読処理を行うEffect
   const subscribe = useCallback(async () => {
     if (!swRegistration || !userId || !VAPID_PUBLIC_KEY) {
-      // 必要なものが揃っていなければ何もしない
       return;
     }
 
     const prompted = localStorage.getItem(NOTIFICATION_PROMPTED_KEY);
     const permission = Notification.permission;
 
-    // 初回アクセス時のみ実行
     if (permission === "default" && !prompted) {
       console.log("Conditions met, starting subscription process.");
       localStorage.setItem(NOTIFICATION_PROMPTED_KEY, "true");
 
       try {
-        // Service Workerの準備が本当に完了するのを待つ
         const readySwRegistration = await navigator.serviceWorker.ready;
-
         const sub = await readySwRegistration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
@@ -98,6 +90,7 @@ export const usePushNotifications = () => {
   }, [subscribe]);
 
   return {
+    userId,
     error,
   };
 };

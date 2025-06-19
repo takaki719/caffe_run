@@ -18,8 +18,10 @@ import { useCaffeineLogs } from "@/hooks/UseCaffeineLogs";
 import { useUnityContext } from "react-unity-webgl";
 import Warnings from "@/components/Warnings";
 import NotificationInitializer from "@/components/NotificationInitializer";
+import { usePushNotifications } from "@/hooks/UsePushNotifications";
 
 const HomePage: React.FC = () => {
+  const { userId } = usePushNotifications();
   // developブランチの新しいカスタムフックで状態を管理
   const { bedTime, wakeTime, setBedTime, setWakeTime } = useSleepTimes();
   // 状態の初期化（localStorageの値を優先）
@@ -77,10 +79,11 @@ const HomePage: React.FC = () => {
       const caffeine_logs = savedLogs ? JSON.parse(savedLogs) : [];
 
       const requestData = {
-        bed_time: bedTime, // 変数名を修正
-        wake_time: wakeTime, // 変数名を修正
+        bed_time: bedTime,
+        wake_time: wakeTime,
         focus_periods: focusPeriods,
         caffeine_logs,
+        userId: userId,
       };
 
       const response = await fetch("/api/plan", {
@@ -112,7 +115,7 @@ const HomePage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [bedTime, wakeTime, focusPeriods, isValid]);
+  }, [bedTime, wakeTime, focusPeriods, isValid, userId]);
 
   // --- 集中度をUnityに定期的に送信するuseEffectを追加 ---
   useEffect(() => {
