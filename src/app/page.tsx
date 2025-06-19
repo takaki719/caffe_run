@@ -49,7 +49,6 @@ const HomePage: React.FC = () => {
     codeUrl: "/unity/Build/Downloads.wasm",
   });
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [warnings, setWarnings] = useState<string[]>([]);
   const [minPerformances, setMinPerformances] = useState<number[]>([]);
   const [targetPerformance, setTargetPerformance] = useState<number>(0.7);
 
