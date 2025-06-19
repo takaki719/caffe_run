@@ -3,7 +3,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import SettingModal from "../components/SettingModal"; // 追加
 import BlueButton from "../components/BlueButton";
 import UnityModel from "../components/UnityModel";
-import TopBackButton from "@/components/TopBackButton";
 import Chart from "@/components/Chart";
 import RecommendedPlanList from "../components/NextCaffeineTime";
 import CaffeineLogForm from "../components/CaffeineLogForm";
@@ -16,6 +15,7 @@ import type { Recommendation } from "../components/NextCaffeineTime";
 import { useCaffeineAmounts } from "../hooks/UseCaffeineAmounts";
 import { useCaffeineLogs } from "@/hooks/UseCaffeineLogs";
 import { useUnityContext } from "react-unity-webgl";
+import Warnings from "@/components/Warnings";
 
 const HomePage: React.FC = () => {
   // developブランチの新しいカスタムフックで状態を管理
@@ -49,7 +49,8 @@ const HomePage: React.FC = () => {
   });
 
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [warnings, setWarnings] = useState<string[]>([]); // 警告メッセージ用のstateを追加
+  const [minPerformances, setMinPerformances] = useState<number[]>([]);
+  const [targetPerformance, setTargetPerformance] = useState<number>(0.7);
 
   // 入力チェック関数を、developブランチの変数名(camelCase)に合わせる
   const isValid = useCallback(() => {
@@ -97,7 +98,11 @@ const HomePage: React.FC = () => {
         current: result.currentStatusData || [],
       });
       setRecommendations(result.caffeinePlan || []);
-      setWarnings(result.warnings || []); // APIからの警告をstateにセット
+
+      // Warnings コンポーネントに必要なデータを設定
+      setMinPerformances(result.minPerformances || []);
+      setTargetPerformance(result.targetPerformance);
+
       setActiveGraph("simulation");
     } catch (error) {
       console.error("エラーが発生しました:", error);
@@ -146,120 +151,123 @@ const HomePage: React.FC = () => {
     return () => clearInterval(interval);
   }, [isLoaded, graphData.simulation, sendMessage]); // 依存配列に設定
 
-  // handleGeneratePlan を useEffect の依存に追加
+  // 初回起動時にモーダルを出す
   useEffect(() => {
-    const completed = localStorage.getItem("initial-setup-complete");
-    if (!completed) {
+    if (!localStorage.getItem("initial-setup-complete")) {
       setShowSettingModal(true);
-      handleGeneratePlan();
     }
-  }, [handleGeneratePlan]);
+  }, []);
   return (
     <div>
-      <div>
-        <TopBackButton />
-        {showSettingModal && (
-          <SettingModal onClose={() => setShowSettingModal(false)} />
-        )}
-        {!showSettingModal && (
-          <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 py-8">
-            <div className="w-full max-w-2xl flex justify-center">
-              {/* UnityModelにunityProviderを渡す */}
-              <UnityModel unityProvider={unityProvider} />
-            </div>
-
-            {/* developブランチの新しいレイアウトを採用 */}
-            <div className="w-full max-w-2xl mx-auto flex flex-row items-center justify-center gap-1 mt-8 px-0">
-              <div className="flex-2">
-                <RecommendedPlanList recommendations={recommendations} />
-              </div>
-              <div className="flex-1">
-                <Summery caffeineData={amounts} /> {/* サマリーのデータは仮 */}
-              </div>
-            </div>
-
-            <div className="w-full max-w-2xl mx-auto mt-8 mb-2">
-              <div className="flex items-center mb-2">
-                <button
-                  type="button"
-                  className="mr-3 w-8 h-8 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold transition text-xl"
-                  onClick={() => setIsLogFormOpen((p) => !p)}
-                  aria-label={isLogFormOpen ? "閉じる" : "開く"}
-                >
-                  {isLogFormOpen ? "-" : "+"}
-                </button>
-                <h2 className="text-lg font-bold text-gray-800">
-                  カフェイン摂取記録
-                </h2>
-              </div>
-              {isLogFormOpen && (
-                <CaffeineLogForm logs={logs} setLogs={setLogs} />
-              )}
-            </div>
-
-            <main className="flex flex-col items-center flex-1 w-full max-w-2xl mx-auto">
-              {/* developブランチの新しいフォームコンポーネントを使用 */}
-              <SleepForm
-                bedTime={bedTime}
-                wakeTime={wakeTime}
-                setBedTime={setBedTime}
-                setWakeTime={setWakeTime}
-                disabled={isLoading}
-              />
-              <FocusForm
-                focusPeriods={focusPeriods}
-                addFocusPeriod={addFocusPeriod}
-                removeFocusPeriod={removeFocusPeriod}
-                updateFocusPeriod={updateFocusPeriod}
-                disabled={isLoading}
-                warnings={warnings}
-              />
-
-              {error && (
-                <div className="text-red-600 font-semibold mb-3">{error}</div>
-              )}
-
-              <div className="w-full flex justify-center mt-8 mb-6">
-                <BlueButton
-                  label={
-                    isLoading ? "計画生成中..." : "カフェイン計画を生成する"
-                  }
-                  href="#"
-                  onClick={handleGeneratePlan}
-                  disabled={isLoading}
-                />
-              </div>
-
-              {/* あなたが実装したグラフ表示部分 */}
-              {(graphData.simulation.length > 0 ||
-                graphData.current.length > 0) && (
-                <div className="w-full max-w-2xl flex flex-col items-center justify-center mt-8">
-                  <div className="flex justify-center gap-4 mb-4">
-                    <button
-                      onClick={() => setActiveGraph("simulation")}
-                      className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === "simulation" ? "bg-indigo-500 text-white shadow" : "bg-gray-200 text-gray-700"}`}
-                    >
-                      理想の集中度
-                    </button>
-                    <button
-                      onClick={() => setActiveGraph("current")}
-                      className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === "current" ? "bg-teal-500 text-white shadow" : "bg-gray-200 text-gray-700"}`}
-                    >
-                      現在の集中度
-                    </button>
-                  </div>
-                  <div className="w-full">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-                      カフェイン効果予測
-                    </h3>
-                    <Chart data={graphData[activeGraph]} />
-                  </div>
-                </div>
-              )}
-            </main>
+      <Warnings
+        minPerformances={minPerformances}
+        targetPerformance={targetPerformance}
+      />
+      {showSettingModal && (
+        <SettingModal
+          onClose={(mins, tgt) => {
+            // 親で受け取ってモーダルを閉じつつ警告データを保存
+            setMinPerformances(mins);
+            setTargetPerformance(tgt);
+            setShowSettingModal(false);
+            // 続けて一度プラン生成も行う (モーダル内で生成済みなら不要)
+            // handleGeneratePlan();
+          }}
+        />
+      )}
+      {!showSettingModal && (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 py-8">
+          <div className="w-full max-w-2xl flex justify-center">
+            {/* UnityModelにunityProviderを渡す */}
+            <UnityModel unityProvider={unityProvider} />
           </div>
-        )}
-      </div>
+
+          {/* developブランチの新しいレイアウトを採用 */}
+          <div className="w-full max-w-2xl mx-auto flex flex-row items-center justify-center gap-1 mt-8 px-0">
+            <div className="flex-2">
+              <RecommendedPlanList recommendations={recommendations} />
+            </div>
+            <div className="flex-1">
+              <Summery caffeineData={amounts} />
+            </div>
+          </div>
+
+          <div className="w-full max-w-2xl mx-auto mt-8 mb-2">
+            <div className="flex items-center mb-2">
+              <button
+                type="button"
+                className="mr-3 w-8 h-8 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold transition text-xl"
+                onClick={() => setIsLogFormOpen((p) => !p)}
+                aria-label={isLogFormOpen ? "閉じる" : "開く"}
+              >
+                {isLogFormOpen ? "-" : "+"}
+              </button>
+              <h2 className="text-lg font-bold text-gray-800">
+                カフェイン摂取記録
+              </h2>
+            </div>
+            {isLogFormOpen && <CaffeineLogForm logs={logs} setLogs={setLogs} />}
+          </div>
+
+          <main className="flex flex-col items-start flex-1 w-full max-w-2xl mx-auto px-4">
+            {/* developブランチの新しいフォームコンポーネントを使用 */}
+            <SleepForm
+              bedTime={bedTime}
+              wakeTime={wakeTime}
+              setBedTime={setBedTime}
+              setWakeTime={setWakeTime}
+              disabled={isLoading}
+            />
+            <FocusForm
+              focusPeriods={focusPeriods}
+              addFocusPeriod={addFocusPeriod}
+              removeFocusPeriod={removeFocusPeriod}
+              updateFocusPeriod={updateFocusPeriod}
+              disabled={isLoading}
+            />
+
+            {error && (
+              <div className="text-red-600 font-semibold mb-3">{error}</div>
+            )}
+
+            <div className="w-full flex justify-center mt-8 mb-6">
+              <BlueButton
+                label={isLoading ? "計画生成中..." : "カフェイン計画を生成する"}
+                href="#"
+                onClick={handleGeneratePlan}
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* あなたが実装したグラフ表示部分 */}
+            {(graphData.simulation.length > 0 ||
+              graphData.current.length > 0) && (
+              <div className="w-full max-w-2xl flex flex-col items-center justify-center mt-8">
+                <div className="flex justify-center gap-4 mb-4">
+                  <button
+                    onClick={() => setActiveGraph("simulation")}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === "simulation" ? "bg-indigo-500 text-white shadow" : "bg-gray-200 text-gray-700"}`}
+                  >
+                    理想の集中度
+                  </button>
+                  <button
+                    onClick={() => setActiveGraph("current")}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === "current" ? "bg-teal-500 text-white shadow" : "bg-gray-200 text-gray-700"}`}
+                  >
+                    現在の集中度
+                  </button>
+                </div>
+                <div className="w-full">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+                    カフェイン効果予測
+                  </h3>
+                  <Chart data={graphData[activeGraph]} />
+                </div>
+              </div>
+            )}
+          </main>
+        </div>
+      )}
     </div>
   );
 };
