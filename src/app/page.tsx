@@ -28,7 +28,7 @@ const HomePage: React.FC = () => {
   const { focusPeriods, addFocusPeriod, removeFocusPeriod, updateFocusPeriod } =
     useFocusPeriods();
 
-  // カフェイン摂取量の履歴を取得
+  // カフェイン摂取量の履歴取得
   const [logs, setLogs] = useCaffeineLogs();
   const amounts = useCaffeineAmounts(logs);
 
