@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import SettingModal from "../components/SettingModal"; // 追加
 import BlueButton from "../components/BlueButton";
-import UnityModel from "../components/UnityModel";
+import UnityModelWrapper from "@/components/UnityModelWrapper";
 import Chart from "@/components/Chart";
 import RecommendedPlanList from "../components/NextCaffeineTime";
 import CaffeineLogForm from "../components/CaffeineLogForm";
@@ -174,7 +174,7 @@ const HomePage: React.FC = () => {
         <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 py-8">
           <div className="w-full max-w-2xl flex justify-center">
             {/* UnityModelにunityProviderを渡す */}
-            <UnityModel unityProvider={unityProvider} />
+            <UnityModelWrapper unityProvider={unityProvider} />
           </div>
 
           {/* developブランチの新しいレイアウトを採用 */}
