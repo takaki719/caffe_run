@@ -19,11 +19,10 @@ function urlBase64ToUint8Array(base64String: string) {
 
 export const usePushNotifications = () => {
   const [userId, setUserId] = useState<string | null>(null);
-  const [subscription, setSubscription] = useState<PushSubscription | null>(null);
-  const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
+
+  const [swRegistration, setSwRegistration] =
+    useState<ServiceWorkerRegistration | null>(null);
 
   // 1. ユーザーIDのセットアップとService Workerの登録・有効化を行うEffect
   useEffect(() => {
@@ -41,14 +40,15 @@ export const usePushNotifications = () => {
     }
 
     // Service Workerを登録し、有効化されるのを待つ
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg => {
-        console.log('Service Worker registration successful', reg);
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then((reg) => {
+        console.log("Service Worker registration successful", reg);
         setSwRegistration(reg); // 登録オブジェクトをstateに保存
       })
-      .catch(err => {
-        console.error('Service Worker registration failed:', err);
-        setError('Service Worker registration failed.');
+      .catch((err) => {
+        console.error("Service Worker registration failed:", err);
+        setError("Service Worker registration failed.");
       });
   }, []);
 
@@ -63,32 +63,32 @@ export const usePushNotifications = () => {
     const permission = Notification.permission;
 
     // 初回アクセス時のみ実行
-    if (permission === 'default' && !prompted) {
-      console.log('Conditions met, starting subscription process.');
-      localStorage.setItem(NOTIFICATION_PROMPTED_KEY, 'true');
-      
+    if (permission === "default" && !prompted) {
+      console.log("Conditions met, starting subscription process.");
+      localStorage.setItem(NOTIFICATION_PROMPTED_KEY, "true");
+
       try {
         // Service Workerの準備が本当に完了するのを待つ
         const readySwRegistration = await navigator.serviceWorker.ready;
-        
+
         const sub = await readySwRegistration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
         });
 
-        console.log('PushManager subscribed successfully.');
-        await fetch('/api/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        console.log("PushManager subscribed successfully.");
+        await fetch("/api/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId, subscription: sub }),
         });
 
-        console.log('Subscription sent to server.');
-        setSubscription(sub);
-        setIsSubscribed(true);
+        console.log("Subscription sent to server.");
       } catch (err) {
-        console.error('Failed to subscribe to push notifications:', err);
-        setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+        console.error("Failed to subscribe to push notifications:", err);
+        setError(
+          err instanceof Error ? err.message : "An unknown error occurred.",
+        );
       }
     }
   }, [swRegistration, userId]);
@@ -97,9 +97,7 @@ export const usePushNotifications = () => {
     subscribe();
   }, [subscribe]);
 
-
   return {
-    isSubscribed,
     error,
   };
 };
