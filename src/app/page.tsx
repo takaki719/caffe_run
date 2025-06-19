@@ -43,12 +43,14 @@ const HomePage: React.FC = () => {
   );
   const { unityProvider, sendMessage, isLoaded } = useUnityContext({
     loaderUrl: "/unity/Build/public.loader.js",
-    dataUrl: "/unity/Build/public.data.br",
-    frameworkUrl: "/unity/Build/public.framework.js.br",
-    codeUrl: "/unity/Build/public.wasm.br",
+    dataUrl: "/unity/Build/public.data",
+    frameworkUrl: "/unity/Build/public.framework.js",
+    codeUrl: "/unity/Build/public.wasm",
   });
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [warnings, setWarnings] = useState<string[]>([])
+  const [minPerformances, setMinPerformances] = useState<number[]>([]);
+  const [targetPerformance, setTargetPerformance] = useState<number>(0.7);
 
   // 入力チェック関数を、developブランチの変数名(camelCase)に合わせる
   const isValid = useCallback(() => {
