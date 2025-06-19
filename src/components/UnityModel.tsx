@@ -3,7 +3,9 @@ import React from "react";
 import { Unity } from "react-unity-webgl";
 
 interface UnityModelProps {
-  unityProvider: ReturnType<typeof import("react-unity-webgl").useUnityContext>["unityProvider"];
+  unityProvider: ReturnType<
+    typeof import("react-unity-webgl").useUnityContext
+  >["unityProvider"];
 }
 
 const UnityModel: React.FC<UnityModelProps> = ({ unityProvider }) => {

@@ -48,7 +48,7 @@ const HomePage: React.FC = () => {
     codeUrl: "/unity/Build/Downloads.wasm",
   });
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [warnings, setWarnings] = useState<string[]>([])
+  const [warnings, setWarnings] = useState<string[]>([]);
   const [minPerformances, setMinPerformances] = useState<number[]>([]);
   const [targetPerformance, setTargetPerformance] = useState<number>(0.7);
 
@@ -126,16 +126,18 @@ const HomePage: React.FC = () => {
       ).padStart(2, "0")}`;
 
       // ★ 修正点3: グラフデータから現在時刻に一致するものを探す（シンプル版）
-      const currentPoint = graphData[activeGraph].find(p => p.time === nowStr);
+      const currentPoint = graphData[activeGraph].find(
+        (p) => p.time === nowStr,
+      );
 
       if (currentPoint) {
         // ★ 修正点1: currentPoint.value（集中度）をそのまま使う
         const focusValue = currentPoint.value;
 
         sendMessage(
-          'unitychan',
-          'SetAnimationSpeed',
-          focusValue.toString() // ★ 修正点1: 未定義だったconcentrationValueをfocusValueに修正
+          "unitychan",
+          "SetAnimationSpeed",
+          focusValue.toString(), // ★ 修正点1: 未定義だったconcentrationValueをfocusValueに修正
         );
       }
     }, 2000); // 2秒ごと
@@ -147,9 +149,9 @@ const HomePage: React.FC = () => {
     if (!localStorage.getItem("initial-setup-complete")) {
       setShowSettingModal(true);
       //handleGeneratePlan();
-    }else {
-        // 初回設定が終わっている場合はプランを自動生成
-        handleGeneratePlan();
+    } else {
+      // 初回設定が終わっている場合はプランを自動生成
+      handleGeneratePlan();
     }
   }, []); // handleGeneratePlanが生成されるたびに実行
   return (
