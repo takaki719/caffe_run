@@ -2,6 +2,7 @@
 import { kv } from "@/lib/kv";
 import { NextResponse } from "next/server";
 import webpush from "web-push";
+import { NextRequest } from "next/server";
 
 // VAPIDキーの設定
 if (
@@ -17,7 +18,11 @@ if (
   );
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
   if (!process.env.VAPID_PRIVATE_KEY) {
     return NextResponse.json(
       { success: false, message: "VAPID keys not configured." },

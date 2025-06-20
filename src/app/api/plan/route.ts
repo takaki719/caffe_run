@@ -217,21 +217,15 @@ export async function POST(request: Request) {
     }
 
     // --- レスポンス (変更なし) ---
+    // APIは計算結果をクライアントに返すだけ。DB保存や通知は行わない。
     const responseData = {
       recommended: optimalSchedule && optimalSchedule.length > 0,
       caffeinePlan: (optimalSchedule || []).map((dose) => ({
-        time: dose.time.toLocaleTimeString("ja-JP", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        time: dose.time.toISOString(), // ★ ISO文字列として返す
         caffeineAmount: dose.mg,
       })),
-      simulationData,
-      currentStatusData,
-      minPerformances: windowMinPerformances.map((v) => v),
-      targetPerformance: params.targetPerformance,
+      // ... (simulationData, currentStatusDataなど)
     };
-
     return NextResponse.json(responseData);
   } catch (error) {
     console.error("API Error:", error);

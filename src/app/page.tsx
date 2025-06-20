@@ -19,6 +19,7 @@ import { useUnityContext } from "react-unity-webgl";
 import Warnings from "@/components/Warnings";
 import NotificationInitializer from "@/components/NotificationInitializer";
 import { usePushNotifications } from "@/hooks/UsePushNotifications";
+import { setSchedules } from "@/lib/local-db";
 
 const HomePage: React.FC = () => {
   const { userId } = usePushNotifications();
@@ -101,6 +102,38 @@ const HomePage: React.FC = () => {
       }
 
       const result = await response.json();
+
+      if (result.caffeinePlan && result.caffeinePlan.length > 0) {
+        // ユーザーの購読情報を取得
+        const swReg = await navigator.serviceWorker.ready;
+        const subscription = await swReg.pushManager.getSubscription();
+
+        if (subscription) {
+          const tasks = result.caffeinePlan.map((plan: Recommendation) => {
+            const doseTime = new Date(plan.time);
+            return {
+              id: doseTime.getTime(),
+              userId: userId,
+              message: {
+                title: "Caffe-Run",
+                body: `まもなく ${doseTime.toLocaleTimeString("ja-JP", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })} にカフェイン ${plan.caffeineAmount}mg の摂取時間です！`,
+              },
+              subscription: subscription.toJSON(),
+            };
+          });
+
+          // 1. IndexedDBにスケジュールを保存
+          await setSchedules(tasks);
+
+          // 2. Service Workerに次の通知を予約するようメッセージを送る
+          navigator.serviceWorker.controller?.postMessage({
+            type: "SCHEDULE_NEXT_NOTIFICATION",
+          });
+        }
+      }
 
       setGraphData({
         simulation: result.simulationData || [],
