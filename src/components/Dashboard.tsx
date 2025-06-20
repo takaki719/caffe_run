@@ -11,6 +11,102 @@ import {
 } from "recharts";
 import type { CaffeineLogEntry } from "./CaffeineLogTable";
 
+// NextCaffeineTime.tsxから同じロジックを使用
+interface FocusPeriod {
+  start: string;
+  end: string;
+}
+
+interface Recommendation {
+  time: string;
+  caffeineAmount: number;
+}
+
+/**
+ * 起床時間と集中時間を基準に有効な推奨プランのみを返す
+ * 以下の条件で推奨プランを表示しない：
+ * 1. 起床時間から24時間が経過した場合
+ * 2. すべての集中時間が終了した場合
+ */
+function getValidRecommendations(
+  recommendations: Recommendation[],
+  wakeTime: string,
+  focusPeriods: FocusPeriod[],
+  now: Date,
+): Recommendation[] {
+  if (!wakeTime) return recommendations;
+
+  // "HH:MM"→分に変換
+  const toMinutes = (t: string) => {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  };
+
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const wakeMinutes = toMinutes(wakeTime);
+
+  // 起床時間から24時間経過したかをチェック
+  let isDayPassed = false;
+
+  if (wakeMinutes <= nowMinutes) {
+    // 通常のケース：起床時間が今日の朝など
+    const hoursPassed = (nowMinutes - wakeMinutes) / 60;
+    isDayPassed = hoursPassed >= 24;
+  } else {
+    // 日をまたぐケース：起床時間が今日の夜など（前日の起床から計算）
+    const minutesSinceYesterdayWake = nowMinutes + 24 * 60 - wakeMinutes;
+    const hoursPassed = minutesSinceYesterdayWake / 60;
+    isDayPassed = hoursPassed >= 24;
+  }
+
+  // 起床時間から24時間が過ぎている場合は空を返す
+  if (isDayPassed) {
+    return [];
+  }
+
+  // 集中時間がすべて終了しているかチェック
+  if (focusPeriods && focusPeriods.length > 0) {
+    const validFocusPeriods = focusPeriods.filter(period => period.start && period.end);
+    
+    if (validFocusPeriods.length > 0) {
+      const allFocusPeriodsEnded = validFocusPeriods.every(period => {
+        let endMinutes = toMinutes(period.end);
+        const startMinutes = toMinutes(period.start);
+        
+        // 日をまたぐ集中時間の場合（例：22:00-02:00）
+        if (startMinutes > endMinutes) {
+          endMinutes += 24 * 60; // 翌日の時刻として扱う
+          // 現在時刻が午前中（起床時刻より小さい）場合は翌日として扱う必要がある
+          const currentTimeForComparison = nowMinutes < wakeMinutes ? nowMinutes + 24 * 60 : nowMinutes;
+          return currentTimeForComparison > endMinutes;
+        } else {
+          // 日をまたがない集中時間の場合
+          // 現在時刻が起床時刻より小さい場合（翌日）は、集中時間は終了している
+          if (nowMinutes < wakeMinutes) {
+            return true; // 翌日なので前日の集中時間は終了
+          }
+          return nowMinutes > endMinutes;
+        }
+      });
+      
+      // すべての集中時間が終了している場合は空を返す
+      if (allFocusPeriodsEnded) {
+        return [];
+      }
+    }
+  }
+
+  // 現在時刻以降の推奨プランのみを取得
+  const futureRecommendations = recommendations.filter(
+    (rec) => toMinutes(rec.time) > nowMinutes,
+  );
+
+  // 時刻順にソート
+  return futureRecommendations.sort(
+    (a, b) => toMinutes(a.time) - toMinutes(b.time),
+  );
+}
+
 export interface DashboardProps {
   logs: CaffeineLogEntry[] | null;
   graphData: {
@@ -424,42 +520,65 @@ const Dashboard: React.FC<DashboardProps> = ({
       )}
 
       {/* 今日の推奨スケジュール */}
-      {recommendations.length > 0 && (
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            今日の推奨摂取スケジュール
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {recommendations.map((rec, index) => {
-              const isExecuted = executedRecommendations.some(
-                (executed) => executed.time === rec.time,
-              );
-              return (
-                <div
-                  key={index}
-                  className={`p-3 rounded-lg border-2 ${
-                    isExecuted
-                      ? "border-green-300 bg-green-50"
-                      : "border-gray-200 bg-gray-50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-bold text-lg text-gray-800">
-                        {rec.time}
+      {(() => {
+        // 有効な推奨プランをフィルタリング
+        const validRecommendations = getValidRecommendations(
+          recommendations,
+          wakeTime,
+          focusPeriods,
+          new Date()
+        );
+
+        return validRecommendations.length > 0 ? (
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              今日の推奨摂取スケジュール
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {validRecommendations.map((rec, index) => {
+                const isExecuted = executedRecommendations.some(
+                  (executed) => executed.time === rec.time,
+                );
+                return (
+                  <div
+                    key={index}
+                    className={`p-3 rounded-lg border-2 ${
+                      isExecuted
+                        ? "border-green-300 bg-green-50"
+                        : "border-gray-200 bg-gray-50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-lg text-gray-800">
+                          {rec.time}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {rec.caffeineAmount}mg
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-600">
-                        {rec.caffeineAmount}mg
-                      </div>
+                      <div className="text-2xl">{isExecuted ? "✅" : "⏰"}</div>
                     </div>
-                    <div className="text-2xl">{isExecuted ? "✅" : "⏰"}</div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        ) : (
+          recommendations.length > 0 && (
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                今日の推奨摂取スケジュール
+              </h3>
+              <div className="text-center text-gray-500 py-8">
+                <div className="text-4xl mb-2">😴</div>
+                <p>推奨プランがありません</p>
+                <p className="text-sm mt-1">集中時間が終了しているか、起床から24時間が経過しています</p>
+              </div>
+            </div>
+          )
+        );
+      })()}
     </div>
   );
 };
