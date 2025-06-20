@@ -157,7 +157,7 @@ const HomePage: React.FC = () => {
       // 初回設定が終わっている場合はプランを自動生成
       handleGeneratePlan();
     }
-  }, []); // handleGeneratePlanが生成されるたびに実行
+  }, [handleGeneratePlan]); // handleGeneratePlanが生成されるたびに実行
   return (
     <div>
       <NotificationInitializer />
