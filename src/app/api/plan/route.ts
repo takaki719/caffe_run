@@ -1,11 +1,16 @@
 // /src/app/api/plan/route.ts
 // --------------------------------------------------
-// APIエンドポイントのメイン処理
+// APIエンドポイントのメイン処理（元の計算モデル）
 
-import { SleepPeriod, OptimizationParams } from "@/lib/optimizer/interfaces";
+import {
+  CaffeineDose,
+  SleepPeriod,
+  OptimizationParams,
+} from "@/lib/optimizer/interfaces";
 import { PerformanceModel } from "@/lib/optimizer/PerformanceModel";
 import { CaffeineOptimizer } from "@/lib/optimizer/CaffeineOptimizer";
 import { NextResponse } from "next/server";
+import type { CaffeineLogEntry } from "@/components/CaffeineLogTable";
 
 // --- 型定義（フロントエンドからのリクエストボディ） ---
 export type FocusPeriodRequest = {
@@ -28,7 +33,7 @@ const timeToDate = (timeStr: string, date: Date): Date => {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { bed_time, wake_time, focus_periods } = body;
+    const { bed_time, wake_time, focus_periods, caffeine_logs } = body;
 
     // --- バリデーション ---
     if (
@@ -59,12 +64,9 @@ export async function POST(request: Request) {
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
 
-    // 時刻の前後関係を比較するために、一旦同じ日付のDateオブジェクトに変換
     const bedTimeOnSameDay = timeToDate(bed_time, today);
     const wakeTimeOnSameDay = timeToDate(wake_time, today);
 
-    // 就寝時刻が起床時刻より後（例: 23:00 > 07:00）なら、就寝日は昨日とする
-    // そうでなければ（例: 01:00 < 09:00）、就寝日も今日とする
     const bedTimeDate =
       bedTimeOnSameDay > wakeTimeOnSameDay ? yesterday : today;
 
@@ -78,14 +80,19 @@ export async function POST(request: Request) {
       },
     ];
 
-    // 睡眠時間を計算 (時間単位)
+    const actualCaffeineHistory: CaffeineDose[] = (caffeine_logs || []).map(
+      (log: CaffeineLogEntry) => ({
+        time: timeToDate(log.time, today),
+        mg: log.caffeineMg,
+      }),
+    );
+
     const sleepDurationMs = finalWakeTime.getTime() - finalBedTime.getTime();
     const sleepDurationHours = sleepDurationMs / (1000 * 60 * 60);
 
     const SHORT_SLEEP_THRESHOLD_HOURS = 5;
     const isShortSleep = sleepDurationHours < SHORT_SLEEP_THRESHOLD_HOURS;
 
-    // 睡眠時間に応じてフォールバック量と、最適化で試行する選択肢を変更する
     const fallbackDose = isShortSleep ? 200 : 200;
     const doseOptions = isShortSleep ? [150, 200] : [50, 100, 150, 200];
 
@@ -94,8 +101,6 @@ export async function POST(request: Request) {
         const startDate = timeToDate(p.start, today);
         let endDate = timeToDate(p.end, today);
 
-        // 集中時間の開始時刻が終了時刻より後の場合（例: 23:00 > 05:00）、
-        // 日をまたいだと判断し、終了日を明日に設定する
         if (startDate > endDate) {
           endDate = timeToDate(p.end, tomorrow);
         }
@@ -107,16 +112,14 @@ export async function POST(request: Request) {
       }),
       targetPerformance: 0.7,
       maxDosePerIntake: 200,
-      minTimeBetweenDosesHours: 0.5, // 間隔を短くして柔軟性を高める
+      minTimeBetweenDosesHours: 0.5,
       fallbackDose: fallbackDose,
       doseOptions: doseOptions,
     };
 
-    // --- 最適化の実行 ---
     const optimizer = new CaffeineOptimizer();
     const optimalSchedule = optimizer.findOptimalSchedule(sleepHistory, params);
 
-    // --- パフォーマンス予測グラフの生成 ---
     const model = new PerformanceModel();
     const simulationData: { time: string; value: number }[] = [];
     const dayStart = timeToDate(wake_time, today);
@@ -125,7 +128,7 @@ export async function POST(request: Request) {
 
     const windowMinPerformances = new Array(params.timeWindows.length).fill(
       1.1,
-    ); // 1より大きい初期値
+    );
 
     for (
       let t = dayStart.getTime();
@@ -140,12 +143,11 @@ export async function POST(request: Request) {
         params.timeWindows,
       );
 
-      // 現在時刻がどの集中時間帯に含まれるかチェックし、最低パフォーマンスを更新
       params.timeWindows.forEach((window, index) => {
         if (currentTime >= window.start && currentTime <= window.end) {
           windowMinPerformances[index] = Math.min(
             windowMinPerformances[index],
-            performance, // 0-1のパフォーマンス値を直接比較
+            performance,
           );
         }
       });
@@ -155,26 +157,24 @@ export async function POST(request: Request) {
           hour: "2-digit",
           minute: "2-digit",
         }),
-        value: Math.max(5, Math.round(performance * 100)), // キーを "focus" に変更し、値を0-100の範囲にする
+        value: Math.max(5, Math.round(performance * 100)),
       });
     }
 
-    // --- 2. カフェインを摂取しなかった場合の覚醒度（現在の覚醒度グラフ用）---
-    const noCaffeineData: { time: string; value: number }[] = [];
+    const currentStatusData: { time: string; value: number }[] = [];
     for (
       let t = dayStart.getTime();
       t <= dayEnd.getTime();
       t += 15 * 60 * 1000
     ) {
       const currentTime = new Date(t);
-      // model.predictの第3引数（カフェイン履歴）に空の配列[]を渡す
       const performance = model.predict(
         currentTime,
         sleepHistory,
-        [],
+        actualCaffeineHistory,
         params.timeWindows,
       );
-      noCaffeineData.push({
+      currentStatusData.push({
         time: currentTime.toLocaleTimeString("ja-JP", {
           hour: "2-digit",
           minute: "2-digit",
@@ -183,24 +183,23 @@ export async function POST(request: Request) {
       });
     }
 
-    // --- 最終的なレスポンス ---
     const isRecommended = optimalSchedule && optimalSchedule.length > 0;
 
-    const minPerformances = windowMinPerformances.map((v) => v); // ウィンドウごとの最低パフォーマンス値（0～1）
+    const minPerformances = windowMinPerformances.map((v) => v);
 
     const responseData = {
-      recommended: isRecommended, // ここで推奨フラグをセット
+      recommended: isRecommended,
       caffeinePlan: isRecommended
         ? optimalSchedule.map((dose) => ({
             time: dose.time.toLocaleTimeString("ja-JP", {
               hour: "2-digit",
-              minute: "2-digit", //ここで時間をフロントエントに返してる
+              minute: "2-digit",
             }),
-            caffeineAmount: dose.mg, //同様にカフェイン量を返している
+            caffeineAmount: dose.mg,
           }))
         : [],
       simulationData: simulationData,
-      currentStatusData: noCaffeineData,
+      currentStatusData: currentStatusData,
       minPerformances,
       targetPerformance: params.targetPerformance,
     };
