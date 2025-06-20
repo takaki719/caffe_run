@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
-import SettingModal from "../components/SettingModal"; // 追加
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import SettingModal from "../components/SettingModal";
 import BlueButton from "../components/BlueButton";
 import UnityModelWrapper from "@/components/UnityModelWrapper";
 import TopBackButton from "@/components/TopBackButton";
@@ -20,23 +20,89 @@ import Warnings from "@/components/Warnings";
 import { useExpireCaffeineLogs } from "@/hooks/useExpireCaffeineLogs";
 import ExpirePopup from "@/components/ExpirePopup";
 
+// グラフの点の型定義
+type GraphPoint = { time: string; value: number };
+
+// Unityのロジックをカプセル化する新しいコンポーネント
+const UnityContainer = ({
+  graphData,
+}: {
+  graphData: { current: GraphPoint[] };
+}) => {
+  const { unityProvider, sendMessage, isLoaded } = useUnityContext({
+    loaderUrl: "/unity/Build/Downloads.loader.js",
+    dataUrl: "/unity/Build/Downloads.data",
+    frameworkUrl: "/unity/Build/Downloads.framework.js",
+    codeUrl: "/unity/Build/Downloads.wasm",
+  });
+
+  // Unityに集中度データを送信するタイマー処理
+  useEffect(() => {
+    if (!isLoaded || graphData.current.length === 0) {
+      return;
+    }
+    const intervalId = setInterval(() => {
+      const now = new Date();
+      const timeToMinutes = (timeStr: string) => {
+        const [h, m] = timeStr.split(":").map(Number);
+        return h * 60 + m;
+      };
+      const nowInMinutes = now.getHours() * 60 + now.getMinutes();
+
+      // ★★★★★★★ 修正点: 二分探索（バイナリサーチ）で効率化 ★★★★★★★
+      let low = 0;
+      let high = graphData.current.length - 1;
+      let closestPoint = graphData.current[0];
+
+      while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        const midPoint = graphData.current[mid];
+        const midTimeInMinutes = timeToMinutes(midPoint.time);
+
+        if (
+          Math.abs(midTimeInMinutes - nowInMinutes) <
+          Math.abs(timeToMinutes(closestPoint.time) - nowInMinutes)
+        ) {
+          closestPoint = midPoint;
+        }
+
+        if (midTimeInMinutes < nowInMinutes) {
+          low = mid + 1;
+        } else if (midTimeInMinutes > nowInMinutes) {
+          high = mid - 1;
+        } else {
+          closestPoint = midPoint;
+          break;
+        }
+      }
+      // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+      if (closestPoint) {
+        sendMessage(
+          "unitychan",
+          "SetAnimationSpeed",
+          closestPoint.value.toString(),
+        );
+      }
+    }, 2000);
+    return () => clearInterval(intervalId);
+  }, [isLoaded, sendMessage, graphData]);
+
+  return <UnityModelWrapper unityProvider={unityProvider} />;
+};
+
 const HomePage: React.FC = () => {
-  // developブランチの新しいカスタムフックで状態を管理
   const { bedTime, wakeTime, setBedTime, setWakeTime } = useSleepTimes();
-  // 状態の初期化（localStorageの値を優先）
   const { focusPeriods, addFocusPeriod, removeFocusPeriod, updateFocusPeriod } =
     useFocusPeriods();
 
-  // カフェイン摂取量の履歴を取得
   const [logs, setLogs] = useCaffeineLogs();
   const amounts = useCaffeineAmounts(logs);
 
-  // あなたが追加した、エラー、ローディング、グラフ関連のstate
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isLogFormOpen, setIsLogFormOpen] = useState(true);
   const [showSettingModal, setShowSettingModal] = useState(false);
-  type GraphPoint = { time: string; value: number };
   const [graphData, setGraphData] = useState<{
     simulation: GraphPoint[];
     current: GraphPoint[];
@@ -44,12 +110,9 @@ const HomePage: React.FC = () => {
   const [activeGraph, setActiveGraph] = useState<"simulation" | "current">(
     "simulation",
   );
-  const { unityProvider, sendMessage, isLoaded } = useUnityContext({
-    loaderUrl: "/unity/Build/Downloads.loader.js",
-    dataUrl: "/unity/Build/Downloads.data",
-    frameworkUrl: "/unity/Build/Downloads.framework.js",
-    codeUrl: "/unity/Build/Downloads.wasm",
-  });
+
+  const [unityKey, setUnityKey] = useState(1);
+
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [minPerformances, setMinPerformances] = useState<number[]>([]);
   const [targetPerformance, setTargetPerformance] = useState<number>(0.7);
@@ -71,15 +134,12 @@ const HomePage: React.FC = () => {
     }
   }, []);
 
-  // 入力チェック関数を、developブランチの変数名(camelCase)に合わせる
   const isValid = useCallback(() => {
     return (
       !!bedTime && !!wakeTime && focusPeriods.some((p) => p.start && p.end)
     );
   }, [bedTime, wakeTime, focusPeriods]);
 
-  // あなたが実装したAPI呼び出し関数を、developブランチの変数名に合わせる
-  // handleGeneratePlan を useCallback に変更
   const handleGeneratePlan = useCallback(async () => {
     if (!isValid()) {
       setError("集中時間・睡眠時間を入力してください");
@@ -90,89 +150,59 @@ const HomePage: React.FC = () => {
     setGraphData({ simulation: [], current: [] });
 
     try {
-      const savedLogs = window.localStorage.getItem("caffeine-logs");
-      const caffeine_logs = savedLogs ? JSON.parse(savedLogs) : [];
-
-      const requestData = {
-        bed_time: bedTime, // 変数名を修正
-        wake_time: wakeTime, // 変数名を修正
-        focus_periods: focusPeriods,
-        caffeine_logs,
-      };
-
       const response = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestData),
+        body: JSON.stringify({
+          bed_time: bedTime,
+          wake_time: wakeTime,
+          focus_periods: focusPeriods,
+          caffeine_logs: logs,
+        }),
       });
 
       if (!response.ok) {
         throw new Error("APIリクエストに失敗しました");
       }
-
       const result = await response.json();
-
       setGraphData({
         simulation: result.simulationData || [],
         current: result.currentStatusData || [],
       });
       setRecommendations(result.caffeinePlan || []);
-
-      // Warnings コンポーネントに必要なデータを設定
       setMinPerformances(result.minPerformances || []);
       setTargetPerformance(result.targetPerformance);
-
       setActiveGraph("simulation");
+
+      setUnityKey((prevKey) => prevKey + 1);
     } catch (error) {
       console.error("エラーが発生しました:", error);
       setError("プラン生成中にエラーが発生しました");
     } finally {
       setIsLoading(false);
     }
-  }, [bedTime, wakeTime, focusPeriods, isValid]);
+  }, [bedTime, wakeTime, focusPeriods, isValid, logs]);
 
-  // --- 集中度をUnityに定期的に送信するuseEffectを追加 ---
-  useEffect(() => {
-    // ★ 修正点2: isLoadedでUnityの準備完了をチェック
-    if (!isLoaded || graphData[activeGraph].length === 0) {
-      return;
-    }
-
-    const intervalId = setInterval(() => {
-      const now = new Date();
-      const nowStr = `${String(now.getHours()).padStart(2, "0")}:${String(
-        now.getMinutes(),
-      ).padStart(2, "0")}`;
-
-      // ★ 修正点3: グラフデータから現在時刻に一致するものを探す（シンプル版）
-      const currentPoint = graphData[activeGraph].find(
-        (p) => p.time === nowStr,
-      );
-
-      if (currentPoint) {
-        // ★ 修正点1: currentPoint.value（集中度）をそのまま使う
-        const focusValue = currentPoint.value;
-
-        sendMessage(
-          "unitychan",
-          "SetAnimationSpeed",
-          focusValue.toString(), // ★ 修正点1: 未定義だったconcentrationValueをfocusValueに修正
-        );
-      }
-    }, 2000); // 2秒ごと
-
-    return () => clearInterval(intervalId);
-  }, [isLoaded, sendMessage, graphData, activeGraph]);
-  // 初回起動時にモーダルを出す
   useEffect(() => {
     if (!localStorage.getItem("initial-setup-complete")) {
       setShowSettingModal(true);
-      //handleGeneratePlan();
     } else {
-      // 初回設定が終わっている場合はプランを自動生成
       handleGeneratePlan();
     }
-  }, []); // handleGeneratePlanが生成されるたびに実行
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    handleGeneratePlan();
+    setActiveGraph("current");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logs]);
+
   return (
     <div>
       <Warnings
@@ -186,23 +216,18 @@ const HomePage: React.FC = () => {
       {showSettingModal && (
         <SettingModal
           onClose={(mins, tgt) => {
-            // 親で受け取ってモーダルを閉じつつ警告データを保存
             setMinPerformances(mins);
             setTargetPerformance(tgt);
             setShowSettingModal(false);
-            // 続けて一度プラン生成も行う (モーダル内で生成済みなら不要)
-            // handleGeneratePlan();
           }}
         />
       )}
       {!showSettingModal && (
         <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 py-8">
           <div className="w-full max-w-2xl flex justify-center">
-            {/* UnityModelにunityProviderを渡す */}
-            <UnityModelWrapper unityProvider={unityProvider} />
+            <UnityContainer key={unityKey} graphData={graphData} />
           </div>
 
-          {/* developブランチの新しいレイアウトを採用 */}
           <div className="w-full max-w-2xl mx-auto flex flex-row items-center justify-center gap-1 mt-8 px-0">
             <div className="flex-2">
               <RecommendedPlanList recommendations={recommendations} />
@@ -230,7 +255,6 @@ const HomePage: React.FC = () => {
           </div>
 
           <main className="flex flex-col items-start flex-1 w-full max-w-2xl mx-auto px-4">
-            {/* developブランチの新しいフォームコンポーネントを使用 */}
             <SleepForm
               bedTime={bedTime}
               wakeTime={wakeTime}
@@ -259,7 +283,6 @@ const HomePage: React.FC = () => {
               />
             </div>
 
-            {/* あなたが実装したグラフ表示部分 */}
             {(graphData.simulation.length > 0 ||
               graphData.current.length > 0) && (
               <div className="w-full max-w-2xl flex flex-col items-center justify-center mt-8">
