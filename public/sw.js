@@ -76,7 +76,9 @@ const scheduleNextNotification = async () => {
     return;
   }
 
-  console.log(`[SW] 次の通知を ${Math.round(delay / 1000)}秒後 に予約しました。`);
+  console.log(
+    `[SW] 次の通知を ${Math.round(delay / 1000)}秒後 に予約しました。`,
+  );
   console.log(`[SW] 予定: ${new Date(scheduledTime).toLocaleString()}`);
 
   // タイマーをセット
