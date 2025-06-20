@@ -5,6 +5,8 @@ import SleepForm from "./SleepForm";
 import FocusForm from "./FocusForm";
 import { useSleepTimes } from "@/hooks/UseSleepTimes";
 import { useFocusPeriods } from "@/hooks/UseFocusPeriods";
+// ★ 変更点 1: 必要なフックをインポート
+import { usePushNotifications } from "@/hooks/UsePushNotifications";
 
 interface SettingModalProps {
   onClose: (minPerformances: number[], targetPerformance: number) => void;
@@ -15,16 +17,25 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
   const { focusPeriods, addFocusPeriod, removeFocusPeriod, updateFocusPeriod } =
     useFocusPeriods([{ start: "09:00", end: "12:00" }], true);
 
+  // ★ 変更点 2: userId をフックから取得
+  const { userId } = usePushNotifications();
+
   const [error, setError] = useState("");
+  // ★ 変更点 3: 保存処理中の状態を追加
+  const [isSaving, setIsSaving] = useState(false);
 
   const isValid = () =>
     !!bedTime && !!wakeTime && focusPeriods.some((p) => p.start && p.end);
 
   const handleSave = async () => {
-    if (!isValid()) {
-      setError("全ての情報を入力してください");
+    // ★ 変更点 4: userIdがない場合は処理を中断
+    if (!isValid() || !userId) {
+      setError("情報が不足しています。ページをリロードしてみてください。");
       return;
     }
+
+    setIsSaving(true);
+    setError("");
 
     // localStorage 保存…
     localStorage.setItem("initial-setup-complete", "true");
@@ -46,19 +57,31 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
           wake_time: wakeTime,
           focus_periods: focusPeriods,
           caffeine_logs: [],
+          userId: userId, // ★ 変更点 5: リクエストにuserIdを追加
         }),
       });
-      if (!res.ok) throw new Error("API error");
+      if (!res.ok) {
+        // エラーレスポンスの内容を具体的に表示するよう改善
+        const errorData = await res
+          .json()
+          .catch(() => ({ error: "APIから有効なJSON応答がありませんでした" }));
+        throw new Error(errorData.error || "APIリクエストに失敗しました");
+      }
       const json = await res.json();
       mins = json.minPerformances || [];
       tgt = json.targetPerformance ?? 0.7;
       setError("");
-    } catch {
-      setError("初期プラン取得中にエラーが発生しました");
+    } catch (err) {
+      // エラーメッセージを具体的に表示するよう改善
+      const message =
+        err instanceof Error
+          ? err.message
+          : "初期プラン取得中に不明なエラーが発生しました";
+      setError(message);
+      setIsSaving(false); // エラー時にボタンを再度有効化
       return;
     }
 
-    // **ここでローカル変数を渡す**
     onClose(mins, tgt);
   };
 
@@ -74,7 +97,7 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
           wakeTime={wakeTime}
           setBedTime={setBedTime}
           setWakeTime={setWakeTime}
-          disabled={false}
+          disabled={isSaving}
         />
 
         <FocusForm
@@ -82,16 +105,18 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
           addFocusPeriod={addFocusPeriod}
           removeFocusPeriod={removeFocusPeriod}
           updateFocusPeriod={updateFocusPeriod}
-          disabled={false}
+          disabled={isSaving}
         />
 
         {error && <div className="text-red-600 mb-2">{error}</div>}
 
         <button
-          className="mt-4 w-full bg-blue-600 text-white py-2 rounded"
+          className="mt-4 w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50"
           onClick={handleSave}
+          // ★ 変更点 6: isSaving中またはuserIdがない場合はボタンを無効化
+          disabled={isSaving || !userId}
         >
-          保存してはじめる
+          {isSaving ? "保存中..." : "保存してはじめる"}
         </button>
       </div>
     </div>

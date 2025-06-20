@@ -73,6 +73,11 @@ const HomePage: React.FC = () => {
     setIsLoading(true);
     setGraphData({ simulation: [], current: [] });
 
+    if (!userId) {
+      setError("ユーザーIDが取得できません。ページをリロードしてください。");
+      return;
+    }
+
     try {
       const savedLogs = window.localStorage.getItem("caffeine-logs");
       const caffeine_logs = savedLogs ? JSON.parse(savedLogs) : [];
