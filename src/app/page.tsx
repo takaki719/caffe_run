@@ -30,9 +30,36 @@ const UnityContainer = ({
 }: {
   graphData: { current: GraphPoint[] };
 }) => {
+  // 現在の集中力値を計算
+  const getCurrentFocusValue = (): number => {
+    if (graphData.current.length === 0) return 0;
+
+    const now = new Date();
+    const timeToMinutes = (timeStr: string) => {
+      const [h, m] = timeStr.split(":").map(Number);
+      return h * 60 + m;
+    };
+    const nowInMinutes = now.getHours() * 60 + now.getMinutes();
+
+    // 最も近い時刻のデータを取得
+    let closestPoint = graphData.current[0];
+    let minDiff = Infinity;
+
+    for (const point of graphData.current) {
+      const pointMinutes = timeToMinutes(point.time);
+      const diff = Math.abs(pointMinutes - nowInMinutes);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestPoint = point;
+      }
+    }
+
+    return closestPoint.value;
+  };
   const [isUnityReady, setIsUnityReady] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [currentFocus, setCurrentFocus] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
@@ -88,6 +115,22 @@ const UnityContainer = ({
       setIsUnityReady(false);
     }
   }, [isLoaded, unityProvider, hasError]);
+
+  // 現在の集中力値を定期的に更新
+  useEffect(() => {
+    const updateCurrentFocus = () => {
+      const focus = getCurrentFocusValue();
+      setCurrentFocus(focus);
+    };
+
+    // 初回更新
+    updateCurrentFocus();
+
+    // 30秒ごとに更新
+    const focusInterval = setInterval(updateCurrentFocus, 30000);
+
+    return () => clearInterval(focusInterval);
+  }, [graphData]);
 
   // クリーンアップ処理
   useEffect(() => {
@@ -183,32 +226,52 @@ const UnityContainer = ({
   // エラー状態の場合は代替表示
   if (hasError) {
     return (
-      <div className="flex-1 bg-gray-200 rounded-2xl flex items-center justify-center h-[240px] sm:h-[320px] lg:h-[420px] w-full">
-        <div className="text-gray-500 text-center">
-          <div className="mb-2">🎮</div>
-          <div>Unity表示でエラーが発生しました</div>
-          <div className="text-xs mt-1">リトライ回数: {retryCount}</div>
-          <button
-            onClick={() => {
-              if (retryCount < 3) {
-                setHasError(false);
-                setIsUnityReady(false);
-                setRetryCount((prev) => prev + 1);
-              } else {
-                // 3回リトライ後はページリロード
-                window.location.reload();
-              }
-            }}
-            className="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-sm"
-          >
-            {retryCount < 3 ? "再試行" : "ページを再読み込み"}
-          </button>
+      <div className="relative">
+        <div className="flex-1 bg-gray-200 rounded-2xl flex items-center justify-center h-[240px] sm:h-[320px] lg:h-[420px] w-full">
+          <div className="text-gray-500 text-center">
+            <div className="mb-2">🎮</div>
+            <div>Unity表示でエラーが発生しました</div>
+            <div className="text-xs mt-1">リトライ回数: {retryCount}</div>
+            <button
+              onClick={() => {
+                if (retryCount < 3) {
+                  setHasError(false);
+                  setIsUnityReady(false);
+                  setRetryCount((prev) => prev + 1);
+                } else {
+                  // 3回リトライ後はページリロード
+                  window.location.reload();
+                }
+              }}
+              className="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-sm"
+            >
+              {retryCount < 3 ? "再試行" : "ページを再読み込み"}
+            </button>
+          </div>
+        </div>
+        {/* 現在の集中力表示 */}
+        <div className="absolute top-3 left-3 bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg shadow-lg">
+          <div className="text-xs font-medium">現在の集中力</div>
+          <div className="text-lg font-bold text-center">
+            {Math.round(currentFocus)}%
+          </div>
         </div>
       </div>
     );
   }
 
-  return <UnityModelWrapper unityProvider={unityProvider} />;
+  return (
+    <div className="relative">
+      <UnityModelWrapper unityProvider={unityProvider} />
+      {/* 現在の集中力表示 */}
+      <div className="absolute top-3 left-3 bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg shadow-lg">
+        <div className="text-xs font-medium">現在の集中力</div>
+        <div className="text-lg font-bold text-center">
+          {Math.round(currentFocus)}%
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const HomePage: React.FC = () => {
@@ -344,7 +407,6 @@ const HomePage: React.FC = () => {
       {showExpirePopup && (
         <ExpirePopup onClose={() => setShowExpirePopup(false)} />
       )}
-      <TopBackButton />
       {showSettingModal && (
         <SettingModal
           onClose={(mins, tgt) => {
@@ -356,6 +418,11 @@ const HomePage: React.FC = () => {
       )}
       {!showSettingModal && (
         <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 py-8">
+          {/* トップバー */}
+          <div className="w-full max-w-6xl mx-auto mb-4">
+            <TopBackButton />
+          </div>
+          
           {/* ビュー切り替えボタン */}
           <div className="w-full max-w-6xl mx-auto mb-6">
             <div className="flex justify-center gap-4">
@@ -408,6 +475,7 @@ const HomePage: React.FC = () => {
                   <RecommendedPlanList
                     recommendations={recommendations}
                     wakeTime={wakeTime}
+                    focusPeriods={focusPeriods}
                   />
                 </div>
                 <div className="flex-1">
@@ -489,32 +557,6 @@ const HomePage: React.FC = () => {
                     disabled={isLoading}
                   />
                 </div>
-
-                {(graphData.simulation.length > 0 ||
-                  graphData.current.length > 0) && (
-                  <div className="w-full max-w-2xl flex flex-col items-center justify-center mt-8">
-                    <div className="flex justify-center gap-4 mb-4">
-                      <button
-                        onClick={() => setActiveGraph("simulation")}
-                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === "simulation" ? "bg-indigo-500 text-white shadow" : "bg-gray-200 text-gray-700"}`}
-                      >
-                        理想の集中度
-                      </button>
-                      <button
-                        onClick={() => setActiveGraph("current")}
-                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === "current" ? "bg-teal-500 text-white shadow" : "bg-gray-200 text-gray-700"}`}
-                      >
-                        現在の集中度
-                      </button>
-                    </div>
-                    <div className="w-full">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-                        カフェイン効果予測
-                      </h3>
-                      <Chart data={graphData[activeGraph]} />
-                    </div>
-                  </div>
-                )}
               </main>
             </>
           )}
