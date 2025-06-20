@@ -15,7 +15,7 @@ export function useExpireCaffeineLogs(
     const wakeDate = new Date(now);
     wakeDate.setHours(h, m, 0, 0);
 
-    const expireAt = wakeDate.getTime() + 2 * 24 * 60 * 60 * 1000;
+    const expireAt = wakeDate.getTime() + 24 * 60 * 60 * 1000;
     const delay = expireAt - now.getTime();
 
     const timer = setTimeout(() => {
