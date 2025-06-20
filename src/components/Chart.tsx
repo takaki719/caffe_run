@@ -8,13 +8,14 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
-  Legend, // Legendを追加
+  Legend,
+  DotProps,
 } from "recharts";
 
-// グラフの点の型定義（APIの返り値に合わせる）
+// 型定義
 type DataPoint = {
   time: string;
-  value: number; // ★キーの名前が'value'であることを定義
+  value: number;
 };
 
 type Props = {
@@ -22,20 +23,62 @@ type Props = {
 };
 
 const Chart: React.FC<Props> = ({ data }) => {
-  // データを1時間ごとにフィルタリング
+  // 30分刻みのデータだけ抽出
   const hourlyData = useMemo(
     () => data.filter((d) => d.time.endsWith(":00") || d.time.endsWith(":30")),
     [data],
   );
 
-  // データがない場合はメッセージを表示
-  if (!data || data.length === 0) {
+  // 現在時刻に最も近いデータ点を取得（30分単位）
+  const currentKey = useMemo(() => {
+    if (hourlyData.length === 0) return null;
+
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    const closestTime = `${pad(now.getHours())}:${now.getMinutes() < 30 ? "00" : "30"}`;
+
+    // 最も近い時刻をデータ内から探索
+    const availableTimes = hourlyData.map((d) => d.time);
+    if (availableTimes.includes(closestTime)) {
+      return closestTime;
+    } else {
+      // 無ければ最も近い時刻を線形距離で探す
+      const currentMinutes = now.getHours() * 60 + (now.getMinutes() < 30 ? 0 : 30);
+      return hourlyData.reduce((prev, curr) => {
+        const [h, m] = curr.time.split(":").map(Number);
+        const timeMinutes = h * 60 + m;
+        const prevMinutes = Number(prev.time.split(":")[0]) * 60 + Number(prev.time.split(":")[1]);
+        return Math.abs(timeMinutes - currentMinutes) < Math.abs(prevMinutes - currentMinutes)
+          ? curr
+          : prev;
+      }).time;
+    }
+  }, [hourlyData]);
+
+  // カスタムドット：現在に一番近い点だけ★マーク
+
+const CustomDot: React.FC<DotProps & { payload: DataPoint }> = ({ cx, cy, payload }) => {
+  if (cx == null || cy == null) return null;
+
+  if (payload.time === currentKey) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-400">
-        プランを生成するとグラフが表示されます
-      </div>
+      <text x={cx} y={cy+7} textAnchor="middle" fontSize={24} fill="#f59e0b">
+        ★
+      </text>
     );
   }
+
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={3}
+      stroke="#6366f1"
+      strokeWidth={2}
+      fill="#6366f1"
+    />
+  );
+};
 
   return (
     <div className="bg-white rounded-2xl shadow-md p-4 flex flex-col items-center justify-center min-h-[240px] h-[320px] sm:h-[420px] w-full">
@@ -57,17 +100,20 @@ const Chart: React.FC<Props> = ({ data }) => {
               borderRadius: "0.75rem",
               border: "1px solid #eee",
             }}
-            labelStyle={{ color: "#000" }} // ここでラベル（時刻）の文字色だけ黒に
+            labelStyle={{ color: "#000" }}
           />
           <Legend />
           <Line
             type="monotone"
-            dataKey="value" // ★★★ ここを "focus" から "value" に変更 ★★★
+            dataKey="value"
             name="集中度"
             stroke="#6366f1"
             strokeWidth={3}
-            dot={{ r: 2 }}
-          />
+            dot={<CustomDot payload={{
+              time: "",
+              value: 0
+            }} />}
+          />pay
         </LineChart>
       </ResponsiveContainer>
     </div>
