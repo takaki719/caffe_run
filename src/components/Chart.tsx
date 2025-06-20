@@ -27,13 +27,13 @@ const Chart: React.FC<ChartProps> = ({ data, recommendations = [] }) => {
   // 30分刻みでフィルタ
   const hourlyData = useMemo(
     () => data.filter((d) => d.time.endsWith(":00") || d.time.endsWith(":30")),
-    [data],
+    [data]
   );
 
   // おすすめ時間をSetに
   const starTimes = useMemo(
     () => new Set(recommendations.map((r) => r.time)),
-    [recommendations],
+    [recommendations]
   );
 
   if (!data || data.length === 0) {
@@ -66,7 +66,7 @@ const Chart: React.FC<ChartProps> = ({ data, recommendations = [] }) => {
     return <circle cx={cx} cy={cy} r={4} fill="#6366f1" />;
   };
 
-  // ホバー中の点
+    // ホバー中の点
   const CustomActiveDot = (props: any) => {
     const { cx, cy, payload } = props;
     if (starTimes.has(payload.time)) {
@@ -117,7 +117,7 @@ const Chart: React.FC<ChartProps> = ({ data, recommendations = [] }) => {
             name="集中度"
             stroke="#6366f1"
             strokeWidth={3}
-            dot={<CustomDot />} // ★カスタムドットを指定
+            dot={<CustomDot />}     // ★カスタムドットを指定
             activeDot={<CustomActiveDot />}
           />
         </LineChart>
