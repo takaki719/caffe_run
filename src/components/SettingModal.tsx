@@ -65,7 +65,9 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4 text-center">初回設定</h2>
+        <h2 className="text-xl font-bold mb-4 text-center text-black">
+          初回設定
+        </h2>
 
         <SleepForm
           bedTime={bedTime}
