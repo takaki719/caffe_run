@@ -78,7 +78,7 @@ const HomePage: React.FC = () => {
         bed_time: bedTime, // 変数名を修正
         wake_time: wakeTime, // 変数名を修正
         focus_periods: focusPeriods,
-        caffeine_logs,
+        caffeine_logs: logs,
       };
 
       const response = await fetch("/api/plan", {
@@ -162,13 +162,13 @@ const HomePage: React.FC = () => {
       isInitialMount.current = false;
       return;
     }
-
+    
     // ログが更新されたら、プラン(グラフ)を再生成
     handleGeneratePlan();
     // ログ追加後は「現在の集中度」グラフに切り替える
     setActiveGraph("current");
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [logs]); // logsの変更のみを監視
   return (
     <div>
