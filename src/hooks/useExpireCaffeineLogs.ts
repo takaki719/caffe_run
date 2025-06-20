@@ -18,14 +18,19 @@ export function useExpireCaffeineLogs(
     const expireAt = wakeDate.getTime() + 24 * 60 * 60 * 1000;
     const delay = expireAt - now.getTime();
 
+    // delayが負（過去）の場合はタイマーをセットしない
+    if (delay < 0) return;
+
     const timer = setTimeout(() => {
       storageKeys.forEach((key) => window.localStorage.removeItem(key));
       console.log(
-        `Expired: removed keys [${storageKeys.join(", ")}] at ${new Date().toISOString()}`,
+        `Expired: removed keys [${storageKeys.join(
+          ", ",
+        )}] at ${new Date().toISOString()}`,
       );
       if (onExpire) onExpire();
     }, delay);
 
     return () => clearTimeout(timer);
-  }, [wakeTime, JSON.stringify(storageKeys), onExpire]);
+  }, [wakeTime, storageKeys, onExpire]); // ★ 修正点
 }

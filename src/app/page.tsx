@@ -1,4 +1,5 @@
 "use client";
+import { saveSchedules, clearSchedules } from "@/lib/local-db";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import SettingModal from "../components/SettingModal";
 import BlueButton from "../components/BlueButton";
@@ -128,11 +129,26 @@ const HomePage: React.FC = () => {
 
   // ローカルストレージから初期データを取得
   useEffect(() => {
-    const savedLogs = localStorage.getItem("caffeine-logs");
-    if (savedLogs) {
-      setLogs(JSON.parse(savedLogs));
-    }
-  }, []);
+    const registerServiceWorker = async () => {
+      if ("serviceWorker" in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.register("/sw.js");
+          console.log("Service Worker 登録成功:", registration);
+
+          // 通知の許可を求める
+          const permission = await Notification.requestPermission();
+          if (permission === "granted") {
+            console.log("通知の許可が得られました。");
+          } else {
+            console.log("通知は許可されませんでした。");
+          }
+        } catch (error) {
+          console.error("Service Worker 登録失敗:", error);
+        }
+      }
+    };
+    registerServiceWorker();
+  }, []); // 空の依存配列で初回レンダリング時のみ実行
 
   const isValid = useCallback(() => {
     return (
@@ -165,6 +181,8 @@ const HomePage: React.FC = () => {
         throw new Error("APIリクエストに失敗しました");
       }
       const result = await response.json();
+
+      // 既存の画面表示用のstate更新
       setGraphData({
         simulation: result.simulationData || [],
         current: result.currentStatusData || [],
@@ -173,8 +191,43 @@ const HomePage: React.FC = () => {
       setMinPerformances(result.minPerformances || []);
       setTargetPerformance(result.targetPerformance);
       setActiveGraph("simulation");
-
       setUnityKey((prevKey) => prevKey + 1);
+
+      // ★★★ ここからが新しい処理 ★★★
+      if (result.caffeinePlan && result.caffeinePlan.length > 0) {
+        // 1. 既存のスケジュールをすべてクリア
+        await clearSchedules();
+
+        // 2. APIのレスポンスをIndexedDBに保存できる形式に変換
+        const schedulesToSave = result.caffeinePlan.map(
+          (p: { time: string; caffeineAmount: number }) => {
+            const [hours, minutes] = p.time.split(":").map(Number);
+            const scheduleDate = new Date();
+            scheduleDate.setHours(hours, minutes, 0, 0);
+
+            // もし計算された時間が現在時刻より過去なら、明日の日付にする
+            if (scheduleDate < new Date()) {
+              scheduleDate.setDate(scheduleDate.getDate() + 1);
+            }
+
+            return {
+              time: scheduleDate.getTime(), // Unixタイムスタンプ (ミリ秒)
+              caffeineAmount: p.caffeineAmount,
+            };
+          },
+        );
+
+        // 3. IndexedDBに新しいスケジュールを保存
+        await saveSchedules(schedulesToSave);
+
+        // 4. Service Workerにスケジュール更新を通知
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: "SCHEDULE_UPDATED",
+          });
+          console.log("Service Workerにスケジュール更新を通知しました。");
+        }
+      }
     } catch (error) {
       console.error("エラーが発生しました:", error);
       setError("プラン生成中にエラーが発生しました");
