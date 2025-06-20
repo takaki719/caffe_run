@@ -83,15 +83,14 @@ const Chart: React.FC<ChartProps> = ({ data, recommendations = [] }) => {
     );
   };
 
-  const renderDot = (props: any) => {
-    const { key, ...rest } = props;
-    return <CustomDot key={key} {...(rest as CustomDotProps)} />;
+  const renderDot = (props: DotProps) => {
+    return <CustomDot {...(props as CustomDotProps)} />;
   };
-
-  const renderActiveDot = (props: any) => {
-    const { key, ...rest } = props;
-    return <CustomActiveDot key={key} {...(rest as CustomDotProps)} />;
+  
+  const renderActiveDot = (props: DotProps) => {
+    return <CustomActiveDot {...(props as CustomDotProps)} />;
   };
+  
 
   return (
     <div className="bg-white rounded-2xl shadow-md p-4 flex flex-col items-center justify-center min-h-[240px] h-[320px] sm:h-[420px] w-full">
