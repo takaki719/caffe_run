@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   Legend,
+  DotProps,
 } from "recharts";
 
 // 型定義
@@ -55,20 +56,18 @@ const Chart: React.FC<Props> = ({ data }) => {
   }, [hourlyData]);
 
   // カスタムドット：現在に一番近い点だけ★マーク
-  const CustomDot = (props: any) => {
-  const { cx, cy, payload } = props;
 
-  if (!cx || !cy) return null;
+const CustomDot: React.FC<DotProps & { payload: DataPoint }> = ({ cx, cy, payload }) => {
+  if (cx == null || cy == null) return null;
 
   if (payload.time === currentKey) {
     return (
-      <text x={cx} y={cy} textAnchor="middle" fontSize={24} fill="#f59e0b">
+      <text x={cx} y={cy+7} textAnchor="middle" fontSize={24} fill="#f59e0b">
         ★
       </text>
     );
   }
 
-  // 通常の小さな円
   return (
     <circle
       cx={cx}
@@ -110,8 +109,11 @@ const Chart: React.FC<Props> = ({ data }) => {
             name="集中度"
             stroke="#6366f1"
             strokeWidth={3}
-            dot={<CustomDot />}
-          />
+            dot={<CustomDot payload={{
+              time: "",
+              value: 0
+            }} />}
+          />pay
         </LineChart>
       </ResponsiveContainer>
     </div>
