@@ -17,7 +17,6 @@ if (
   );
 }
 
-// Cron Jobが叩くためのGETハンドラ
 export async function GET() {
   if (!process.env.VAPID_PRIVATE_KEY) {
     return NextResponse.json(
@@ -25,9 +24,7 @@ export async function GET() {
       { status: 500 },
     );
   }
-
   try {
-    // 1. 全ユーザーのスケジュールキーを取得 ("schedules:...")
     const scheduleKeys = [];
     let cursor = 0;
     do {
@@ -45,43 +42,54 @@ export async function GET() {
       });
     }
 
-    const now = Math.floor(Date.now() / 1000); // 現在時刻をUnixタイムスタンプ（秒）で取得
+    const now = Math.floor(Date.now() / 1000);
+    const twoMinutesFromNow = now + 120;
+    const threeMinutesFromNow = now + 180;
     let sentCount = 0;
 
-    // 2. 各ユーザーのスケジュールをチェック
     for (const key of scheduleKeys) {
-      // 実行時間になったタスクを取得 (scoreが現在時刻以前のもの)
-      const tasks = await kv.zrange(key, 0, now, { byScore: true });
-
+      const tasks = await kv.zrange(
+        key,
+        `(${twoMinutesFromNow}`,
+        threeMinutesFromNow,
+        { byScore: true },
+      );
       if (tasks.length === 0) {
         continue;
       }
 
-      // 3. 取得したタスクに対して通知を送信
-      const promises = tasks.map((task) => {
-        const { userId, message, subscription } = JSON.parse(task as string);
-        console.log(`Sending notification to userId: ${userId}`);
-        return webpush
-          .sendNotification(subscription, JSON.stringify(message))
-          .catch((err) => {
-            // もし購読が無効になっていたら（例：ユーザーが通知をブロック）、DBから削除する
-            if (err.statusCode === 410 || err.statusCode === 404) {
-              console.log(
-                `Subscription for userId: ${userId} is expired or invalid. Deleting.`,
-              );
-              return kv.del(`user:${userId}`);
-            }
-            console.error(`Error sending notification to ${userId}:`, err);
-          });
-      });
-
-      await Promise.all(promises);
-
-      // 4. 送信済みのタスクをリストから削除
-      await kv.zremrangebyscore(key, 0, now);
-      sentCount += tasks.length;
+      for (const task of tasks) {
+        try {
+          const taskData: {
+            userId: string;
+            message: object;
+            subscription: webpush.PushSubscription;
+          } = JSON.parse(task as string);
+          const { userId, message, subscription } = taskData;
+          console.log(
+            `Sending 3-minute-warning notification to userId: ${userId}`,
+          );
+          await webpush.sendNotification(subscription, JSON.stringify(message));
+          await kv.zrem(key, task);
+          sentCount++;
+        } catch (err) {
+          if (
+            err instanceof Error &&
+            "statusCode" in err &&
+            (err.statusCode === 410 || err.statusCode === 404)
+          ) {
+            const taskData = JSON.parse(task as string);
+            console.log(
+              `Subscription for userId: ${taskData.userId} is expired or invalid. Deleting user and task.`,
+            );
+            await kv.del(`user:${taskData.userId}`);
+            await kv.zrem(key, task);
+          } else {
+            console.error(`Error processing task:`, err);
+          }
+        }
+      }
     }
-
     return NextResponse.json({ success: true, sentCount });
   } catch (error) {
     console.error("Cron job failed:", error);

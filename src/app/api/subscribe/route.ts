@@ -1,49 +1,35 @@
-// src/app/api/subscribe/route.ts
 import { NextResponse } from "next/server";
-import { kv } from "@/lib/kv";
-import webpush from "web-push";
+import { z } from "zod";
+import { kv } from "@/lib/kv"; // Vercel KVをインポート
 
-// VAPIDキーの設定
-if (
-  !process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
-  !process.env.VAPID_PRIVATE_KEY
-) {
-  throw new Error("VAPID keys are not set in environment variables.");
-}
-
-webpush.setVapidDetails(
-  "mailto:hituyonai@gmail.com", //開発者のメールアドレス
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY,
-);
+const subscribeSchema = z.object({
+  subscription: z.any(),
+  userId: z.string(),
+});
 
 export async function POST(request: Request) {
+  const body = await request.json();
+  const result = subscribeSchema.safeParse(body);
+
+  if (!result.success) {
+    return NextResponse.json(
+      { success: false, error: result.error.flatten() },
+      { status: 400 },
+    );
+  }
+
+  const { subscription, userId } = result.data;
+  console.log(`Subscribing userId: ${userId}`);
+
   try {
-    const { userId, subscription } = await request.json();
-
-    if (!userId || !subscription) {
-      return NextResponse.json(
-        { error: "Missing userId or subscription" },
-        { status: 400 },
-      );
-    }
-
-    // Vercel KVにユーザーIDをキーとして購読情報を保存
+    // 購読情報をKVに保存
     await kv.set(`user:${userId}`, subscription);
-
-    // 購読成功のウェルカム通知を送信
-    const payload = JSON.stringify({
-      title: "Caffe-Runへようこそ！",
-      body: "通知設定が完了しました。",
-    });
-
-    await webpush.sendNotification(subscription, payload);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error saving subscription:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Internal Server Error";
-    return new NextResponse(errorMessage, { status: 500 });
+    console.error("Subscription failed:", error);
+    const message =
+      error instanceof Error ? error.message : "An unknown error occurred.";
+    return new NextResponse(message, { status: 500 });
   }
 }
