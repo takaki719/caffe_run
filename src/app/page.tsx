@@ -417,37 +417,40 @@ const HomePage: React.FC = () => {
         />
       )}
       {!showSettingModal && (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 py-8">
+        <div className="min-h-screen bg-gray-50">
           {/* トップバー */}
-          <div className="w-full max-w-6xl mx-auto mb-4">
-            <TopBackButton />
-          </div>
-          
-          {/* ビュー切り替えボタン */}
-          <div className="w-full max-w-6xl mx-auto mb-6">
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={() => setActiveView("detailed")}
-                className={`px-6 py-3 rounded-lg font-semibold transition ${
-                  activeView === "detailed"
-                    ? "bg-blue-500 text-white shadow-lg"
-                    : "bg-white text-gray-700 shadow-md hover:shadow-lg"
-                }`}
-              >
-                🎯 メインメニュー
-              </button>
-              <button
-                onClick={() => setActiveView("dashboard")}
-                className={`px-6 py-3 rounded-lg font-semibold transition ${
-                  activeView === "dashboard"
-                    ? "bg-blue-500 text-white shadow-lg"
-                    : "bg-white text-gray-700 shadow-md hover:shadow-lg"
-                }`}
-              >
-                📊 ダッシュボード
-              </button>
+          <div className="w-full bg-white shadow-sm">
+            <div className="max-w-6xl mx-auto">
+              <TopBackButton />
             </div>
           </div>
+          
+          <div className="flex flex-col items-center px-4 py-8">
+            {/* ビュー切り替えボタン */}
+            <div className="w-full max-w-6xl mx-auto mb-6">
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => setActiveView("detailed")}
+                  className={`px-6 py-3 rounded-lg font-semibold transition ${
+                    activeView === "detailed"
+                      ? "bg-blue-500 text-white shadow-lg"
+                      : "bg-white text-gray-700 shadow-md hover:shadow-lg"
+                  }`}
+                >
+                  🎯 メインメニュー
+                </button>
+                <button
+                  onClick={() => setActiveView("dashboard")}
+                  className={`px-6 py-3 rounded-lg font-semibold transition ${
+                    activeView === "dashboard"
+                      ? "bg-blue-500 text-white shadow-lg"
+                      : "bg-white text-gray-700 shadow-md hover:shadow-lg"
+                  }`}
+                >
+                  📊 ダッシュボード
+                </button>
+              </div>
+            </div>
           {/* ダッシュボードビュー */}
           {activeView === "dashboard" && (
             <>
@@ -501,9 +504,10 @@ const HomePage: React.FC = () => {
                     </button>
                   </div>
                   <div className="w-full">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+                    {activeGraph == "simulation" &&<h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
                       カフェイン効果予測
                     </h3>
+                    }
                     <Chart data={graphData[activeGraph]} />
                   </div>
                 </div>
@@ -560,6 +564,7 @@ const HomePage: React.FC = () => {
               </main>
             </>
           )}
+          </div>
         </div>
       )}
     </div>
