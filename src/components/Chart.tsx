@@ -42,16 +42,12 @@ const Chart: React.FC<Props> = ({ data }) => {
       return closestTime;
     } else {
       // 無ければ最も近い時刻を線形距離で探す
-      const currentMinutes =
-        now.getHours() * 60 + (now.getMinutes() < 30 ? 0 : 30);
+      const currentMinutes = now.getHours() * 60 + (now.getMinutes() < 30 ? 0 : 30);
       return hourlyData.reduce((prev, curr) => {
         const [h, m] = curr.time.split(":").map(Number);
         const timeMinutes = h * 60 + m;
-        const prevMinutes =
-          Number(prev.time.split(":")[0]) * 60 +
-          Number(prev.time.split(":")[1]);
-        return Math.abs(timeMinutes - currentMinutes) <
-          Math.abs(prevMinutes - currentMinutes)
+        const prevMinutes = Number(prev.time.split(":")[0]) * 60 + Number(prev.time.split(":")[1]);
+        return Math.abs(timeMinutes - currentMinutes) < Math.abs(prevMinutes - currentMinutes)
           ? curr
           : prev;
       }).time;
@@ -60,30 +56,30 @@ const Chart: React.FC<Props> = ({ data }) => {
 
   // カスタムドット：現在に一番近い点だけ★マーク
   const CustomDot = (props: any) => {
-    const { cx, cy, payload } = props;
-    if (payload.time === currentKey) {
-      return (
-        <text
-          x={cx}
-          y={cy + 5}
-          textAnchor="middle"
-          fontSize={24}
-          fill="#f59e0b"
-        >
-          ★
-        </text>
-      );
-    }
-    return null;
-  };
+  const { cx, cy, payload } = props;
 
-  if (!data || data.length === 0) {
+  if (!cx || !cy) return null;
+
+  if (payload.time === currentKey) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-400">
-        プランを生成するとグラフが表示されます
-      </div>
+      <text x={cx} y={cy} textAnchor="middle" fontSize={24} fill="#f59e0b">
+        ★
+      </text>
     );
   }
+
+  // 通常の小さな円
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={3}
+      stroke="#6366f1"
+      strokeWidth={2}
+      fill="#6366f1"
+    />
+  );
+};
 
   return (
     <div className="bg-white rounded-2xl shadow-md p-4 flex flex-col items-center justify-center min-h-[240px] h-[320px] sm:h-[420px] w-full">
