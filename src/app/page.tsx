@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import SettingModal from "../components/SettingModal"; // 追加
 import BlueButton from "../components/BlueButton";
 import UnityModelWrapper from "@/components/UnityModelWrapper";
@@ -110,7 +110,7 @@ const HomePage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [bedTime, wakeTime, focusPeriods, isValid]);
+  }, [bedTime, wakeTime, focusPeriods, isValid, logs]);
 
   // --- 集中度をUnityに定期的に送信するuseEffectを追加 ---
   useEffect(() => {
@@ -154,6 +154,22 @@ const HomePage: React.FC = () => {
       handleGeneratePlan();
     }
   }, []); // handleGeneratePlanが生成されるたびに実行
+
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    // マウント時には実行しない（初回ロード用のuseEffectが担当するため）
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    // ログが更新されたら、プラン(グラフ)を再生成
+    handleGeneratePlan();
+    // ログ追加後は「現在の集中度」グラフに切り替える
+    setActiveGraph("current");
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logs]); // logsの変更のみを監視
   return (
     <div>
       <Warnings

@@ -2,10 +2,15 @@
 // --------------------------------------------------
 // APIエンドポイントのメイン処理
 
-import { SleepPeriod, OptimizationParams } from "@/lib/optimizer/interfaces";
+import {
+  CaffeineDose,
+  SleepPeriod,
+  OptimizationParams,
+} from "@/lib/optimizer/interfaces";
 import { PerformanceModel } from "@/lib/optimizer/PerformanceModel";
 import { CaffeineOptimizer } from "@/lib/optimizer/CaffeineOptimizer";
 import { NextResponse } from "next/server";
+import { CaffeineLogEntry } from "@/components/CaffeineLogTable";
 
 // --- 型定義（フロントエンドからのリクエストボディ） ---
 export type FocusPeriodRequest = {
@@ -28,7 +33,7 @@ const timeToDate = (timeStr: string, date: Date): Date => {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { bed_time, wake_time, focus_periods } = body;
+    const { bed_time, wake_time, focus_periods, caffeine_logs } = body;
 
     // --- バリデーション ---
     if (
@@ -77,6 +82,13 @@ export async function POST(request: Request) {
         end: finalWakeTime,
       },
     ];
+
+    const actualCaffeineHistory: CaffeineDose[] = (caffeine_logs || []).map(
+      (log: CaffeineLogEntry) => ({
+        time: timeToDate(log.time, today),
+        mg: log.caffeineMg,
+      }),
+    );
 
     // 睡眠時間を計算 (時間単位)
     const sleepDurationMs = finalWakeTime.getTime() - finalBedTime.getTime();
@@ -160,21 +172,22 @@ export async function POST(request: Request) {
     }
 
     // --- 2. カフェインを摂取しなかった場合の覚醒度（現在の覚醒度グラフ用）---
-    const noCaffeineData: { time: string; value: number }[] = [];
+    const currentStatusData: { time: string; value: number }[] = []; // ★ここで変数が宣言される
     for (
       let t = dayStart.getTime();
       t <= dayEnd.getTime();
       t += 15 * 60 * 1000
     ) {
       const currentTime = new Date(t);
-      // model.predictの第3引数（カフェイン履歴）に空の配列[]を渡す
+      // model.predictの第3引数に、実際のカフェイン履歴を渡す
       const performance = model.predict(
         currentTime,
         sleepHistory,
-        [],
+        actualCaffeineHistory,
         params.timeWindows,
       );
-      noCaffeineData.push({
+      currentStatusData.push({
+        // ★計算結果が追加される
         time: currentTime.toLocaleTimeString("ja-JP", {
           hour: "2-digit",
           minute: "2-digit",
@@ -200,7 +213,7 @@ export async function POST(request: Request) {
           }))
         : [],
       simulationData: simulationData,
-      currentStatusData: noCaffeineData,
+      currentStatusData: currentStatusData,
       minPerformances,
       targetPerformance: params.targetPerformance,
     };
