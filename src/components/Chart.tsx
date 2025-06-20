@@ -10,18 +10,19 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   Legend,
+  type DotProps,
 } from "recharts";
-import type { Recommendation } from "./NextCaffeineTime";
-import { DotProps } from "recharts";
+import type { Recommendation } from "@/components/NextCaffeineTime";
 
-type DataPoint = {
+// ★ エクスポートしてトップページ側でも使えるように
+export type DataPoint = {
   time: string;
   value: number;
 };
 
 interface ChartProps {
   data: DataPoint[];
-  recommendations?: Recommendation[]; // ★追加
+  recommendations?: Recommendation[];
 }
 
 interface CustomDotProps extends Partial<DotProps> {
@@ -29,19 +30,16 @@ interface CustomDotProps extends Partial<DotProps> {
 }
 
 const Chart: React.FC<ChartProps> = ({ data, recommendations = [] }) => {
-  // 30分刻みでフィルタ
   const hourlyData = useMemo(
     () => data.filter((d) => d.time.endsWith(":00") || d.time.endsWith(":30")),
     [data],
   );
-
-  // おすすめ時間をSetに
   const starTimes = useMemo(
     () => new Set(recommendations.map((r) => r.time)),
     [recommendations],
   );
 
-  if (!data || data.length === 0) {
+  if (data.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400">
         プランを生成するとグラフが表示されます
@@ -49,48 +47,50 @@ const Chart: React.FC<ChartProps> = ({ data, recommendations = [] }) => {
     );
   }
 
-  // カスタムドット
-  const CustomDot = (props: CustomDotProps) => {
-    const { cx, cy, payload } = props;
-    if (starTimes.has(payload.time)) {
-      // ★マークをポイントの上に表示
-      return (
-        <text
-          x={cx}
-          y={cy}
-          fill="gold"
-          fontSize={20}
-          textAnchor="middle"
-          dominantBaseline="middle"
-        >
-          ★
-        </text>
-      );
-    }
-    // 普通の小さい丸
-    return <circle cx={cx} cy={cy} r={4} fill="#6366f1" />;
+  const CustomDot: React.FC<CustomDotProps> = ({ cx, cy, payload }) => {
+    if (cx == null || cy == null) return null;
+    return starTimes.has(payload.time) ? (
+      <text
+        x={cx}
+        y={cy}
+        fill="gold"
+        fontSize={20}
+        textAnchor="middle"
+        dominantBaseline="middle"
+      >
+        ★
+      </text>
+    ) : (
+      <circle cx={cx} cy={cy} r={4} fill="#6366f1" />
+    );
   };
 
-  // ホバー中の点
-  const CustomActiveDot = (props: CustomDotProps) => {
-    const { cx, cy, payload } = props;
-    if (starTimes.has(payload.time)) {
-      // ホバー中の★は大きめに
-      return (
-        <text
-          x={cx}
-          y={cy}
-          fill="gold"
-          fontSize={32}
-          textAnchor="middle"
-          dominantBaseline="middle"
-        >
-          ★
-        </text>
-      );
-    }
-    // ホバー中の通常点も少し大きめ
-    return <circle cx={cx} cy={cy} r={6} fill="#6366f1" />;
+  const CustomActiveDot: React.FC<CustomDotProps> = ({ cx, cy, payload }) => {
+    if (cx == null || cy == null) return null;
+    return starTimes.has(payload.time) ? (
+      <text
+        x={cx}
+        y={cy}
+        fill="gold"
+        fontSize={32}
+        textAnchor="middle"
+        dominantBaseline="middle"
+      >
+        ★
+      </text>
+    ) : (
+      <circle cx={cx} cy={cy} r={6} fill="#6366f1" />
+    );
+  };
+
+  const renderDot = (props: any) => {
+    const { key, ...rest } = props;
+    return <CustomDot key={key} {...(rest as CustomDotProps)} />;
+  };
+
+  const renderActiveDot = (props: any) => {
+    const { key, ...rest } = props;
+    return <CustomActiveDot key={key} {...(rest as CustomDotProps)} />;
   };
 
   return (
@@ -122,14 +122,8 @@ const Chart: React.FC<ChartProps> = ({ data, recommendations = [] }) => {
             name="集中度"
             stroke="#6366f1"
             strokeWidth={3}
-            dot={(props: any) => {
-              const { key, ...rest } = props;
-              return <CustomDot key={key} {...rest} />;
-            }}
-            activeDot={(props: any) => {
-              const { key, ...rest } = props;
-              return <CustomActiveDot key={key} {...rest} />;
-            }}
+            dot={renderDot}
+            activeDot={renderActiveDot}
           />
         </LineChart>
       </ResponsiveContainer>
