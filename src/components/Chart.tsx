@@ -1,3 +1,4 @@
+// src/components/Chart.tsx
 "use client";
 import React, { useMemo } from "react";
 import {
@@ -8,27 +9,33 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
-  Legend, // Legendを追加
+  Legend,
 } from "recharts";
+import type { Recommendation } from "./NextCaffeineTime";
 
-// グラフの点の型定義（APIの返り値に合わせる）
 type DataPoint = {
   time: string;
-  value: number; // ★キーの名前が'value'であることを定義
+  value: number;
 };
 
-type Props = {
+interface ChartProps {
   data: DataPoint[];
-};
+  recommendations?: Recommendation[]; // ★追加
+}
 
-const Chart: React.FC<Props> = ({ data }) => {
-  // データを1時間ごとにフィルタリング
+const Chart: React.FC<ChartProps> = ({ data, recommendations = [] }) => {
+  // 30分刻みでフィルタ
   const hourlyData = useMemo(
     () => data.filter((d) => d.time.endsWith(":00") || d.time.endsWith(":30")),
     [data],
   );
 
-  // データがない場合はメッセージを表示
+  // おすすめ時間をSetに
+  const starTimes = useMemo(
+    () => new Set(recommendations.map((r) => r.time)),
+    [recommendations],
+  );
+
   if (!data || data.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400">
@@ -36,6 +43,50 @@ const Chart: React.FC<Props> = ({ data }) => {
       </div>
     );
   }
+
+  // カスタムドット
+  const CustomDot = (props: any) => {
+    const { cx, cy, payload } = props;
+    if (starTimes.has(payload.time)) {
+      // ★マークをポイントの上に表示
+      return (
+        <text
+          x={cx}
+          y={cy}
+          fill="gold"
+          fontSize={20}
+          textAnchor="middle"
+          dominantBaseline="middle"
+        >
+          ★
+        </text>
+      );
+    }
+    // 普通の小さい丸
+    return <circle cx={cx} cy={cy} r={4} fill="#6366f1" />;
+  };
+
+  // ホバー中の点
+  const CustomActiveDot = (props: any) => {
+    const { cx, cy, payload } = props;
+    if (starTimes.has(payload.time)) {
+      // ホバー中の★は大きめに
+      return (
+        <text
+          x={cx}
+          y={cy}
+          fill="gold"
+          fontSize={32}
+          textAnchor="middle"
+          dominantBaseline="middle"
+        >
+          ★
+        </text>
+      );
+    }
+    // ホバー中の通常点も少し大きめ
+    return <circle cx={cx} cy={cy} r={6} fill="#6366f1" />;
+  };
 
   return (
     <div className="bg-white rounded-2xl shadow-md p-4 flex flex-col items-center justify-center min-h-[240px] h-[320px] sm:h-[420px] w-full">
@@ -57,16 +108,17 @@ const Chart: React.FC<Props> = ({ data }) => {
               borderRadius: "0.75rem",
               border: "1px solid #eee",
             }}
-            labelStyle={{ color: "#000" }} // ここでラベル（時刻）の文字色だけ黒に
+            labelStyle={{ color: "#000" }}
           />
           <Legend />
           <Line
             type="monotone"
-            dataKey="value" // ★★★ ここを "focus" から "value" に変更 ★★★
+            dataKey="value"
             name="集中度"
             stroke="#6366f1"
             strokeWidth={3}
-            dot={{ r: 2 }}
+            dot={<CustomDot />} // ★カスタムドットを指定
+            activeDot={<CustomActiveDot />}
           />
         </LineChart>
       </ResponsiveContainer>
