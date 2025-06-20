@@ -12,6 +12,7 @@ import {
   Legend,
 } from "recharts";
 import type { Recommendation } from "./NextCaffeineTime";
+import { DotProps } from "recharts";
 
 type DataPoint = {
   time: string;
@@ -21,6 +22,10 @@ type DataPoint = {
 interface ChartProps {
   data: DataPoint[];
   recommendations?: Recommendation[]; // ★追加
+}
+
+interface CustomDotProps extends Partial<DotProps> {
+  payload: DataPoint;
 }
 
 const Chart: React.FC<ChartProps> = ({ data, recommendations = [] }) => {
@@ -45,7 +50,7 @@ const Chart: React.FC<ChartProps> = ({ data, recommendations = [] }) => {
   }
 
   // カスタムドット
-  const CustomDot = (props: any) => {
+  const CustomDot = (props: CustomDotProps) => {
     const { cx, cy, payload } = props;
     if (starTimes.has(payload.time)) {
       // ★マークをポイントの上に表示
@@ -67,7 +72,7 @@ const Chart: React.FC<ChartProps> = ({ data, recommendations = [] }) => {
   };
 
   // ホバー中の点
-  const CustomActiveDot = (props: any) => {
+  const CustomActiveDot = (props: CustomDotProps) => {
     const { cx, cy, payload } = props;
     if (starTimes.has(payload.time)) {
       // ホバー中の★は大きめに
@@ -117,8 +122,14 @@ const Chart: React.FC<ChartProps> = ({ data, recommendations = [] }) => {
             name="集中度"
             stroke="#6366f1"
             strokeWidth={3}
-            dot={<CustomDot />} // ★カスタムドットを指定
-            activeDot={<CustomActiveDot />}
+            dot={(props: any) => {
+              const { key, ...rest } = props;
+              return <CustomDot key={key} {...rest} />;
+            }}
+            activeDot={(props: any) => {
+              const { key, ...rest } = props;
+              return <CustomActiveDot key={key} {...rest} />;
+            }}
           />
         </LineChart>
       </ResponsiveContainer>
