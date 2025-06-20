@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import SettingModal from "../components/SettingModal";
 import BlueButton from "../components/BlueButton";
-import UnityModel from "../components/UnityModel";
+import UnityModelWrapper from "@/components/UnityModelWrapper";
 import TopBackButton from "@/components/TopBackButton";
 import Chart from "@/components/Chart";
 import RecommendedPlanList from "../components/NextCaffeineTime";
@@ -51,7 +51,6 @@ const HomePage: React.FC = () => {
     frameworkUrl: "/unity/Build/Downloads.framework.js",
     codeUrl: "/unity/Build/Downloads.wasm",
   });
-
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [minPerformances, setMinPerformances] = useState<number[]>([]);
   const [targetPerformance, setTargetPerformance] = useState<number>(0.7);
@@ -119,49 +118,46 @@ const HomePage: React.FC = () => {
 
   // --- 集中度をUnityに定期的に送信するuseEffectを追加 ---
   useEffect(() => {
-    // 5秒ごとに実行するタイマー
-    const interval = setInterval(() => {
-      // Unityがロード済みで、グラフデータが存在する場合のみ実行
-      if (isLoaded && graphData.simulation.length > 0) {
-        const now = new Date();
-        const currentTimeStr = now.toLocaleTimeString("ja-JP", {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+    // ★ 修正点2: isLoadedでUnityの準備完了をチェック
+    if (!isLoaded || graphData[activeGraph].length === 0) {
+      return;
+    }
 
-        // グラフデータから現在時刻に最も近いデータポイントを探す
-        const currentPoint = graphData.simulation.find(
-          (p) => p.time === currentTimeStr,
+    const intervalId = setInterval(() => {
+      const now = new Date();
+      const nowStr = `${String(now.getHours()).padStart(2, "0")}:${String(
+        now.getMinutes(),
+      ).padStart(2, "0")}`;
+
+      // ★ 修正点3: グラフデータから現在時刻に一致するものを探す（シンプル版）
+      const currentPoint = graphData[activeGraph].find(
+        (p) => p.time === nowStr,
+      );
+
+      if (currentPoint) {
+        // ★ 修正点1: currentPoint.value（集中度）をそのまま使う
+        const focusValue = currentPoint.value;
+
+        sendMessage(
+          "unitychan",
+          "SetAnimationSpeed",
+          focusValue.toString(), // ★ 修正点1: 未定義だったconcentrationValueをfocusValueに修正
         );
-
-        if (currentPoint) {
-          const concentrationValue = currentPoint.value; // 集中度の値 (0-100)
-
-          console.log(`Sending to Unity: ${concentrationValue}`); // デバッグ用
-
-          // Unityのメソッドを呼び出す
-          // 第1引数: GameObject名 ("PerformanceController")
-          // 第2引数: C#スクリプトのメソッド名 ("UpdateConcentration")
-          // 第3引数: 送信する値 (数値を文字列に変換)
-          sendMessage(
-            "PerformanceController",
-            "UpdateConcentration",
-            concentrationValue.toString(),
-          );
-        }
       }
-    }, 5000); // 5000ms = 5秒
+    }, 2000); // 2秒ごと
 
-    // コンポーネントがアンマウントされるときにタイマーをクリア
-    return () => clearInterval(interval);
-  }, [isLoaded, graphData.simulation, sendMessage]); // 依存配列に設定
-
+    return () => clearInterval(intervalId);
+  }, [isLoaded, sendMessage, graphData, activeGraph]);
   // 初回起動時にモーダルを出す
   useEffect(() => {
     if (!localStorage.getItem("initial-setup-complete")) {
       setShowSettingModal(true);
+      //handleGeneratePlan();
+    } else {
+      // 初回設定が終わっている場合はプランを自動生成
+      handleGeneratePlan();
     }
-  }, []);
+  }, []); // handleGeneratePlanが生成されるたびに実行
   return (
     <div>
       <NotificationInitializer />
@@ -186,7 +182,7 @@ const HomePage: React.FC = () => {
         <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 py-8">
           <div className="w-full max-w-2xl flex justify-center">
             {/* UnityModelにunityProviderを渡す */}
-            <UnityModel unityProvider={unityProvider} />
+            <UnityModelWrapper unityProvider={unityProvider} />
           </div>
 
           {/* developブランチの新しいレイアウトを採用 */}
