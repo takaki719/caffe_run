@@ -69,7 +69,7 @@ const HomePage: React.FC = () => {
     if (savedLogs) {
       setLogs(JSON.parse(savedLogs));
     }
-  }, [setLogs]);
+  }, []);
 
   // 入力チェック関数を、developブランチの変数名(camelCase)に合わせる
   const isValid = useCallback(() => {
@@ -172,7 +172,7 @@ const HomePage: React.FC = () => {
       // 初回設定が終わっている場合はプランを自動生成
       handleGeneratePlan();
     }
-  }, [handleGeneratePlan]); // handleGeneratePlanが生成されるたびに実行
+  }, []); // handleGeneratePlanが生成されるたびに実行
   return (
     <div>
       <Warnings
