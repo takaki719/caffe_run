@@ -304,10 +304,7 @@ const HomePage: React.FC = () => {
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
                     カフェイン効果予測
                   </h3>
-                  <Chart
-                    data={graphData[activeGraph]}
-                    recommendations={recommendations}
-                  />
+                  <Chart data={graphData[activeGraph]} />
                 </div>
               </div>
             )}

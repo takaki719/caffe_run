@@ -1,4 +1,3 @@
-// src/components/Chart.tsx
 "use client";
 import React, { useMemo } from "react";
 import {
@@ -10,87 +9,81 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   Legend,
-  type DotProps,
 } from "recharts";
-import type { Recommendation } from "@/components/NextCaffeineTime";
 
-// ★ エクスポートしてトップページ側でも使えるように
-export type DataPoint = {
+// 型定義
+type DataPoint = {
   time: string;
   value: number;
 };
 
-interface ChartProps {
+type Props = {
   data: DataPoint[];
-  recommendations?: Recommendation[];
-}
+};
 
-interface CustomDotProps extends Partial<DotProps> {
-  payload: DataPoint;
-}
-
-const Chart: React.FC<ChartProps> = ({ data, recommendations = [] }) => {
+const Chart: React.FC<Props> = ({ data }) => {
+  // 30分刻みのデータだけ抽出
   const hourlyData = useMemo(
     () => data.filter((d) => d.time.endsWith(":00") || d.time.endsWith(":30")),
     [data],
   );
-  const starTimes = useMemo(
-    () => new Set(recommendations.map((r) => r.time)),
-    [recommendations],
-  );
 
-  if (data.length === 0) {
+  // 現在時刻に最も近いデータ点を取得（30分単位）
+  const currentKey = useMemo(() => {
+    if (hourlyData.length === 0) return null;
+
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    const closestTime = `${pad(now.getHours())}:${now.getMinutes() < 30 ? "00" : "30"}`;
+
+    // 最も近い時刻をデータ内から探索
+    const availableTimes = hourlyData.map((d) => d.time);
+    if (availableTimes.includes(closestTime)) {
+      return closestTime;
+    } else {
+      // 無ければ最も近い時刻を線形距離で探す
+      const currentMinutes =
+        now.getHours() * 60 + (now.getMinutes() < 30 ? 0 : 30);
+      return hourlyData.reduce((prev, curr) => {
+        const [h, m] = curr.time.split(":").map(Number);
+        const timeMinutes = h * 60 + m;
+        const prevMinutes =
+          Number(prev.time.split(":")[0]) * 60 +
+          Number(prev.time.split(":")[1]);
+        return Math.abs(timeMinutes - currentMinutes) <
+          Math.abs(prevMinutes - currentMinutes)
+          ? curr
+          : prev;
+      }).time;
+    }
+  }, [hourlyData]);
+
+  // カスタムドット：現在に一番近い点だけ★マーク
+  const CustomDot = (props: any) => {
+    const { cx, cy, payload } = props;
+    if (payload.time === currentKey) {
+      return (
+        <text
+          x={cx}
+          y={cy + 5}
+          textAnchor="middle"
+          fontSize={24}
+          fill="#f59e0b"
+        >
+          ★
+        </text>
+      );
+    }
+    return null;
+  };
+
+  if (!data || data.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400">
         プランを生成するとグラフが表示されます
       </div>
     );
   }
-
-  const CustomDot: React.FC<CustomDotProps> = ({ cx, cy, payload }) => {
-    if (cx == null || cy == null) return null;
-    return starTimes.has(payload.time) ? (
-      <text
-        x={cx}
-        y={cy}
-        fill="gold"
-        fontSize={20}
-        textAnchor="middle"
-        dominantBaseline="middle"
-      >
-        ★
-      </text>
-    ) : (
-      <circle cx={cx} cy={cy} r={4} fill="#6366f1" />
-    );
-  };
-
-  const CustomActiveDot: React.FC<CustomDotProps> = ({ cx, cy, payload }) => {
-    if (cx == null || cy == null) return null;
-    return starTimes.has(payload.time) ? (
-      <text
-        x={cx}
-        y={cy}
-        fill="gold"
-        fontSize={32}
-        textAnchor="middle"
-        dominantBaseline="middle"
-      >
-        ★
-      </text>
-    ) : (
-      <circle cx={cx} cy={cy} r={6} fill="#6366f1" />
-    );
-  };
-
-  const renderDot = (props: DotProps) => {
-    return <CustomDot {...(props as CustomDotProps)} />;
-  };
-  
-  const renderActiveDot = (props: DotProps) => {
-    return <CustomActiveDot {...(props as CustomDotProps)} />;
-  };
-  
 
   return (
     <div className="bg-white rounded-2xl shadow-md p-4 flex flex-col items-center justify-center min-h-[240px] h-[320px] sm:h-[420px] w-full">
@@ -121,8 +114,7 @@ const Chart: React.FC<ChartProps> = ({ data, recommendations = [] }) => {
             name="集中度"
             stroke="#6366f1"
             strokeWidth={3}
-            dot={renderDot}
-            activeDot={renderActiveDot}
+            dot={<CustomDot />}
           />
         </LineChart>
       </ResponsiveContainer>
