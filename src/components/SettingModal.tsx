@@ -44,6 +44,7 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     focusPeriods.some(
       (p) => p.start && p.end && p.start !== "" && p.end !== "",
     );
+  focusPeriods.some((p) => p.start && p.end && p.start !== "" && p.end !== "");
 
   const handleSave = async () => {
     if (!isValid()) {
@@ -83,11 +84,10 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
         simulation: json.simulationData || [],
         current: json.currentStatusData || [],
       };
-      const schedule = json.rawSchedule || json.caffeinePlan || [];
-      recommendations = schedule.map(
-        (rec: { timeDisplay?: string; time?: string; mg: number }) => ({
-          time: rec.timeDisplay || rec.time || "",
-          caffeineAmount: rec.mg,
+      recommendations = (json.caffeinePlan || []).map(
+        (rec: { time: string; mg: number }) => ({
+          time: rec.time,
+          mg: rec.mg,
         }),
       );
       setError("");

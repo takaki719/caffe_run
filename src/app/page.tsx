@@ -24,6 +24,13 @@ import ExpirePopup from "@/components/ExpirePopup";
 // グラフの点の型定義
 type GraphPoint = { time: string; value: number };
 
+type ModalRecommendation = {
+  time: string;
+  mg?: number; // mgはオプショナル（存在する場合もあれば、ない場合もある）
+  caffeineAmount?: number; // caffeineAmountもオプショナル
+  fullDateTime?: string; // fullDateTimeもオプショナル
+};
+
 // Unityのロジックをカプセル化する新しいコンポーネント
 const UnityContainer = ({
   graphData,
@@ -140,7 +147,7 @@ const UnityContainer = ({
       sendMessage("unitychan", "SetAnimationSpeed", focusValue.toString());
     }, 2000);
     return () => clearInterval(intervalId);
-  }, [isLoaded, sendMessage, graphData, wakeTime]);
+  }, [isLoaded, sendMessage, graphData, getCurrentFocusValue]);
 
   return (
     <div className="relative">
@@ -363,7 +370,13 @@ const HomePage: React.FC = () => {
               setActiveGraph("simulation");
             }
             if (recommendations) {
-              setRecommendations(recommendations);
+              setRecommendations(
+                recommendations.map((rec: ModalRecommendation) => ({
+                  time: rec.time,
+                  caffeineAmount: rec.caffeineAmount ?? rec.mg ?? 0,
+                  fullDateTime: rec.fullDateTime || "",
+                })),
+              );
             }
             setShowSettingModal(false);
           }}
