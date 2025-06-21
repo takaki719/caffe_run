@@ -8,10 +8,10 @@ import { useFocusPeriods } from "@/hooks/UseFocusPeriods";
 
 interface SettingModalProps {
   onClose: (
-    minPerformances: number[], 
+    minPerformances: number[],
     targetPerformance: number,
-    graphData?: { simulation: any[], current: any[] },
-    recommendations?: any[]
+    graphData?: { simulation: any[]; current: any[] },
+    recommendations?: any[],
   ) => void;
 }
 
@@ -23,11 +23,13 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
   const [error, setError] = useState("");
 
   const isValid = () =>
-    !!bedTime && 
-    !!wakeTime && 
-    bedTime !== "" && 
-    wakeTime !== "" && 
-    focusPeriods.some((p) => p.start && p.end && p.start !== "" && p.end !== "");
+    !!bedTime &&
+    !!wakeTime &&
+    bedTime !== "" &&
+    wakeTime !== "" &&
+    focusPeriods.some(
+      (p) => p.start && p.end && p.start !== "" && p.end !== "",
+    );
 
   const handleSave = async () => {
     if (!isValid()) {
@@ -66,7 +68,7 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
       tgt = json.targetPerformance ?? 0.7;
       graphData = {
         simulation: json.simulationData || [],
-        current: json.currentStatusData || []
+        current: json.currentStatusData || [],
       };
       recommendations = json.caffeinePlan || [];
       setError("");
