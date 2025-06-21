@@ -30,8 +30,8 @@ const SleepForm: React.FC<SleepFormProps> = ({
           disabled={disabled}
           title="クリックして就寝時刻を変更"
           style={{
-            WebkitAppearance: 'none',
-            MozAppearance: 'textfield'
+            WebkitAppearance: "none",
+            MozAppearance: "textfield",
           }}
           onClick={(e) => {
             e.currentTarget.showPicker?.();
@@ -48,8 +48,8 @@ const SleepForm: React.FC<SleepFormProps> = ({
           disabled={disabled}
           title="クリックして起床時刻を変更"
           style={{
-            WebkitAppearance: 'none',
-            MozAppearance: 'textfield'
+            WebkitAppearance: "none",
+            MozAppearance: "textfield",
           }}
           onClick={(e) => {
             e.currentTarget.showPicker?.();

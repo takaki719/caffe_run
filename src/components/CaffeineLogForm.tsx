@@ -103,8 +103,8 @@ const CaffeineLogForm: React.FC<Props> = ({ logs, setLogs }) => {
               onChange={(e) => setTime(e.target.value)}
               title="クリックして摂取時刻を変更"
               style={{
-                WebkitAppearance: 'none',
-                MozAppearance: 'textfield'
+                WebkitAppearance: "none",
+                MozAppearance: "textfield",
               }}
               onClick={(e) => {
                 e.currentTarget.showPicker?.();

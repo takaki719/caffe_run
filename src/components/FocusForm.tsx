@@ -33,13 +33,15 @@ export const FocusForm: React.FC<FocusFormProps> = ({
               <input
                 type="time"
                 value={period.start}
-                onChange={(e) => updateFocusPeriod(idx, "start", e.target.value)}
+                onChange={(e) =>
+                  updateFocusPeriod(idx, "start", e.target.value)
+                }
                 className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black cursor-pointer hover:border-blue-400 transition-colors appearance-none"
                 disabled={disabled}
                 title="クリックして開始時刻を変更"
                 style={{
-                  WebkitAppearance: 'none',
-                  MozAppearance: 'textfield'
+                  WebkitAppearance: "none",
+                  MozAppearance: "textfield",
                 }}
                 onClick={(e) => {
                   e.currentTarget.showPicker?.();
@@ -56,8 +58,8 @@ export const FocusForm: React.FC<FocusFormProps> = ({
                 disabled={disabled}
                 title="クリックして終了時刻を変更"
                 style={{
-                  WebkitAppearance: 'none',
-                  MozAppearance: 'textfield'
+                  WebkitAppearance: "none",
+                  MozAppearance: "textfield",
                 }}
                 onClick={(e) => {
                   e.currentTarget.showPicker?.();
