@@ -108,7 +108,29 @@ const UnityContainer = ({
     <div className="relative">
       <UnityModelWrapper unityProvider={unityProvider} />
 
-      {/* ローディングオーバーレイ（2秒間のみ表示） */}
+      {/* スクロール用オーバーレイ（Unity上を覆う） */}
+      {!showLoadingOverlay && (
+        <div 
+          className="absolute inset-0 z-10 bg-transparent cursor-default"
+          style={{ pointerEvents: 'auto' }}
+          onMouseDown={(e) => e.preventDefault()}
+          onMouseUp={(e) => e.preventDefault()}
+          onMouseMove={(e) => e.preventDefault()}
+          onClick={(e) => e.preventDefault()}
+          onWheel={(e) => {
+            // ホイールイベントを親要素に委譲してスクロールを維持
+            const parent = e.currentTarget.parentElement?.parentElement;
+            if (parent) {
+              parent.scrollBy({
+                top: e.deltaY,
+                behavior: 'auto'
+              });
+            }
+          }}
+        ></div>
+      )}
+
+      {/* ローディングオーバーレイ（3秒間のみ表示） */}
       {showLoadingOverlay && (
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl flex flex-col items-center justify-center z-30">
           <div className="text-center">
