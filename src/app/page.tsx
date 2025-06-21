@@ -31,6 +31,7 @@ const UnityContainer = ({
   graphData: { current: GraphPoint[] };
 }) => {
   const [currentFocus, setCurrentFocus] = useState(0);
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
 
   const { unityProvider, sendMessage, isLoaded } = useUnityContext({
     loaderUrl: "/unity/Build/Downloads.loader.js",
@@ -38,6 +39,15 @@ const UnityContainer = ({
     frameworkUrl: "/unity/Build/Downloads.framework.js",
     codeUrl: "/unity/Build/Downloads.wasm",
   });
+
+  // 2秒後にローディングオーバーレイを非表示
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoadingOverlay(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // 現在の集中力値を計算する関数
   const getCurrentFocusValue = (): number => {
@@ -97,8 +107,30 @@ const UnityContainer = ({
   return (
     <div className="relative">
       <UnityModelWrapper unityProvider={unityProvider} />
+      
+      {/* ローディングオーバーレイ（2秒間のみ表示） */}
+      {showLoadingOverlay && (
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl flex flex-col items-center justify-center z-30">
+          <div className="text-center">
+            {/* ローディングアニメーション */}
+            <div className="mb-6">
+              <div className="relative w-16 h-16 mx-auto">
+                <div className="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+              </div>
+            </div>
+            
+            {/* ローディングテキスト */}
+            <div className="text-gray-700">
+              <div className="text-lg font-semibold mb-2">3Dキャラクター読み込み中...</div>
+              <div className="text-sm text-gray-600">もうすぐ完了します</div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* 現在の集中力表示 */}
-      <div className="absolute top-3 left-3 bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg shadow-lg z-20">
+      <div className="absolute top-3 left-3 bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg shadow-lg z-40">
         <div className="text-xs font-medium">現在の集中力</div>
         <div className="text-lg font-bold text-center">
           {Math.round(currentFocus)}%
