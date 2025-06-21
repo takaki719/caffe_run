@@ -88,11 +88,25 @@ function getValidRecommendations(
           return currentTimeForComparison > endMinutes;
         } else {
           // 日をまたがない集中時間の場合
-          // 現在時刻が起床時刻より小さい場合（翌日）は、集中時間は終了している
+          // 夜型パターン（起床時刻 > 現在時刻）の場合の処理
           if (nowMinutes < wakeMinutes) {
-            return true; // 翌日なので前日の集中時間は終了
+            // 起床時刻が22:00、現在時刻が00:02のような夜型パターン
+            // 集中時間が起床後（翌日の早朝）の場合は、まだ継続中の可能性がある
+            const isEnded = nowMinutes > endMinutes;
+            console.log("NextCaffeineTime - Night owl pattern check:", {
+              nowMinutes,
+              endMinutes,
+              wakeMinutes,
+              isEnded,
+              note: "Same day focus period in night owl schedule",
+            });
+            return isEnded;
           }
-          return nowMinutes > endMinutes;
+          const isEnded = nowMinutes > endMinutes;
+          console.log("NextCaffeineTime - Same day period check:", {
+            isEnded,
+          });
+          return isEnded;
         }
       });
 

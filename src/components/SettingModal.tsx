@@ -9,7 +9,8 @@ interface GraphPoint {
   time: string;
   value: number;
 }
-interface Recommendation {
+
+interface ProcessedRecommendation {
   time: string;
   caffeineAmount: number;
 }
@@ -18,8 +19,8 @@ interface SettingModalProps {
   onClose: (
     minPerformances: number[],
     targetPerformance: number,
-    graphData?: { simulation: GraphPoint[]; current: GraphPoint[] },
-    recommendations?: Recommendation[],
+    graphData?: GraphData,
+    recommendations?: ProcessedRecommendation[],
   ) => void;
 }
 
@@ -55,11 +56,9 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
 
     let mins: number[] = [];
     let tgt = 0.7;
-    let graphData: { simulation: GraphPoint[]; current: GraphPoint[] } = {
-      simulation: [],
-      current: [],
-    };
-    let recommendations: Recommendation[] = [];
+    let graphData: GraphData = { simulation: [], current: [] };
+    let recommendations: ProcessedRecommendation[] = [];
+
     try {
       const res = await fetch("/api/plan", {
         method: "POST",
@@ -79,10 +78,11 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
         simulation: json.simulationData || [],
         current: json.currentStatusData || [],
       };
-      recommendations = (json.caffeinePlan || []).map(
-        (rec: { time: string; mg: number }) => ({
-          time: rec.time,
-          mg: rec.mg,
+      const schedule = json.rawSchedule || json.caffeinePlan || [];
+      recommendations = schedule.map(
+        (rec: { timeDisplay?: string; time?: string; mg: number }) => ({
+          time: rec.timeDisplay || rec.time || "",
+          caffeineAmount: rec.mg,
         }),
       );
       setError("");
