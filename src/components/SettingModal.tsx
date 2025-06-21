@@ -6,12 +6,21 @@ import FocusForm from "./FocusForm";
 import { useSleepTimes } from "@/hooks/UseSleepTimes";
 import { useFocusPeriods } from "@/hooks/UseFocusPeriods";
 
+interface GraphPoint {
+  time: string;
+  value: number;
+}
+interface Recommendation {
+  time: string;
+  caffeineAmount: number;
+}
+
 interface SettingModalProps {
   onClose: (
-    minPerformances: number[], 
+    minPerformances: number[],
     targetPerformance: number,
-    graphData?: { simulation: any[], current: any[] },
-    recommendations?: any[]
+    graphData?: { simulation: GraphPoint[]; current: GraphPoint[] },
+    recommendations?: Recommendation[],
   ) => void;
 }
 
@@ -23,11 +32,13 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
   const [error, setError] = useState("");
 
   const isValid = () =>
-    !!bedTime && 
-    !!wakeTime && 
-    bedTime !== "" && 
-    wakeTime !== "" && 
-    focusPeriods.some((p) => p.start && p.end && p.start !== "" && p.end !== "");
+    !!bedTime &&
+    !!wakeTime &&
+    bedTime !== "" &&
+    wakeTime !== "" &&
+    focusPeriods.some(
+      (p) => p.start && p.end && p.start !== "" && p.end !== "",
+    );
 
   const handleSave = async () => {
     if (!isValid()) {
@@ -47,8 +58,11 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     // API コールしてローカル変数に受け取る
     let mins: number[] = [];
     let tgt = 0.7;
-    let graphData = { simulation: [], current: [] };
-    let recommendations: any[] = [];
+    let graphData: { simulation: GraphPoint[]; current: GraphPoint[] } = {
+      simulation: [],
+      current: [],
+    };
+    let recommendations: Recommendation[] = [];
     try {
       const res = await fetch("/api/plan", {
         method: "POST",
@@ -66,7 +80,7 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
       tgt = json.targetPerformance ?? 0.7;
       graphData = {
         simulation: json.simulationData || [],
-        current: json.currentStatusData || []
+        current: json.currentStatusData || [],
       };
       recommendations = json.caffeinePlan || [];
       setError("");

@@ -7,6 +7,8 @@ export function useExpireCaffeineLogs(
   storageKeys: string[] = ["caffeine-logs"],
   onExpire?: () => void,
 ) {
+  const storageKeysString = JSON.stringify(storageKeys);
+
   useEffect(() => {
     if (!wakeTime) return;
 
@@ -27,5 +29,5 @@ export function useExpireCaffeineLogs(
     }, delay);
 
     return () => clearTimeout(timer);
-  }, [wakeTime, JSON.stringify(storageKeys), onExpire]);
+  }, [wakeTime, storageKeysString, onExpire, storageKeys]);
 }
