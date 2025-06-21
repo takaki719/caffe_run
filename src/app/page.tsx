@@ -26,9 +26,10 @@ type GraphPoint = { time: string; value: number };
 
 type ModalRecommendation = {
   time: string;
-  mg?: number; // mgはオプショナル（存在する場合もあれば、ない場合もある）
-  caffeineAmount?: number; // caffeineAmountもオプショナル
-  fullDateTime?: string; // fullDateTimeもオプショナル
+  mg?: number;
+  caffeineAmount?: number;
+  fullDateTime?: string;
+  timeDisplay?: string; // ← これを追加！
 };
 
 // Unityのロジックをカプセル化する新しいコンポーネント
@@ -299,23 +300,48 @@ const HomePage: React.FC = () => {
         );
       }
       const result = await response.json();
+      const schedule: ModalRecommendation[] =
+        result.rawSchedule || result.caffeinePlan || [];
       setGraphData({
         simulation: result.simulationData || [],
         current: result.currentStatusData || [],
       });
-      const schedule = result.rawSchedule || result.caffeinePlan || [];
+
+      // setRecommendations(
+      //   schedule.map(
+      //     (rec: { timeDisplay?: string; time?: string; mg: number }) => ({
+      //       time: rec.timeDisplay || rec.time || "",
+      //       caffeineAmount: rec.mg,
+      //     }),
+      //   ),
+      // );
+
       setRecommendations(
-        schedule.map(
-          (rec: { timeDisplay?: string; time?: string; mg: number }) => ({
-            time: rec.timeDisplay || rec.time || "",
-            caffeineAmount: rec.mg,
-          }),
-        ),
+        schedule.map((rec) => {
+          const time = rec.timeDisplay || rec.time || "";
+          const now = new Date();
+          const [hour, minute] = time.split(":").map(Number);
+          const inferredDate = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            hour,
+            minute,
+          );
+          if (inferredDate < now) {
+            inferredDate.setDate(inferredDate.getDate() + 1); // 過去なら明日に繰り上げ
+          }
+
+          return {
+            time,
+            caffeineAmount: rec.caffeineAmount ?? rec.mg ?? 0,
+            fullDateTime: rec.fullDateTime || inferredDate.toISOString(),
+          };
+        }),
       );
       setMinPerformances(result.minPerformances || []);
       setTargetPerformance(result.targetPerformance);
       setActiveGraph("simulation");
-
       setUnityKey((prevKey) => prevKey + 1);
     } catch (error) {
       console.error("プラン生成エラー詳細:", {
