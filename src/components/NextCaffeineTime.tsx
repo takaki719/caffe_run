@@ -1,182 +1,60 @@
+// src/components/NextCaffeineTime.tsx
+
 import React, { useState, useEffect } from "react";
 
-// 変更後のRecommendation型
+// 型定義を修正
 export interface Recommendation {
-  time: string; // "08:00"
-  caffeineAmount: number; // 例: 150
+  time: string;
+  caffeineAmount: number;
+  fullDateTime: string; // APIからの完全な日時文字列
 }
 
-// 集中時間の型定義
+// FocusPeriodの型はそのまま
 export interface FocusPeriod {
   start: string;
   end: string;
 }
 
-/**
- * 起床時間と集中時間を基準に有効な推奨プランのみを返す
- * 以下の条件で推奨プランを表示しない：
- * 1. 起床時間から24時間が経過した場合
- * 2. すべての集中時間が終了した場合
- */
-function getValidRecommendations(
-  recommendations: Recommendation[],
-  wakeTime: string,
-  focusPeriods: FocusPeriod[],
-  now: Date,
-): Recommendation[] {
-  if (!wakeTime) return recommendations;
-
-  // "HH:MM"→分に変換
-  const toMinutes = (t: string) => {
-    const [h, m] = t.split(":").map(Number);
-    return h * 60 + m;
-  };
-
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const wakeMinutes = toMinutes(wakeTime);
-
-  // 起床時間から24時間経過したかをチェック
-  let isDayPassed = false;
-
-  if (wakeMinutes <= nowMinutes) {
-    // 通常のケース：起床時間が今日の朝など
-    const hoursPassed = (nowMinutes - wakeMinutes) / 60;
-    isDayPassed = hoursPassed >= 24;
-  } else {
-    // 日をまたぐケース：起床時間が今日の夜など（前日の起床から計算）
-    const minutesSinceYesterdayWake = nowMinutes + 24 * 60 - wakeMinutes;
-    const hoursPassed = minutesSinceYesterdayWake / 60;
-    isDayPassed = hoursPassed >= 24;
-  }
-
-  // デバッグログ
-  console.log("NextCaffeineTime - Day Passed Check:", {
-    wakeTime,
-    currentTime: `${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")}`,
-    wakeMinutes,
-    nowMinutes,
-    isDayPassed,
-    hoursPassed:
-      wakeMinutes <= nowMinutes
-        ? (nowMinutes - wakeMinutes) / 60
-        : (nowMinutes + 24 * 60 - wakeMinutes) / 60,
-  });
-
-  // 起床時間から24時間が過ぎている場合は空を返す
-  if (isDayPassed) {
-    console.log("NextCaffeineTime - Hiding recommendations: Day passed");
-    return [];
-  }
-
-  // 集中時間がすべて終了しているかチェック
-  if (focusPeriods && focusPeriods.length > 0) {
-    const validFocusPeriods = focusPeriods.filter(
-      (period) => period.start && period.end,
-    );
-
-    if (validFocusPeriods.length > 0) {
-      const allFocusPeriodsEnded = validFocusPeriods.every((period) => {
-        let endMinutes = toMinutes(period.end);
-        const startMinutes = toMinutes(period.start);
-
-        // 日をまたぐ集中時間の場合（例：22:00-02:00）
-        if (startMinutes > endMinutes) {
-          endMinutes += 24 * 60; // 翌日の時刻として扱う
-          // 現在時刻が午前中（起床時刻より小さい）場合は翌日として扱う必要がある
-          const currentTimeForComparison =
-            nowMinutes < wakeMinutes ? nowMinutes + 24 * 60 : nowMinutes;
-          return currentTimeForComparison > endMinutes;
-        } else {
-          // 日をまたがない集中時間の場合
-          // 現在時刻が起床時刻より小さい場合（翌日）は、集中時間は終了している
-          if (nowMinutes < wakeMinutes) {
-            return true; // 翌日なので前日の集中時間は終了
-          }
-          return nowMinutes > endMinutes;
-        }
-      });
-
-      // すべての集中時間が終了している場合は空を返す
-      if (allFocusPeriodsEnded) {
-        console.log(
-          "NextCaffeineTime - Hiding recommendations: All focus periods ended",
-        );
-        return [];
-      }
-    }
-  }
-
-  // 現在時刻以降の推奨プランのみを取得
-  console.log("NextCaffeineTime - Filtering recommendations:", {
-    allRecommendations: recommendations.map((r) => ({
-      time: r.time,
-      timeMinutes: toMinutes(r.time),
-    })),
-    nowMinutes,
-    currentTime: `${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")}`,
-  });
-
-  const futureRecommendations = recommendations.filter((rec) => {
-    let recMinutes = toMinutes(rec.time);
-
-    // 夜型対応：推奨時刻が現在時刻より小さい場合、翌日の時刻として扱う
-    if (recMinutes < nowMinutes) {
-      recMinutes += 24 * 60; // 翌日として計算
-    }
-
-    return recMinutes > nowMinutes;
-  });
-
-  console.log("NextCaffeineTime - Future recommendations:", {
-    count: futureRecommendations.length,
-    items: futureRecommendations.map((r) => ({
-      time: r.time,
-      amount: r.caffeineAmount,
-    })),
-  });
-
-  // 時刻順にソート
-  return futureRecommendations.sort(
-    (a, b) => toMinutes(a.time) - toMinutes(b.time),
-  );
-}
-
 export interface RecommendedPlanListProps {
   recommendations: Recommendation[];
-  wakeTime?: string;
-  focusPeriods?: FocusPeriod[];
+  wakeTime?: string; // 今後の拡張のために残す
+  focusPeriods?: FocusPeriod[]; // 今後の拡張のために残す
 }
 
 const RecommendedPlanList: React.FC<RecommendedPlanListProps> = ({
   recommendations,
-  wakeTime = "",
-  focusPeriods = [],
 }) => {
   const [validRecs, setValidRecs] = useState<Recommendation[]>([]);
 
   useEffect(() => {
-    // 起床時間と集中時間を基準に有効な推奨プランのみを抽出
-    const valid = getValidRecommendations(
-      recommendations,
-      wakeTime,
-      focusPeriods,
-      new Date(),
-    );
-    setValidRecs(valid);
+    const filterAndSetRecs = () => {
+      const now = new Date();
 
-    // 1分ごとに更新して時刻の変化に対応
-    const interval = setInterval(() => {
-      const updated = getValidRecommendations(
-        recommendations,
-        wakeTime,
-        focusPeriods,
-        new Date(),
+      // ★★★ ロジックを大幅に簡素化 ★★★
+      // APIから渡された日付情報(fullDateTime)を使い、現在時刻より未来の推奨のみをフィルタリング
+      const futureRecommendations = recommendations.filter((rec) => {
+        if (!rec.fullDateTime) return false; // 日付情報がないものは除外
+        const recommendationDate = new Date(rec.fullDateTime);
+        return recommendationDate > now;
+      });
+
+      // 時刻順にソート（念のため）
+      const sortedRecs = futureRecommendations.sort(
+        (a, b) =>
+          new Date(a.fullDateTime).getTime() -
+          new Date(b.fullDateTime).getTime(),
       );
-      setValidRecs(updated);
-    }, 60000); // 1分ごと
+
+      setValidRecs(sortedRecs);
+    };
+
+    filterAndSetRecs(); // 初期表示
+
+    // 1分ごとに更新
+    const interval = setInterval(filterAndSetRecs, 60000);
 
     return () => clearInterval(interval);
-  }, [recommendations, wakeTime, focusPeriods]);
+  }, [recommendations]); // recommendationsが変更された時のみ再実行
 
   const nextRec = validRecs.length > 0 ? validRecs[0] : null;
 

@@ -102,7 +102,7 @@ const UnityContainer = ({
       sendMessage("unitychan", "SetAnimationSpeed", focusValue.toString());
     }, 2000);
     return () => clearInterval(intervalId);
-  }, [isLoaded, sendMessage, graphData]);
+  }, [isLoaded, sendMessage, graphData, getCurrentFocusValue]);
 
   return (
     <div className="relative">
@@ -208,7 +208,7 @@ const HomePage: React.FC = () => {
     if (savedLogs) {
       setLogs(JSON.parse(savedLogs));
     }
-  }, []);
+  }, [setLogs]);
 
   const isValid = useCallback(() => {
     return (
@@ -258,10 +258,14 @@ const HomePage: React.FC = () => {
         simulation: result.simulationData || [],
         current: result.currentStatusData || [],
       });
-      setRecommendations((result.caffeinePlan || []).map((rec: { time: string; mg: number }) => ({
-        time: rec.time,
-        caffeineAmount: rec.mg
-      })));
+      setRecommendations(
+        (result.caffeinePlan || []).map(
+          (rec: { time: string; mg: number }) => ({
+            time: rec.time,
+            caffeineAmount: rec.mg,
+          }),
+        ),
+      );
       setMinPerformances(result.minPerformances || []);
       setTargetPerformance(result.targetPerformance);
       setActiveGraph("simulation");
@@ -320,10 +324,12 @@ const HomePage: React.FC = () => {
               setActiveGraph("simulation");
             }
             if (recommendations) {
-              setRecommendations(recommendations.map((rec: { time: string; mg: number }) => ({
-                time: rec.time,
-                caffeineAmount: rec.mg
-              })));
+              setRecommendations(
+                recommendations.map((rec: { time: string; mg: number }) => ({
+                  time: rec.time,
+                  caffeineAmount: rec.mg,
+                })),
+              );
             }
             setShowSettingModal(false);
           }}
