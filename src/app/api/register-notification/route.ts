@@ -60,13 +60,16 @@ export async function POST(request: NextRequest) {
     // Redisに保存（キー: notification:{userId}:{timestamp}）
     const redisKey = `notification:${userId}:${notificationDate.getTime()}`;
 
-    const redisResponse = await fetch(`${redisUrl}/setex`, {
+    const redisResponse = await fetch(`${redisUrl}/set/${redisKey}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${redisToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify([redisKey, ttlSeconds, JSON.stringify(notificationData)]),
+      body: JSON.stringify({
+        value: JSON.stringify(notificationData),
+        ex: ttlSeconds
+      }),
     });
 
     if (!redisResponse.ok) {
