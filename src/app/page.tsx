@@ -110,9 +110,9 @@ const UnityContainer = ({
 
       {/* スクロール用オーバーレイ（Unity上を覆う） */}
       {!showLoadingOverlay && (
-        <div 
+        <div
           className="absolute inset-0 z-10 bg-transparent cursor-default"
-          style={{ pointerEvents: 'auto' }}
+          style={{ pointerEvents: "auto" }}
           onMouseDown={(e) => e.preventDefault()}
           onMouseUp={(e) => e.preventDefault()}
           onMouseMove={(e) => e.preventDefault()}
@@ -123,7 +123,7 @@ const UnityContainer = ({
             if (parent) {
               parent.scrollBy({
                 top: e.deltaY,
-                behavior: 'auto'
+                behavior: "auto",
               });
             }
           }}
