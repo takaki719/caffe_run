@@ -79,7 +79,10 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
         simulation: json.simulationData || [],
         current: json.currentStatusData || [],
       };
-      recommendations = json.caffeinePlan || [];
+      recommendations = (json.caffeinePlan || []).map((rec: { time: string; mg: number }) => ({
+        time: rec.time,
+        mg: rec.mg
+      }));
       setError("");
     } catch {
       setError("初期プラン取得中にエラーが発生しました");

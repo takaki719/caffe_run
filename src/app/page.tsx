@@ -296,7 +296,10 @@ const HomePage: React.FC = () => {
         simulation: result.simulationData || [],
         current: result.currentStatusData || [],
       });
-      setRecommendations(result.caffeinePlan || []);
+      setRecommendations((result.caffeinePlan || []).map((rec: { time: string; mg: number }) => ({
+        time: rec.time,
+        caffeineAmount: rec.mg
+      })));
       setMinPerformances(result.minPerformances || []);
       setTargetPerformance(result.targetPerformance);
       setActiveGraph("simulation");
@@ -355,7 +358,10 @@ const HomePage: React.FC = () => {
               setActiveGraph("simulation");
             }
             if (recommendations) {
-              setRecommendations(recommendations);
+              setRecommendations(recommendations.map((rec: { time: string; mg: number }) => ({
+                time: rec.time,
+                caffeineAmount: rec.mg
+              })));
             }
             setShowSettingModal(false);
           }}
