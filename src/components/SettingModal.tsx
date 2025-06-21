@@ -1,4 +1,3 @@
-// components/SettingModal.tsx
 "use client";
 import React, { useState } from "react";
 import SleepForm from "./SleepForm";
@@ -17,6 +16,7 @@ interface Recommendation {
 
 interface SettingModalProps {
   onClose: (
+    minPerformances: number[],
     minPerformances: number[],
     targetPerformance: number,
     graphData?: { simulation: GraphPoint[]; current: GraphPoint[] },
@@ -46,7 +46,6 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
       return;
     }
 
-    // localStorage 保存…
     console.log("保存する設定値:", { bedTime, wakeTime, focusPeriods });
     localStorage.setItem("initial-setup-complete", "true");
     localStorage.setItem("bedTime", bedTime);
@@ -55,7 +54,6 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     window.dispatchEvent(new CustomEvent("sleepTimesUpdated"));
     window.dispatchEvent(new CustomEvent("focusPeriodsUpdated"));
 
-    // API コールしてローカル変数に受け取る
     let mins: number[] = [];
     let tgt = 0.7;
     let graphData: { simulation: GraphPoint[]; current: GraphPoint[] } = {
@@ -81,6 +79,7 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
       graphData = {
         simulation: json.simulationData || [],
         current: json.currentStatusData || [],
+        current: json.currentStatusData || [],
       };
       recommendations = json.caffeinePlan || [];
       setError("");
@@ -89,7 +88,6 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
       return;
     }
 
-    // **ここでローカル変数を渡す**
     onClose(mins, tgt, graphData, recommendations);
   };
 
