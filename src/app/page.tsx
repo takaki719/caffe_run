@@ -249,8 +249,10 @@ const UnityContainer = ({
             </button>
           </div>
         </div>
+        {/* 透明なオーバーレイ（スクロール対応） */}
+        <div className="absolute inset-0 pointer-events-none"></div>
         {/* 現在の集中力表示 */}
-        <div className="absolute top-3 left-3 bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg shadow-lg">
+        <div className="absolute top-3 left-3 bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg shadow-lg pointer-events-none">
           <div className="text-xs font-medium">現在の集中力</div>
           <div className="text-lg font-bold text-center">
             {Math.round(currentFocus)}%
@@ -263,8 +265,27 @@ const UnityContainer = ({
   return (
     <div className="relative">
       <UnityModelWrapper unityProvider={unityProvider} />
+      {/* スクロール用オーバーレイ（Unity上を覆う） */}
+      <div 
+        className="absolute inset-0 z-10 bg-transparent cursor-default"
+        style={{ pointerEvents: 'auto' }}
+        onMouseDown={(e) => e.preventDefault()}
+        onMouseUp={(e) => e.preventDefault()}
+        onMouseMove={(e) => e.preventDefault()}
+        onClick={(e) => e.preventDefault()}
+        onWheel={(e) => {
+          // ホイールイベントを親要素に委譲してスクロールを維持
+          const parent = e.currentTarget.parentElement?.parentElement;
+          if (parent) {
+            parent.scrollBy({
+              top: e.deltaY,
+              behavior: 'auto'
+            });
+          }
+        }}
+      ></div>
       {/* 現在の集中力表示 */}
-      <div className="absolute top-3 left-3 bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg shadow-lg">
+      <div className="absolute top-3 left-3 bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg shadow-lg z-20">
         <div className="text-xs font-medium">現在の集中力</div>
         <div className="text-lg font-bold text-center">
           {Math.round(currentFocus)}%
