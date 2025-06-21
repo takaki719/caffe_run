@@ -5,6 +5,16 @@ import FocusForm from "./FocusForm";
 import { useSleepTimes } from "@/hooks/UseSleepTimes";
 import { useFocusPeriods } from "@/hooks/UseFocusPeriods";
 
+interface GraphData {
+  simulation: SimulationPoint[];
+  current: SimulationPoint[];
+}
+
+interface SimulationPoint {
+  time: string;
+  value: number;
+}
+
 interface ProcessedRecommendation {
   time: string;
   caffeineAmount: number;
