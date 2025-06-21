@@ -6,6 +6,7 @@ interface UnityModelProps {
   unityProvider: ReturnType<
     typeof import("react-unity-webgl").useUnityContext
   >["unityProvider"];
+  isLoaded: boolean;
 }
 
 const UnityModel: React.FC<UnityModelProps> = ({ unityProvider }) => {
