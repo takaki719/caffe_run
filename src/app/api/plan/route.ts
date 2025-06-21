@@ -98,7 +98,7 @@ export async function POST(request: Request) {
         time: timeToDate(log.time, today),
         mg: log.caffeineMg,
       }))
-      .sort((a, b) => a.time.getTime() - b.time.getTime()); // 時系列順にソート
+      .sort((a: CaffeineDose, b: CaffeineDose) => a.time.getTime() - b.time.getTime()); // 時系列順にソート
 
     // デバッグ用: カフェイン履歴の詳細ログ
     console.log("API /plan - Caffeine History Details:", {
