@@ -31,7 +31,7 @@ const UnityContainer = ({
   graphData: { current: GraphPoint[] };
 }) => {
   const [currentFocus, setCurrentFocus] = useState(0);
-  
+
   const { unityProvider, sendMessage, isLoaded } = useUnityContext({
     loaderUrl: "/unity/Build/Downloads.loader.js",
     dataUrl: "/unity/Build/Downloads.data",
@@ -88,12 +88,8 @@ const UnityContainer = ({
     const intervalId = setInterval(() => {
       const focusValue = getCurrentFocusValue();
       setCurrentFocus(focusValue);
-      
-      sendMessage(
-        "unitychan",
-        "SetAnimationSpeed",
-        focusValue.toString(),
-      );
+
+      sendMessage("unitychan", "SetAnimationSpeed", focusValue.toString());
     }, 2000);
     return () => clearInterval(intervalId);
   }, [isLoaded, sendMessage, graphData]);
@@ -180,9 +176,9 @@ const HomePage: React.FC = () => {
         focus_periods: focusPeriods,
         caffeine_logs: logs,
       };
-      
+
       console.log("API Request Body:", requestBody);
-      
+
       const response = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -195,9 +191,11 @@ const HomePage: React.FC = () => {
           status: response.status,
           statusText: response.statusText,
           url: response.url,
-          body: errorText
+          body: errorText,
         });
-        throw new Error(`APIリクエストに失敗しました (${response.status}: ${response.statusText}) - ${errorText}`);
+        throw new Error(
+          `APIリクエストに失敗しました (${response.status}: ${response.statusText}) - ${errorText}`,
+        );
       }
       const result = await response.json();
       setGraphData({
@@ -214,9 +212,11 @@ const HomePage: React.FC = () => {
       console.error("プラン生成エラー詳細:", {
         error,
         errorMessage: error instanceof Error ? error.message : String(error),
-        errorStack: error instanceof Error ? error.stack : undefined
+        errorStack: error instanceof Error ? error.stack : undefined,
       });
-      setError(`プラン生成中にエラーが発生しました: ${error instanceof Error ? error.message : String(error)}`);
+      setError(
+        `プラン生成中にエラーが発生しました: ${error instanceof Error ? error.message : String(error)}`,
+      );
     } finally {
       setIsLoading(false);
     }
@@ -268,7 +268,7 @@ const HomePage: React.FC = () => {
               <TopBackButton />
             </div>
           </div>
-          
+
           <div className="flex flex-col items-center px-4 py-8">
             {/* ビュー切り替えボタン */}
             <div className="w-full max-w-6xl mx-auto mb-6">
@@ -295,119 +295,122 @@ const HomePage: React.FC = () => {
                 </button>
               </div>
             </div>
-          {/* ダッシュボードビュー */}
-          {activeView === "dashboard" && (
-            <>
-              <Dashboard
-                logs={logs}
-                graphData={graphData}
-                recommendations={recommendations}
-                bedTime={bedTime}
-                wakeTime={wakeTime}
-                focusPeriods={focusPeriods}
-              />
-            </>
-          )}
-
-          {/* 詳細設定ビュー */}
-          {activeView === "detailed" && (
-            <>
-              <div className="w-full max-w-2xl flex justify-center">
-                <UnityContainer key={unityKey} graphData={graphData} />
-              </div>
-
-              {/* developブランチの新しいレイアウトを採用 */}
-              <div className="w-full max-w-2xl mx-auto flex flex-row items-center justify-center gap-1 mt-8 px-0">
-                <div className="flex-2">
-                  <RecommendedPlanList
-                    recommendations={recommendations}
-                    wakeTime={wakeTime}
-                    focusPeriods={focusPeriods}
-                  />
-                </div>
-                <div className="flex-1">
-                  <Summery caffeineData={amounts} />
-                </div>
-              </div>
-              {/* あなたが実装したグラフ表示部分 */}
-              {(graphData.simulation.length > 0 ||
-                graphData.current.length > 0) && (
-                <div className="w-full max-w-2xl flex flex-col items-center justify-center mt-8">
-                  <div className="flex justify-center gap-4 mb-4">
-                    <button
-                      onClick={() => setActiveGraph("simulation")}
-                      className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === "simulation" ? "bg-indigo-500 text-white shadow" : "bg-gray-200 text-gray-700"}`}
-                    >
-                      理想の集中度
-                    </button>
-                    <button
-                      onClick={() => setActiveGraph("current")}
-                      className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === "current" ? "bg-teal-500 text-white shadow" : "bg-gray-200 text-gray-700"}`}
-                    >
-                      現在の集中度
-                    </button>
-                  </div>
-                  <div className="w-full">
-                    {activeGraph == "simulation" &&<h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-                      カフェイン効果予測
-                    </h3>
-                    }
-                    <Chart data={graphData[activeGraph]} />
-                  </div>
-                </div>
-              )}
-              <div className="w-full max-w-2xl mx-auto mt-8 mb-2">
-                <div className="flex items-center mb-2">
-                  <button
-                    type="button"
-                    className="mr-3 w-8 h-8 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold transition text-xl"
-                    onClick={() => setIsLogFormOpen((p) => !p)}
-                    aria-label={isLogFormOpen ? "閉じる" : "開く"}
-                  >
-                    {isLogFormOpen ? "-" : "+"}
-                  </button>
-                  <h2 className="text-lg font-bold text-gray-800">
-                    カフェイン摂取記録
-                  </h2>
-                </div>
-                {isLogFormOpen && (
-                  <CaffeineLogForm logs={logs} setLogs={setLogs} />
-                )}
-              </div>
-              <main className="flex flex-col items-start flex-1 w-full max-w-2xl mx-auto px-4">
-                {/* developブランチの新しいフォームコンポーネントを使用 */}
-                <SleepForm
+            {/* ダッシュボードビュー */}
+            {activeView === "dashboard" && (
+              <>
+                <Dashboard
+                  logs={logs}
+                  graphData={graphData}
+                  recommendations={recommendations}
                   bedTime={bedTime}
                   wakeTime={wakeTime}
-                  setBedTime={setBedTime}
-                  setWakeTime={setWakeTime}
-                  disabled={isLoading}
-                />
-                <FocusForm
                   focusPeriods={focusPeriods}
-                  addFocusPeriod={addFocusPeriod}
-                  removeFocusPeriod={removeFocusPeriod}
-                  updateFocusPeriod={updateFocusPeriod}
-                  disabled={isLoading}
                 />
+              </>
+            )}
 
-                {error && (
-                  <div className="text-red-600 font-semibold mb-3">{error}</div>
+            {/* 詳細設定ビュー */}
+            {activeView === "detailed" && (
+              <>
+                <div className="w-full max-w-2xl flex justify-center">
+                  <UnityContainer key={unityKey} graphData={graphData} />
+                </div>
+
+                {/* developブランチの新しいレイアウトを採用 */}
+                <div className="w-full max-w-2xl mx-auto flex flex-row items-center justify-center gap-1 mt-8 px-0">
+                  <div className="flex-2">
+                    <RecommendedPlanList
+                      recommendations={recommendations}
+                      wakeTime={wakeTime}
+                      focusPeriods={focusPeriods}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Summery caffeineData={amounts} />
+                  </div>
+                </div>
+                {/* あなたが実装したグラフ表示部分 */}
+                {(graphData.simulation.length > 0 ||
+                  graphData.current.length > 0) && (
+                  <div className="w-full max-w-2xl flex flex-col items-center justify-center mt-8">
+                    <div className="flex justify-center gap-4 mb-4">
+                      <button
+                        onClick={() => setActiveGraph("simulation")}
+                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === "simulation" ? "bg-indigo-500 text-white shadow" : "bg-gray-200 text-gray-700"}`}
+                      >
+                        理想の集中度
+                      </button>
+                      <button
+                        onClick={() => setActiveGraph("current")}
+                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeGraph === "current" ? "bg-teal-500 text-white shadow" : "bg-gray-200 text-gray-700"}`}
+                      >
+                        現在の集中度
+                      </button>
+                    </div>
+                    <div className="w-full">
+                      {activeGraph == "simulation" && (
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+                          カフェイン効果予測
+                        </h3>
+                      )}
+                      <Chart data={graphData[activeGraph]} />
+                    </div>
+                  </div>
                 )}
-
-                <div className="w-full flex justify-center mt-8 mb-6">
-                  <BlueButton
-                    label={
-                      isLoading ? "計画生成中..." : "カフェイン計画を生成する"
-                    }
-                    href="#"
-                    onClick={handleGeneratePlan}
+                <div className="w-full max-w-2xl mx-auto mt-8 mb-2">
+                  <div className="flex items-center mb-2">
+                    <button
+                      type="button"
+                      className="mr-3 w-8 h-8 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold transition text-xl"
+                      onClick={() => setIsLogFormOpen((p) => !p)}
+                      aria-label={isLogFormOpen ? "閉じる" : "開く"}
+                    >
+                      {isLogFormOpen ? "-" : "+"}
+                    </button>
+                    <h2 className="text-lg font-bold text-gray-800">
+                      カフェイン摂取記録
+                    </h2>
+                  </div>
+                  {isLogFormOpen && (
+                    <CaffeineLogForm logs={logs} setLogs={setLogs} />
+                  )}
+                </div>
+                <main className="flex flex-col items-start flex-1 w-full max-w-2xl mx-auto px-4">
+                  {/* developブランチの新しいフォームコンポーネントを使用 */}
+                  <SleepForm
+                    bedTime={bedTime}
+                    wakeTime={wakeTime}
+                    setBedTime={setBedTime}
+                    setWakeTime={setWakeTime}
                     disabled={isLoading}
                   />
-                </div>
-              </main>
-            </>
-          )}
+                  <FocusForm
+                    focusPeriods={focusPeriods}
+                    addFocusPeriod={addFocusPeriod}
+                    removeFocusPeriod={removeFocusPeriod}
+                    updateFocusPeriod={updateFocusPeriod}
+                    disabled={isLoading}
+                  />
+
+                  {error && (
+                    <div className="text-red-600 font-semibold mb-3">
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="w-full flex justify-center mt-8 mb-6">
+                    <BlueButton
+                      label={
+                        isLoading ? "計画生成中..." : "カフェイン計画を生成する"
+                      }
+                      href="#"
+                      onClick={handleGeneratePlan}
+                      disabled={isLoading}
+                    />
+                  </div>
+                </main>
+              </>
+            )}
           </div>
         </div>
       )}

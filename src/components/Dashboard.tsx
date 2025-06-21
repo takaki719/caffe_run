@@ -66,18 +66,21 @@ function getValidRecommendations(
 
   // 集中時間がすべて終了しているかチェック
   if (focusPeriods && focusPeriods.length > 0) {
-    const validFocusPeriods = focusPeriods.filter(period => period.start && period.end);
-    
+    const validFocusPeriods = focusPeriods.filter(
+      (period) => period.start && period.end,
+    );
+
     if (validFocusPeriods.length > 0) {
-      const allFocusPeriodsEnded = validFocusPeriods.every(period => {
+      const allFocusPeriodsEnded = validFocusPeriods.every((period) => {
         let endMinutes = toMinutes(period.end);
         const startMinutes = toMinutes(period.start);
-        
+
         // 日をまたぐ集中時間の場合（例：22:00-02:00）
         if (startMinutes > endMinutes) {
           endMinutes += 24 * 60; // 翌日の時刻として扱う
           // 現在時刻が午前中（起床時刻より小さい）場合は翌日として扱う必要がある
-          const currentTimeForComparison = nowMinutes < wakeMinutes ? nowMinutes + 24 * 60 : nowMinutes;
+          const currentTimeForComparison =
+            nowMinutes < wakeMinutes ? nowMinutes + 24 * 60 : nowMinutes;
           return currentTimeForComparison > endMinutes;
         } else {
           // 日をまたがない集中時間の場合
@@ -88,7 +91,7 @@ function getValidRecommendations(
           return nowMinutes > endMinutes;
         }
       });
-      
+
       // すべての集中時間が終了している場合は空を返す
       if (allFocusPeriodsEnded) {
         return [];
@@ -526,7 +529,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           recommendations,
           wakeTime,
           focusPeriods,
-          new Date()
+          new Date(),
         );
 
         return validRecommendations.length > 0 ? (
@@ -573,7 +576,9 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="text-center text-gray-500 py-8">
                 <div className="text-4xl mb-2">😴</div>
                 <p>推奨プランがありません</p>
-                <p className="text-sm mt-1">集中時間が終了しているか、起床から24時間が経過しています</p>
+                <p className="text-sm mt-1">
+                  集中時間が終了しているか、起床から24時間が経過しています
+                </p>
               </div>
             </div>
           )

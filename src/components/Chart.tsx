@@ -43,12 +43,16 @@ const Chart: React.FC<Props> = ({ data }) => {
       return closestTime;
     } else {
       // 無ければ最も近い時刻を線形距離で探す
-      const currentMinutes = now.getHours() * 60 + (now.getMinutes() < 30 ? 0 : 30);
+      const currentMinutes =
+        now.getHours() * 60 + (now.getMinutes() < 30 ? 0 : 30);
       return hourlyData.reduce((prev, curr) => {
         const [h, m] = curr.time.split(":").map(Number);
         const timeMinutes = h * 60 + m;
-        const prevMinutes = Number(prev.time.split(":")[0]) * 60 + Number(prev.time.split(":")[1]);
-        return Math.abs(timeMinutes - currentMinutes) < Math.abs(prevMinutes - currentMinutes)
+        const prevMinutes =
+          Number(prev.time.split(":")[0]) * 60 +
+          Number(prev.time.split(":")[1]);
+        return Math.abs(timeMinutes - currentMinutes) <
+          Math.abs(prevMinutes - currentMinutes)
           ? curr
           : prev;
       }).time;
@@ -57,28 +61,38 @@ const Chart: React.FC<Props> = ({ data }) => {
 
   // カスタムドット：現在に一番近い点だけ★マーク
 
-const CustomDot: React.FC<DotProps & { payload: DataPoint }> = ({ cx, cy, payload }) => {
-  if (cx == null || cy == null) return null;
+  const CustomDot: React.FC<DotProps & { payload: DataPoint }> = ({
+    cx,
+    cy,
+    payload,
+  }) => {
+    if (cx == null || cy == null) return null;
 
-  if (payload.time === currentKey) {
+    if (payload.time === currentKey) {
+      return (
+        <text
+          x={cx}
+          y={cy + 7}
+          textAnchor="middle"
+          fontSize={24}
+          fill="#f59e0b"
+        >
+          ★
+        </text>
+      );
+    }
+
     return (
-      <text x={cx} y={cy+7} textAnchor="middle" fontSize={24} fill="#f59e0b">
-        ★
-      </text>
+      <circle
+        cx={cx}
+        cy={cy}
+        r={3}
+        stroke="#6366f1"
+        strokeWidth={2}
+        fill="#6366f1"
+      />
     );
-  }
-
-  return (
-    <circle
-      cx={cx}
-      cy={cy}
-      r={3}
-      stroke="#6366f1"
-      strokeWidth={2}
-      fill="#6366f1"
-    />
-  );
-};
+  };
 
   return (
     <div className="bg-white rounded-2xl shadow-md p-4 flex flex-col items-center justify-center min-h-[240px] h-[320px] sm:h-[420px] w-full">
@@ -109,11 +123,16 @@ const CustomDot: React.FC<DotProps & { payload: DataPoint }> = ({ cx, cy, payloa
             name="集中度"
             stroke="#6366f1"
             strokeWidth={3}
-            dot={<CustomDot payload={{
-              time: "",
-              value: 0
-            }} />}
-          />pay
+            dot={
+              <CustomDot
+                payload={{
+                  time: "",
+                  value: 0,
+                }}
+              />
+            }
+          />
+          pay
         </LineChart>
       </ResponsiveContainer>
     </div>

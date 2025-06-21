@@ -42,9 +42,9 @@ export async function POST(request: Request) {
       bed_time: !!bed_time,
       wake_time: !!wake_time,
       focus_periods: !!focus_periods,
-      focus_periods_length: focus_periods?.length
+      focus_periods_length: focus_periods?.length,
     });
-    
+
     if (
       !bed_time ||
       !wake_time ||
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       (p: FocusPeriodRequest) => p.start && p.end,
     );
     console.log("API /plan - Valid focus periods:", validFocusPeriods);
-    
+
     if (validFocusPeriods.length === 0) {
       console.log("API /plan - No valid focus periods");
       return NextResponse.json(
@@ -99,17 +99,18 @@ export async function POST(request: Request) {
         mg: log.caffeineMg,
       }))
       .sort((a, b) => a.time.getTime() - b.time.getTime()); // 時系列順にソート
-    
+
     // デバッグ用: カフェイン履歴の詳細ログ
     console.log("API /plan - Caffeine History Details:", {
       originalLogs: caffeine_logs,
-      processedHistory: actualCaffeineHistory.map(h => ({
+      processedHistory: actualCaffeineHistory.map((h) => ({
         time: h.time.toLocaleTimeString(),
-        mg: h.mg
+        mg: h.mg,
       })),
       totalEntries: actualCaffeineHistory.length,
-      isSorted: actualCaffeineHistory.every((h, i, arr) => 
-        i === 0 || arr[i-1].time.getTime() <= h.time.getTime())
+      isSorted: actualCaffeineHistory.every(
+        (h, i, arr) => i === 0 || arr[i - 1].time.getTime() <= h.time.getTime(),
+      ),
     });
 
     const sleepDurationMs = finalWakeTime.getTime() - finalBedTime.getTime();
@@ -235,7 +236,7 @@ export async function POST(request: Request) {
     if (error instanceof Error) {
       console.error("API /plan - Error details:", {
         message: error.message,
-        stack: error.stack
+        stack: error.stack,
       });
       return NextResponse.json(
         { error: "サーバーでエラーが発生しました。", details: error.message },
