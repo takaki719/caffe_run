@@ -342,7 +342,12 @@ const HomePage: React.FC = () => {
               setActiveGraph("simulation");
             }
             if (recommendations) {
-              setRecommendations(recommendations);
+              setRecommendations(
+                recommendations.map((rec: any) => ({
+                  time: rec.time,
+                  caffeineAmount: rec.caffeineAmount ?? rec.amount ?? 0,
+                }))
+              );
             }
             setShowSettingModal(false);
           }}
