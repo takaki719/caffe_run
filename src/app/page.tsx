@@ -281,7 +281,7 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     if (!localStorage.getItem("initial-setup-complete")) {
       setShowSettingModal(true);
-    } else {
+    } else if (isValid()) {
       handleGeneratePlan();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -309,9 +309,16 @@ const HomePage: React.FC = () => {
       )}
       {showSettingModal && (
         <SettingModal
-          onClose={(mins, tgt) => {
+          onClose={(mins, tgt, graphData, recommendations) => {
             setMinPerformances(mins);
             setTargetPerformance(tgt);
+            if (graphData) {
+              setGraphData(graphData);
+              setActiveGraph("simulation");
+            }
+            if (recommendations) {
+              setRecommendations(recommendations);
+            }
             setShowSettingModal(false);
           }}
         />

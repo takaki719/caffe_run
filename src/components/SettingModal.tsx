@@ -7,7 +7,12 @@ import { useSleepTimes } from "@/hooks/UseSleepTimes";
 import { useFocusPeriods } from "@/hooks/UseFocusPeriods";
 
 interface SettingModalProps {
-  onClose: (minPerformances: number[], targetPerformance: number) => void;
+  onClose: (
+    minPerformances: number[], 
+    targetPerformance: number,
+    graphData?: { simulation: any[], current: any[] },
+    recommendations?: any[]
+  ) => void;
 }
 
 const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
@@ -18,7 +23,11 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
   const [error, setError] = useState("");
 
   const isValid = () =>
-    !!bedTime && !!wakeTime && focusPeriods.some((p) => p.start && p.end);
+    !!bedTime && 
+    !!wakeTime && 
+    bedTime !== "" && 
+    wakeTime !== "" && 
+    focusPeriods.some((p) => p.start && p.end && p.start !== "" && p.end !== "");
 
   const handleSave = async () => {
     if (!isValid()) {
@@ -27,6 +36,7 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     }
 
     // localStorage 保存…
+    console.log("保存する設定値:", { bedTime, wakeTime, focusPeriods });
     localStorage.setItem("initial-setup-complete", "true");
     localStorage.setItem("bedTime", bedTime);
     localStorage.setItem("wakeTime", wakeTime);
@@ -37,6 +47,8 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     // API コールしてローカル変数に受け取る
     let mins: number[] = [];
     let tgt = 0.7;
+    let graphData = { simulation: [], current: [] };
+    let recommendations: any[] = [];
     try {
       const res = await fetch("/api/plan", {
         method: "POST",
@@ -52,6 +64,11 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
       const json = await res.json();
       mins = json.minPerformances || [];
       tgt = json.targetPerformance ?? 0.7;
+      graphData = {
+        simulation: json.simulationData || [],
+        current: json.currentStatusData || []
+      };
+      recommendations = json.caffeinePlan || [];
       setError("");
     } catch {
       setError("初期プラン取得中にエラーが発生しました");
@@ -59,7 +76,7 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     }
 
     // **ここでローカル変数を渡す**
-    onClose(mins, tgt);
+    onClose(mins, tgt, graphData, recommendations);
   };
 
   return (
