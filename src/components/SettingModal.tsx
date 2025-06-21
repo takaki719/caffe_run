@@ -44,9 +44,7 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     focusPeriods.some(
       (p) => p.start && p.end && p.start !== "" && p.end !== "",
     );
-    focusPeriods.some(
-      (p) => p.start && p.end && p.start !== "" && p.end !== "",
-    );
+  focusPeriods.some((p) => p.start && p.end && p.start !== "" && p.end !== "");
 
   const handleSave = async () => {
     if (!isValid()) {

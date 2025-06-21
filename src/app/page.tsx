@@ -247,7 +247,6 @@ const HomePage: React.FC = () => {
       setLogs(JSON.parse(savedLogs));
     }
   }, [setLogs]);
-  }, [setLogs]);
 
   const isValid = useCallback(() => {
     return (
