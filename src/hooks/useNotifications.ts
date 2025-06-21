@@ -135,6 +135,11 @@ export const useNotifications = () => {
         }),
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API Error:", response.status, errorText);
+      }
+
       return response.ok;
     } catch (error) {
       console.error("Notification registration failed:", error);

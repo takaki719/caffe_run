@@ -313,8 +313,8 @@ const HomePage: React.FC = () => {
       setTargetPerformance(result.targetPerformance);
       setActiveGraph("simulation");
 
-      // 通知を設定
-      await setupNotificationsForRecommendations(result.caffeinePlan || []);
+      // 通知を設定 (一時的に無効化)
+      // await setupNotificationsForRecommendations(result.caffeinePlan || []);
 
       setUnityKey((prevKey) => prevKey + 1);
     } catch (error) {
