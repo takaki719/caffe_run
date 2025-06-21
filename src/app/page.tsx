@@ -20,6 +20,8 @@ import Warnings from "@/components/Warnings";
 import Dashboard from "@/components/Dashboard";
 import { useExpireCaffeineLogs } from "@/hooks/useExpireCaffeineLogs";
 import ExpirePopup from "@/components/ExpirePopup";
+import { useNotifications } from "@/hooks/useNotifications";
+import NotificationButton from "@/components/NotificationButton";
 
 // グラフの点の型定義
 type GraphPoint = { time: string; value: number };
@@ -193,6 +195,48 @@ const HomePage: React.FC = () => {
   const [minPerformances, setMinPerformances] = useState<number[]>([]);
   const [targetPerformance, setTargetPerformance] = useState<number>(0.7);
 
+  // 通知機能
+  const { isSupported, permission, registerNotification } = useNotifications();
+
+  // 推奨プランに基づいて通知を設定する関数
+  const setupNotificationsForRecommendations = useCallback(
+    async (caffeineRecommendations: Recommendation[]) => {
+      if (!isSupported || permission !== "granted") {
+        return;
+      }
+
+      try {
+        for (const recommendation of caffeineRecommendations) {
+          // 推奨時刻から5分前を計算
+          const [hours, minutes] = recommendation.time.split(":").map(Number);
+          const recommendedTime = new Date();
+          recommendedTime.setHours(hours, minutes, 0, 0);
+
+          // 明日の場合は日付を調整
+          if (recommendedTime <= new Date()) {
+            recommendedTime.setDate(recommendedTime.getDate() + 1);
+          }
+
+          // 5分前の通知時刻
+          const notificationTime = new Date(
+            recommendedTime.getTime() - 5 * 60 * 1000,
+          );
+
+          // 未来の時刻のみ通知設定
+          if (notificationTime > new Date()) {
+            await registerNotification(notificationTime);
+            console.log(
+              `通知設定完了: ${recommendation.time} の5分前 (${notificationTime.toLocaleString()})`,
+            );
+          }
+        }
+      } catch (error) {
+        console.error("通知設定エラー:", error);
+      }
+    },
+    [isSupported, permission, registerNotification],
+  );
+
   // 起床時刻＋24時間でローカルストレージ内のすべてのデータを自動消去&ポップアップ表示
   // 次のカフェイン摂取時間や摂取履歴も削除される
   const [showExpirePopup, setShowExpirePopup] = useState(false);
@@ -263,6 +307,9 @@ const HomePage: React.FC = () => {
       setTargetPerformance(result.targetPerformance);
       setActiveGraph("simulation");
 
+      // 通知を設定
+      await setupNotificationsForRecommendations(result.caffeinePlan || []);
+
       setUnityKey((prevKey) => prevKey + 1);
     } catch (error) {
       console.error("プラン生成エラー詳細:", {
@@ -327,8 +374,9 @@ const HomePage: React.FC = () => {
         <div className="min-h-screen bg-gray-50">
           {/* トップバー */}
           <div className="w-full bg-white shadow-sm">
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-6xl mx-auto flex justify-between items-center px-4 py-2">
               <TopBackButton />
+              <NotificationButton />
             </div>
           </div>
 

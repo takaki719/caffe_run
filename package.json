@@ -7,15 +7,18 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format": "prettier --write src"
+    "format": "prettier --write src",
+    "generate-vapid": "node scripts/generate-vapid-keys.js"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",
+    "@types/web-push": "^3.6.4",
     "next": "15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-unity-webgl": "^9.9.0",
-    "recharts": "^2.15.3"
+    "recharts": "^2.15.3",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
