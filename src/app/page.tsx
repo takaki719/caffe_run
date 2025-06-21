@@ -198,50 +198,16 @@ const HomePage: React.FC = () => {
   // 通知機能
   const { isSupported, permission, registerNotification } = useNotifications();
 
-  // 推奨プランに基づいて通知を設定する関数
-  const setupNotificationsForRecommendations = useCallback(
-    async (caffeineRecommendations: Recommendation[]) => {
-      if (!isSupported || permission !== "granted") {
-        return;
-      }
-
-      try {
-        for (const recommendation of caffeineRecommendations) {
-          // 推奨時刻から5分前を計算
-          const [hours, minutes] = recommendation.time.split(":").map(Number);
-          const recommendedTime = new Date();
-          recommendedTime.setHours(hours, minutes, 0, 0);
-
-          // 明日の場合は日付を調整
-          if (recommendedTime <= new Date()) {
-            recommendedTime.setDate(recommendedTime.getDate() + 1);
-          }
-
-          // 5分前の通知時刻
-          const notificationTime = new Date(
-            recommendedTime.getTime() - 5 * 60 * 1000,
-          );
-
-          // 未来の時刻のみ通知設定
-          if (notificationTime > new Date()) {
-            const success = await registerNotification(notificationTime);
-            if (success) {
-              console.log(
-                `通知設定完了: ${recommendation.time} の5分前 (${notificationTime.toLocaleString()})`,
-              );
-            } else {
-              console.error(
-                `通知設定失敗: ${recommendation.time} の5分前 (${notificationTime.toLocaleString()})`,
-              );
-            }
-          }
-        }
-      } catch (error) {
-        console.error("通知設定エラー:", error);
-      }
-    },
-    [isSupported, permission, registerNotification],
-  );
+  // 推奨プランに基づいて通知を設定する関数 (一時的に無効化)
+  // const setupNotificationsForRecommendations = useCallback(
+  //   async (caffeineRecommendations: Recommendation[]) => {
+  //     if (!isSupported || permission !== "granted") {
+  //       return;
+  //     }
+  //     // ... 通知設定処理
+  //   },
+  //   [isSupported, permission, registerNotification],
+  // );
 
   // 起床時刻＋24時間でローカルストレージ内のすべてのデータを自動消去&ポップアップ表示
   // 次のカフェイン摂取時間や摂取履歴も削除される
@@ -335,7 +301,6 @@ const HomePage: React.FC = () => {
     focusPeriods,
     isValid,
     logs,
-    setupNotificationsForRecommendations,
   ]);
 
   useEffect(() => {
