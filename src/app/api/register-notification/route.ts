@@ -34,7 +34,10 @@ export async function POST(request: NextRequest) {
     const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
     if (!redisUrl || !redisToken) {
-      console.error("Redis configuration missing");
+      console.error("Redis configuration missing:", { 
+        hasRedisUrl: !!redisUrl, 
+        hasRedisToken: !!redisToken 
+      });
       return NextResponse.json(
         { error: "Server configuration error" },
         { status: 500 },
