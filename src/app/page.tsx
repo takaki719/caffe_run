@@ -323,7 +323,14 @@ const HomePage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [bedTime, wakeTime, focusPeriods, isValid, logs]);
+  }, [
+    bedTime,
+    wakeTime,
+    focusPeriods,
+    isValid,
+    logs,
+    setupNotificationsForRecommendations,
+  ]);
 
   useEffect(() => {
     if (!localStorage.getItem("initial-setup-complete")) {

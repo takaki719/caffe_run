@@ -5,13 +5,15 @@ import SleepForm from "./SleepForm";
 import FocusForm from "./FocusForm";
 import { useSleepTimes } from "@/hooks/UseSleepTimes";
 import { useFocusPeriods } from "@/hooks/UseFocusPeriods";
+import { GraphData } from "@/types/notifications";
+import type { Recommendation } from "./NextCaffeineTime";
 
 interface SettingModalProps {
   onClose: (
     minPerformances: number[],
     targetPerformance: number,
-    graphData?: { simulation: any[]; current: any[] },
-    recommendations?: any[],
+    graphData?: GraphData,
+    recommendations?: Recommendation[],
   ) => void;
 }
 
@@ -49,8 +51,8 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     // API コールしてローカル変数に受け取る
     let mins: number[] = [];
     let tgt = 0.7;
-    let graphData = { simulation: [], current: [] };
-    let recommendations: any[] = [];
+    let graphData: GraphData = { simulation: [], current: [] };
+    let recommendations: Recommendation[] = [];
     try {
       const res = await fetch("/api/plan", {
         method: "POST",

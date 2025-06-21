@@ -27,5 +27,5 @@ export function useExpireCaffeineLogs(
     }, delay);
 
     return () => clearTimeout(timer);
-  }, [wakeTime, JSON.stringify(storageKeys), onExpire]);
+  }, [wakeTime, storageKeys, onExpire]);
 }

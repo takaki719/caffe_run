@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { NotificationSubscription } from "@/types/notifications";
 
 interface NotificationRequest {
   userId: string;
   notificationTime: string;
-  subscription: {
-    endpoint: string;
-    keys: {
-      p256dh: string;
-      auth: string;
-    };
-  };
+  subscription: NotificationSubscription;
 }
 
 export async function POST(request: NextRequest) {

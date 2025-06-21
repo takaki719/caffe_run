@@ -1,13 +1,5 @@
 import { useState, useEffect } from "react";
 
-interface NotificationSubscription {
-  endpoint: string;
-  keys: {
-    p256dh: string;
-    auth: string;
-  };
-}
-
 export const useNotifications = () => {
   const [isSupported, setIsSupported] = useState(false);
   const [permission, setPermission] =
