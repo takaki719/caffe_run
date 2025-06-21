@@ -1,15 +1,19 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const TopBackButton: React.FC = () => (
-  <header className="w-full flex items-center py-4">
+  <div className="w-full flex items-center justify-between px-4 py-3">
     <Link href="../" className="flex items-center">
-      <span className="text-2xl sm:text-3xl font-bold text-blue-600 pl-2 cursor-pointer">
-        {/* 仮アイコン．作成次第置き換え予定 */}
-        ☕️ Caffe-Run
-      </span>
+      <Image
+        src="/icons/logo.png"
+        alt="Caffe-Run Logo"
+        width={150}
+        height={50}
+        className="h-10 w-auto cursor-pointer"
+      />
     </Link>
-  </header>
+  </div>
 );
 
 export default TopBackButton;

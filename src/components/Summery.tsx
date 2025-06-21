@@ -12,7 +12,7 @@ export interface SummeryProps {
 const COLOR_BLUE = "#2563eb"; // 摂取分（1周め）
 const COLOR_GRAY = "#e5e7eb"; // 残り（200mgまでの灰色）
 const COLOR_RED = "#ef4444"; // 超過分
-const PIE_MAX = 200; // 1周あたり200mg
+const PIE_MAX = 400; // 1周あたり200mg
 
 const Summery: React.FC<SummeryProps> = ({ caffeineData }) => {
   // 合計摂取量
