@@ -17,7 +17,6 @@ interface Recommendation {
 interface SettingModalProps {
   onClose: (
     minPerformances: number[],
-    minPerformances: number[],
     targetPerformance: number,
     graphData?: { simulation: GraphPoint[]; current: GraphPoint[] },
     recommendations?: Recommendation[],
@@ -78,7 +77,6 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
       tgt = json.targetPerformance ?? 0.7;
       graphData = {
         simulation: json.simulationData || [],
-        current: json.currentStatusData || [],
         current: json.currentStatusData || [],
       };
       recommendations = json.caffeinePlan || [];
