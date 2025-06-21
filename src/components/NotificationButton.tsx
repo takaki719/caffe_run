@@ -3,7 +3,7 @@ import React from "react";
 import { useNotifications } from "@/hooks/useNotifications";
 
 const NotificationButton: React.FC = () => {
-  const { isSupported, permission, setupNotifications } = useNotifications();
+  const { isSupported, permission, setupNotifications, subscription, userId } = useNotifications();
 
   if (!isSupported) {
     return null; // ブラウザが対応していない場合は非表示
@@ -20,9 +20,22 @@ const NotificationButton: React.FC = () => {
 
   if (permission === "granted") {
     return (
-      <div className="flex items-center gap-2 text-green-600 text-sm">
-        <span>🔔</span>
-        <span>通知設定済み</span>
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2 text-green-600 text-sm">
+          <span>🔔</span>
+          <span>通知設定済み</span>
+        </div>
+        <div className="text-xs text-gray-500">
+          Subscription: {subscription ? "✓" : "✗"} | UserID: {userId ? "✓" : "✗"}
+        </div>
+        {(!subscription || !userId) && (
+          <button
+            onClick={handleSetupNotifications}
+            className="text-xs text-blue-600 hover:text-blue-800"
+          >
+            再設定
+          </button>
+        )}
       </div>
     );
   }
