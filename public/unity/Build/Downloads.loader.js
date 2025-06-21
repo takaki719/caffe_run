@@ -1,7 +1,7 @@
-function createUnityInstance(t, n, d) {
-  function c(e, t) {
-    if (!c.aborted && n.showBanner)
-      return "error" == t && (c.aborted = !0), n.showBanner(e, t);
+function createUnityInstance(t, n, c) {
+  function d(e, t) {
+    if (!d.aborted && n.showBanner)
+      return "error" == t && (d.aborted = !0), n.showBanner(e, t);
     switch (t) {
       case "error":
         console.error(e);
@@ -38,7 +38,7 @@ function createUnityInstance(t, n, d) {
       ),
       (e[t] = n));
   }
-  d = d || function () {};
+  c = c || function () {};
   var o,
     m = {
       canvas: t,
@@ -70,13 +70,13 @@ function createUnityInstance(t, n, d) {
           "string" == typeof e &&
             -1 != e.indexOf("wasm streaming compile failed") &&
             (-1 != e.toLowerCase().indexOf("mime")
-              ? c(
+              ? d(
                   'HTTP Response Header "Content-Type" configured incorrectly on the server for file ' +
                     m.codeUrl +
                     ' , should be "application/wasm". Startup time performance will suffer.',
                   "warning",
                 )
-              : c(
+              : d(
                   'WebAssembly streaming compilation failed! This can happen for example if "Content-Encoding" HTTP header is incorrectly enabled on the server for file ' +
                     m.codeUrl +
                     ", but the file is not pre-compressed on disk (or vice versa). Check the Network tab in browser Devtools to debug server header configuration.",
@@ -84,7 +84,7 @@ function createUnityInstance(t, n, d) {
                 ));
       },
       locateFile: function (e) {
-        return "build.wasm" == e ? this.codeUrl : e;
+        return e;
       },
       disabledCanvasEvents: ["contextmenu", "dragstart"],
     };
@@ -136,11 +136,11 @@ function createUnityInstance(t, n, d) {
     p,
     g,
     b,
-    w,
     v,
+    w,
     y,
-    C,
-    S = {
+    S,
+    C = {
       Module: m,
       SetFullscreen: function () {
         if (m.SetFullscreen) return m.SetFullscreen.apply(m, arguments);
@@ -164,9 +164,9 @@ function createUnityInstance(t, n, d) {
           a = 4 + o,
           i = 4 + a,
           s = 8 + i,
-          d = 8 + s,
-          c = 4 + d,
-          l = 4 + c,
+          c = 8 + s,
+          d = 4 + c,
+          l = 4 + d,
           u = 4 + l;
         return {
           totalWASMHeapSize: m.HEAPU32[e >> 2],
@@ -177,9 +177,9 @@ function createUnityInstance(t, n, d) {
           pageLoadTimeToFrame1: m.HEAPU32[a >> 2],
           fps: m.HEAPF64[i >> 3],
           movingAverageFps: m.HEAPF64[s >> 3],
-          assetLoadTime: m.HEAPU32[d >> 2],
+          assetLoadTime: m.HEAPU32[c >> 2],
           webAssemblyStartupTime:
-            m.HEAPU32[c >> 2] - (m.webAssemblyTimeStart || 0),
+            m.HEAPU32[d >> 2] - (m.webAssemblyTimeStart || 0),
           codeDownloadTime: m.HEAPU32[l >> 2],
           gameStartupTime: m.HEAPU32[u >> 2],
           numJankedFrames: m.HEAPU32[(4 + u) >> 2],
@@ -213,7 +213,7 @@ function createUnityInstance(t, n, d) {
             alert(e),
             (P.didShowErrorMessage = !0))));
   }
-  function T(e, t) {
+  function U(e, t) {
     if ("symbolsUrl" != e) {
       var n = m.downloadProgress[e],
         r =
@@ -245,7 +245,7 @@ function createUnityInstance(t, n, d) {
             ? ((r += n.loaded), (o += n.total), i++)
             : n.finished || s++;
       }
-      d(0.9 * (a ? (a - s - (o ? (i * (o - r)) / o : 0)) / a : 0));
+      c(0.9 * (a ? (a - s - (o ? (i * (o - r)) / o : 0)) / a : 0));
     }
   }
   function E() {
@@ -258,14 +258,14 @@ function createUnityInstance(t, n, d) {
           console.log("[UnityCache] " + e);
       });
   }
-  function U(e) {
+  function k(e) {
     console.log("[UnityCache] " + e);
   }
-  function k(e) {
+  function T(e) {
     return (
-      (k.link = k.link || document.createElement("a")),
-      (k.link.href = e),
-      k.link.href
+      (T.link = T.link || document.createElement("a")),
+      (T.link.href = e),
+      T.link.href
     );
   }
   (m.SystemInfo = (function () {
@@ -290,15 +290,15 @@ function createUnityInstance(t, n, d) {
     function s(e, t, n) {
       return (e = RegExp(e, "i").exec(t)) && e[n];
     }
-    for (var d = 0; d < i.length; ++d)
-      if ((t = s(i[d][0] + "[/ ](.*?)[ \\)]", a, 1))) {
-        e = i[d][1];
+    for (var c = 0; c < i.length; ++c)
+      if ((t = s(i[c][0] + "[/ ](.*?)[ \\)]", a, 1))) {
+        e = i[c][1];
         break;
       }
     "Safari" == e && (t = s("Version/(.*?) ", a, 1)),
       "Internet Explorer" == e && (t = s("rv:(.*?)\\)? ", a, 1) || t);
     for (
-      var c = [
+      var d = [
           ["Windows (.*?)[;)]", "Windows"],
           ["Android ([0-9_.]+)", "Android"],
           ["iPhone OS ([0-9_.]+)", "iPhoneOS"],
@@ -310,11 +310,11 @@ function createUnityInstance(t, n, d) {
           ["bot|google|baidu|bing|msn|teoma|slurp|yandex", "Search Bot"],
         ],
         l = 0;
-      l < c.length;
+      l < d.length;
       ++l
     )
-      if ((r = s(c[l][0], a, 1))) {
-        (n = c[l][1]), (r = r.replace(/_/g, "."));
+      if ((r = s(d[l][0], a, 1))) {
+        (n = d[l][1]), (r = r.replace(/_/g, "."));
         break;
       }
     var u;
@@ -416,8 +416,8 @@ function createUnityInstance(t, n, d) {
     (Error.stackTraceLimit = Math.max(Error.stackTraceLimit || 0, 50)),
     (m.readBodyWithProgress = function (a, i, s) {
       var e = a.body ? a.body.getReader() : void 0,
-        d = void 0 !== a.headers.get("Content-Length"),
-        c = (function (e, t) {
+        c = void 0 !== a.headers.get("Content-Length"),
+        d = (function (e, t) {
           if (!t) return 0;
           var t = e.headers.get("Content-Encoding"),
             n = parseInt(e.headers.get("Content-Length")),
@@ -430,13 +430,13 @@ function createUnityInstance(t, n, d) {
             default:
               return n;
           }
-        })(a, d),
-        l = new Uint8Array(c),
+        })(a, c),
+        l = new Uint8Array(d),
         u = [],
         h = 0,
         f = 0;
       return (
-        d ||
+        c ||
           console.warn(
             "[UnityCache] Response is served without Content-Length header. Please reconfigure server to include valid Content-Length for better download performance.",
           ),
@@ -450,7 +450,7 @@ function createUnityInstance(t, n, d) {
                     response: a,
                     total: e.length,
                     loaded: 0,
-                    lengthComputable: d,
+                    lengthComputable: c,
                     chunk: s ? t : null,
                   }),
                   t
@@ -458,8 +458,8 @@ function createUnityInstance(t, n, d) {
               })
             : e.read().then(function (e) {
                 if (e.done) {
-                  if (h === c) return l;
-                  if (h < c) return l.slice(0, h);
+                  if (h === d) return l;
+                  if (h < d) return l.slice(0, h);
                   for (
                     var t = new Uint8Array(h), n = (t.set(l, 0), f), r = 0;
                     r < u.length;
@@ -476,9 +476,9 @@ function createUnityInstance(t, n, d) {
                   i({
                     type: "progress",
                     response: a,
-                    total: Math.max(c, h),
+                    total: Math.max(d, h),
                     loaded: h,
-                    lengthComputable: d,
+                    lengthComputable: c,
                     chunk: s ? e.value : null,
                   }),
                   o()
@@ -491,7 +491,7 @@ function createUnityInstance(t, n, d) {
               response: a,
               total: e.length,
               loaded: e.length,
-              lengthComputable: d,
+              lengthComputable: c,
               chunk: null,
             }),
             (a.parsedBody = e),
@@ -519,14 +519,14 @@ function createUnityInstance(t, n, d) {
         window.mozIndexedDB ||
         window.webkitIndexedDB ||
         window.msIndexedDB),
-      (w = null),
+      (v = null),
       (E.getInstance = function () {
-        return (w = w || new E());
+        return (v = v || new E());
       }),
       (E.destroyInstance = function () {
-        return w
-          ? w.close().then(function () {
-              w = null;
+        return v
+          ? v.close().then(function () {
+              v = null;
             })
           : Promise.resolve();
       }),
@@ -744,15 +744,15 @@ function createUnityInstance(t, n, d) {
       }),
       E)),
     (m.cachedFetch =
-      ((v = m.UnityCache),
+      ((w = m.UnityCache),
       (y = m.fetchWithProgress),
-      (C = m.readBodyWithProgress),
+      (S = m.readBodyWithProgress),
       function (o, a) {
         var e,
           t,
-          i = v.getInstance(),
-          s = k("string" == typeof o ? o : o.url),
-          d = {
+          i = w.getInstance(),
+          s = T("string" == typeof o ? o : o.url),
+          c = {
             enabled:
               ((e = s),
               (!(t = a) || !t.method || "GET" === t.method) &&
@@ -760,53 +760,53 @@ function createUnityInstance(t, n, d) {
                   -1 != ["must-revalidate", "immutable"].indexOf(t.control)) &&
                 !!e.match("^https?://")),
           };
-        function c(n, r) {
+        function d(n, r) {
           return fetch(n, r).then(function (e) {
             var t;
-            return !d.enabled || d.revalidated
+            return !c.enabled || c.revalidated
               ? e
               : 304 === e.status
-                ? ((d.revalidated = !0),
+                ? ((c.revalidated = !0),
                   i
-                    .updateRequestMetaData(d.metaData)
+                    .updateRequestMetaData(c.metaData)
                     .then(function () {
-                      U(
+                      k(
                         "'" +
-                          d.metaData.url +
+                          c.metaData.url +
                           "' successfully revalidated and served from the browser cache",
                       );
                     })
                     .catch(function (e) {
-                      U(
+                      k(
                         "'" +
-                          d.metaData.url +
+                          c.metaData.url +
                           "' successfully revalidated but not stored in the browser cache due to the error: " +
                           e,
                       );
                     }),
-                  C(d.response, r.onProgress, r.enableStreamingDownload))
+                  S(c.response, r.onProgress, r.enableStreamingDownload))
                 : 200 == e.status
-                  ? ((d.response = e),
-                    (d.metaData.updatedAt = d.metaData.accessedAt),
-                    (d.revalidated = !0),
+                  ? ((c.response = e),
+                    (c.metaData.updatedAt = c.metaData.accessedAt),
+                    (c.revalidated = !0),
                     (t = e.clone()),
-                    C(e, r.onProgress, r.enableStreamingDownload).then(
+                    S(e, r.onProgress, r.enableStreamingDownload).then(
                       function (e) {
                         return (
-                          (d.metaData.size = e.parsedBody.length),
+                          (c.metaData.size = e.parsedBody.length),
                           Promise.all([
                             i.storeRequest(n, t),
-                            i.updateRequestMetaData(d.metaData),
+                            i.updateRequestMetaData(c.metaData),
                           ])
                             .then(function () {
-                              U(
+                              k(
                                 "'" +
                                   s +
                                   "' successfully downloaded and stored in the browser cache",
                               );
                             })
                             .catch(function (e) {
-                              U(
+                              k(
                                 "'" +
                                   s +
                                   "' successfully downloaded but not stored in the browser cache due to the error: " +
@@ -817,7 +817,7 @@ function createUnityInstance(t, n, d) {
                         );
                       },
                     ))
-                  : (U(
+                  : (k(
                       "'" +
                         s +
                         "' request failed with status: " +
@@ -825,23 +825,23 @@ function createUnityInstance(t, n, d) {
                         " " +
                         e.statusText,
                     ),
-                    C(e, r.onProgress, r.enableStreamingDownload));
+                    S(e, r.onProgress, r.enableStreamingDownload));
           });
         }
         return (
           a &&
-            ((d.control = a.control),
-            (d.companyName = a.companyName),
-            (d.productName = a.productName),
-            (d.productVersion = a.productVersion)),
-          (d.revalidated = !1),
-          (d.metaData = {
+            ((c.control = a.control),
+            (c.companyName = a.companyName),
+            (c.productName = a.productName),
+            (c.productVersion = a.productVersion)),
+          (c.revalidated = !1),
+          (c.metaData = {
             url: s,
             accessedAt: Date.now(),
-            version: d.productVersion,
+            version: c.productVersion,
           }),
-          (d.response = null),
-          d.enabled
+          (c.response = null),
+          c.enabled
             ? i
                 .loadRequest(s)
                 .then(function (e) {
@@ -849,19 +849,19 @@ function createUnityInstance(t, n, d) {
                   return e
                     ? ((n = e.response),
                       (r = e.metaData),
-                      (d.response = n),
-                      (d.metaData.size = r.size),
-                      (d.metaData.updatedAt = r.updatedAt),
-                      "immutable" == d.control
-                        ? ((d.revalidated = !0),
+                      (c.response = n),
+                      (c.metaData.size = r.size),
+                      (c.metaData.updatedAt = r.updatedAt),
+                      "immutable" == c.control
+                        ? ((c.revalidated = !0),
                           i.updateRequestMetaData(r).then(function () {
-                            U(
+                            k(
                               "'" +
-                                d.metaData.url +
+                                c.metaData.url +
                                 "' served from the browser cache without revalidation",
                             );
                           }),
-                          C(n, a.onProgress, a.enableStreamingDownload))
+                          S(n, a.onProgress, a.enableStreamingDownload))
                         : ((e = s),
                           ((t =
                             window.location.href.match(/^[a-z]+:\/\/[^\/]+/)) &&
@@ -877,10 +877,10 @@ function createUnityInstance(t, n, d) {
                                 : n.headers.get("ETag") &&
                                   ((e["If-None-Match"] = n.headers.get("ETag")),
                                   (e["Cache-Control"] = "no-cache")),
-                              c(o, a))
+                              d(o, a))
                             : fetch(s, { method: "HEAD" }).then(function (t) {
                                 return (
-                                  (d.revalidated = [
+                                  (c.revalidated = [
                                     "Last-Modified",
                                     "ETag",
                                   ].every(function (e) {
@@ -889,31 +889,31 @@ function createUnityInstance(t, n, d) {
                                       n.headers.get(e) == t.headers.get(e)
                                     );
                                   })),
-                                  d.revalidated
+                                  c.revalidated
                                     ? (i
                                         .updateRequestMetaData(r)
                                         .then(function () {
-                                          U(
+                                          k(
                                             "'" +
-                                              d.metaData.url +
+                                              c.metaData.url +
                                               "' successfully revalidated and served from the browser cache",
                                           );
                                         }),
-                                      C(
-                                        d.response,
+                                      S(
+                                        c.response,
                                         a.onProgress,
                                         a.enableStreamingDownload,
                                       ))
-                                    : c(o, a)
+                                    : d(o, a)
                                 );
                               })))
-                    : c(o, a);
+                    : d(o, a);
                 })
                 .catch(function (e) {
                   return (
-                    U(
+                    k(
                       "Failed to load '" +
-                        d.metaData.url +
+                        c.metaData.url +
                         "' from browser cache due to the error: " +
                         e,
                     ),
@@ -923,7 +923,7 @@ function createUnityInstance(t, n, d) {
             : y(o, a)
         );
       }));
-  var A = {
+  var x = {
     gzip: {
       hasUnityMarker: function (e) {
         var t = 10,
@@ -973,191 +973,195 @@ function createUnityInstance(t, n, d) {
       },
     },
   };
-  function D() {
-    var t,
-      e,
-      n,
-      s,
-      r,
-      o = performance.now(),
-      p =
-        (new Promise(function (a, e) {
-          var i = document.createElement("script");
-          (i.src = m.frameworkUrl),
-            (i.onload = function () {
-              if ("undefined" == typeof unityFramework || !unityFramework) {
-                var e,
-                  t = [
-                    ["br", "br"],
-                    ["gz", "gzip"],
-                  ];
-                for (e in t) {
-                  var n,
-                    r = t[e];
-                  if (m.frameworkUrl.endsWith("." + r[0]))
-                    return (
-                      (n = "Unable to parse " + m.frameworkUrl + "!"),
-                      "file:" == location.protocol
-                        ? void c(
-                            n +
-                              " Loading pre-compressed (brotli or gzip) content via a file:// URL without a web server is not supported by this browser. Please use a local development web server to host compressed Unity content, or use the Unity Build and Run option.",
-                            "error",
-                          )
-                        : ((n +=
-                            ' This can happen if build compression was enabled but web server hosting the content was misconfigured to not serve the file with HTTP Response Header "Content-Encoding: ' +
-                            r[1] +
-                            '" present. Check browser Console and Devtools Network tab to debug.'),
-                          "br" == r[0] &&
-                            "http:" == location.protocol &&
-                            ((r =
-                              -1 !=
-                              ["localhost", "127.0.0.1"].indexOf(
-                                location.hostname,
-                              )
-                                ? ""
-                                : "Migrate your server to use HTTPS."),
-                            (n = /Firefox/.test(navigator.userAgent)
-                              ? "Unable to parse " +
-                                m.frameworkUrl +
-                                '!<br>If using custom web server, verify that web server is sending .br files with HTTP Response Header "Content-Encoding: br". Brotli compression may not be supported in Firefox over HTTP connections. ' +
-                                r +
-                                ' See <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1670675">https://bugzilla.mozilla.org/show_bug.cgi?id=1670675</a> for more information.'
-                              : "Unable to parse " +
-                                m.frameworkUrl +
-                                '!<br>If using custom web server, verify that web server is sending .br files with HTTP Response Header "Content-Encoding: br". Brotli compression may not be supported over HTTP connections. Migrate your server to use HTTPS.')),
-                          void c(n, "error"))
-                    );
-                }
-                c(
-                  "Unable to parse " +
-                    m.frameworkUrl +
-                    "! The file is corrupt, or compression was misconfigured? (check Content-Encoding HTTP Response Header on web server)",
-                  "error",
-                );
+  function D(t) {
+    U(t);
+    var e = m.cacheControl(m[t]),
+      n = m.companyName && m.productName ? m.cachedFetch : m.fetchWithProgress,
+      r = m[t],
+      o = /file:\/\//.exec(r) ? "same-origin" : void 0;
+    return n(m[t], {
+      method: "GET",
+      companyName: m.companyName,
+      productName: m.productName,
+      productVersion: m.productVersion,
+      control: e,
+      mode: o,
+      onProgress: function (e) {
+        U(t, e);
+      },
+    })
+      .then(function (e) {
+        return (
+          (i = e.parsedBody),
+          (s = m[t]),
+          new Promise(function (e, t) {
+            try {
+              for (var n in x) {
+                var r, o, a;
+                if (x[n].hasUnityMarker(i))
+                  return (
+                    s &&
+                      console.log(
+                        'You can reduce startup time if you configure your web server to add "Content-Encoding: ' +
+                          n +
+                          '" response header when serving "' +
+                          s +
+                          '" file.',
+                      ),
+                    (r = x[n]).worker ||
+                      ((o = URL.createObjectURL(
+                        new Blob(
+                          [
+                            "this.require = ",
+                            r.require.toString(),
+                            "; this.decompress = ",
+                            r.decompress.toString(),
+                            "; this.onmessage = ",
+                            function (e) {
+                              e = {
+                                id: e.data.id,
+                                decompressed: this.decompress(
+                                  e.data.compressed,
+                                ),
+                              };
+                              postMessage(
+                                e,
+                                e.decompressed ? [e.decompressed.buffer] : [],
+                              );
+                            }.toString(),
+                            "; postMessage({ ready: true });",
+                          ],
+                          { type: "application/javascript" },
+                        ),
+                      )),
+                      (r.worker = new Worker(o)),
+                      (r.worker.onmessage = function (e) {
+                        e.data.ready
+                          ? URL.revokeObjectURL(o)
+                          : (this.callbacks[e.data.id](e.data.decompressed),
+                            delete this.callbacks[e.data.id]);
+                      }),
+                      (r.worker.callbacks = {}),
+                      (r.worker.nextCallbackId = 0)),
+                    (a = r.worker.nextCallbackId++),
+                    (r.worker.callbacks[a] = e),
+                    void r.worker.postMessage({ id: a, compressed: i }, [
+                      i.buffer,
+                    ])
+                  );
               }
-              var o = unityFramework;
-              (unityFramework = null), (i.onload = null), a(o);
-            }),
-            (i.onerror = function (e) {
-              c(
-                "Unable to load file " +
-                  m.frameworkUrl +
-                  "! Check that the file exists on the remote server. (also check browser Console and Devtools Network tab to debug)",
-                "error",
-              );
-            }),
-            document.body.appendChild(i),
-            m.deinitializers.push(function () {
-              document.body.removeChild(i);
+              e(i);
+            } catch (e) {
+              t(e);
+            }
+          })
+        );
+        var i, s;
+      })
+      .catch(function (e) {
+        var t = "Failed to download file " + r;
+        "file:" == location.protocol
+          ? d(
+              t +
+                ". Loading web pages via a file:// URL without a web server is not supported by this browser. Please use a local development web server to host Unity content, or use the Unity Build and Run option.",
+              "error",
+            )
+          : console.error(t);
+      });
+  }
+  function A() {
+    var t = performance.now(),
+      p =
+        (Promise.all([
+          D("frameworkUrl").then(function (e) {
+            var s = URL.createObjectURL(
+              new Blob([e], { type: "application/javascript" }),
+            );
+            return new Promise(function (a, e) {
+              var i = document.createElement("script");
+              (i.src = s),
+                (i.onload = function () {
+                  if ("undefined" == typeof unityFramework || !unityFramework) {
+                    var e,
+                      t = [
+                        ["br", "br"],
+                        ["gz", "gzip"],
+                      ];
+                    for (e in t) {
+                      var n,
+                        r = t[e];
+                      if (m.frameworkUrl.endsWith("." + r[0]))
+                        return (
+                          (n = "Unable to parse " + m.frameworkUrl + "!"),
+                          "file:" == location.protocol
+                            ? void d(
+                                n +
+                                  " Loading pre-compressed (brotli or gzip) content via a file:// URL without a web server is not supported by this browser. Please use a local development web server to host compressed Unity content, or use the Unity Build and Run option.",
+                                "error",
+                              )
+                            : ((n +=
+                                ' This can happen if build compression was enabled but web server hosting the content was misconfigured to not serve the file with HTTP Response Header "Content-Encoding: ' +
+                                r[1] +
+                                '" present. Check browser Console and Devtools Network tab to debug.'),
+                              "br" == r[0] &&
+                                "http:" == location.protocol &&
+                                ((r =
+                                  -1 !=
+                                  ["localhost", "127.0.0.1"].indexOf(
+                                    location.hostname,
+                                  )
+                                    ? ""
+                                    : "Migrate your server to use HTTPS."),
+                                (n = /Firefox/.test(navigator.userAgent)
+                                  ? "Unable to parse " +
+                                    m.frameworkUrl +
+                                    '!<br>If using custom web server, verify that web server is sending .br files with HTTP Response Header "Content-Encoding: br". Brotli compression may not be supported in Firefox over HTTP connections. ' +
+                                    r +
+                                    ' See <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1670675">https://bugzilla.mozilla.org/show_bug.cgi?id=1670675</a> for more information.'
+                                  : "Unable to parse " +
+                                    m.frameworkUrl +
+                                    '!<br>If using custom web server, verify that web server is sending .br files with HTTP Response Header "Content-Encoding: br". Brotli compression may not be supported over HTTP connections. Migrate your server to use HTTPS.')),
+                              void d(n, "error"))
+                        );
+                    }
+                    d(
+                      "Unable to parse " +
+                        m.frameworkUrl +
+                        "! The file is corrupt, or compression was misconfigured? (check Content-Encoding HTTP Response Header on web server)",
+                      "error",
+                    );
+                  }
+                  var o = unityFramework;
+                  (unityFramework = null),
+                    (i.onload = null),
+                    URL.revokeObjectURL(s),
+                    a(o);
+                }),
+                (i.onerror = function (e) {
+                  d(
+                    "Unable to load file " +
+                      m.frameworkUrl +
+                      "! Check that the file exists on the remote server. (also check browser Console and Devtools Network tab to debug)",
+                    "error",
+                  );
+                }),
+                document.body.appendChild(i),
+                m.deinitializers.push(function () {
+                  document.body.removeChild(i);
+                });
             });
-        }).then(function (e) {
-          (m.webAssemblyTimeStart = performance.now()),
-            e(m),
-            (m.codeDownloadTimeEnd = performance.now() - o);
+          }),
+          D("codeUrl"),
+        ]).then(function (e) {
+          (m.wasmBinary = e[1]),
+            e[0](m),
+            (m.codeDownloadTimeEnd = performance.now() - t);
         }),
         performance.now()),
-      a =
-        (T((t = "dataUrl")),
-        (e = m.cacheControl(m[t])),
-        (n =
-          m.companyName && m.productName ? m.cachedFetch : m.fetchWithProgress),
-        (s = m[t]),
-        (r = /file:\/\//.exec(s) ? "same-origin" : void 0),
-        n(m[t], {
-          method: "GET",
-          companyName: m.companyName,
-          productName: m.productName,
-          productVersion: m.productVersion,
-          control: e,
-          mode: r,
-          onProgress: function (e) {
-            T(t, e);
-          },
-        })
-          .then(function (e) {
-            var t, n, r, o, a, i;
-            return (
-              A.gzip.hasUnityMarker(e.parsedBody) && (t = ["gzip", "gzip"]),
-              (t = A.br.hasUnityMarker(e.parsedBody) ? ["brotli", "br"] : t) &&
-                ((n = e.headers.get("Content-Type")),
-                (r = e.headers.get("Content-Encoding")),
-                (a =
-                  0 < (o = e.headers.get("Content-Length")) &&
-                  e.parsedBody.length != o),
-                (i = 0 < o && e.parsedBody.length == o),
-                r != t[1]
-                  ? c(
-                      "Failed to parse binary data file " +
-                        s +
-                        ' (with "Content-Type: ' +
-                        n +
-                        '"), because it is still ' +
-                        t[0] +
-                        '-compressed. It should have been uncompressed by the browser, but it was unable to do so since the web server provided the compressed content without specifying the HTTP Response Header "Content-Encoding: ' +
-                        t[1] +
-                        '" that would have informed the browser that decompression is needed. Please verify your web server hosting configuration to add the missing "Content-Encoding: ' +
-                        t[1] +
-                        '" HTTP Response Header.',
-                      "error",
-                    )
-                  : c(
-                      a
-                        ? "Web server configuration error: it looks like the web server has been misconfigured to double-compress the data file " +
-                            s +
-                            "! That is, it looks like the web browser has decompressed the file, but it is still in compressed form, suggesting that an already compressed file was compressed a second time. (Content-Length: " +
-                            o +
-                            ", obtained length: " +
-                            e.parsedBody.length +
-                            ")"
-                        : i
-                          ? /^((?!chrome|android).)*safari/i.test(
-                              navigator.userAgent,
-                            ) &&
-                            "gzip" == r &&
-                            "application/octet-stream" == n
-                            ? "Unable to load content due to Apple Safari bug https://bugs.webkit.org/show_bug.cgi?id=247421 . To work around this issue, please reconfigure your web server to serve " +
-                              s +
-                              " with Content-Type: application/gzip instead of Content-Type: application/octet-stream"
-                            : "Malformed binary data? Received compressed data file " +
-                              s +
-                              ', with "Content-Type: ' +
-                              n +
-                              '", "Content-Encoding: ' +
-                              t[1] +
-                              '", "Content-Length: ' +
-                              o +
-                              '", which the web browser should have decompressed, but it seemingly did not (received file size is the same as compressed file size was). Double check that the integrity of the file is intact.'
-                          : "Malformed binary data URL " +
-                            s +
-                            '. No "Content-Length" HTTP Response header present. Check browser console for more information.',
-                      "error",
-                    ),
-                console.error(
-                  "Malformed data? Downloaded binary data file " +
-                    s +
-                    " (ArrayBuffer size: " +
-                    e.parsedBody.length +
-                    ") and browser should have decompressed it, but it might have not. Dumping raw HTTP Response Headers if it might help debug:",
-                ),
-                e.headers.forEach(function (e, t) {
-                  console.error(t + ": " + e);
-                })),
-              e.parsedBody
-            );
-          })
-          .catch(function (e) {
-            var t = "Failed to download file " + s;
-            "file:" == location.protocol
-              ? c(
-                  t +
-                    ". Loading web pages via a file:// URL without a web server is not supported by this browser. Please use a local development web server to host Unity content, or use the Unity Build and Run option.",
-                  "error",
-                )
-              : console.error(t);
-          }));
+      e = D("dataUrl");
     m.preRun.push(function () {
       m.addRunDependency("dataUrl"),
-        a.then(function (t) {
+        e.then(function (t) {
           var e = new TextDecoder("utf-8"),
             n = 0;
           function r() {
@@ -1167,12 +1171,12 @@ function createUnityInstance(t, n, d) {
             return (n += 4), e;
           }
           function o(e) {
-            if (A.gzip.hasUnityMarker(t))
+            if (x.gzip.hasUnityMarker(t))
               throw (
                 e +
                 '. Failed to parse binary data file, because it is still gzip-compressed and should have been uncompressed by the browser. Web server has likely provided gzip-compressed data without specifying the HTTP Response Header "Content-Encoding: gzip" with it to instruct the browser to decompress it. Please verify your web server hosting configuration.'
               );
-            if (A.br.hasUnityMarker(t))
+            if (x.br.hasUnityMarker(t))
               throw (
                 e +
                 '. Failed to parse binary data file, because it is still brotli-compressed and should have been uncompressed by the browser. Web server has likely provided brotli-compressed data without specifying the HTTP Response Header "Content-Encoding: br" with it to instruct the browser to decompress it. Please verify your web server hosting configuration.'
@@ -1199,15 +1203,15 @@ function createUnityInstance(t, n, d) {
             n < s;
 
           ) {
-            var d = r(),
-              c = r(),
+            var c = r(),
+              d = r(),
               l =
-                (d + c > t.length &&
+                (c + d > t.length &&
                   o(
                     "Invalid binary data file size! (offset=" +
-                      d +
-                      ", size=" +
                       c +
+                      ", size=" +
+                      d +
                       ", file length=" +
                       t.length +
                       ")",
@@ -1232,7 +1236,7 @@ function createUnityInstance(t, n, d) {
               h = f, f = u.indexOf("/", h) + 1
             )
               m.FS_createPath(u.substring(0, h), u.substring(h, f - 1), !0, !0);
-            m.FS_createDataFile(u, null, t.subarray(d, d + c), !0, !0, !0);
+            m.FS_createDataFile(u, null, t.subarray(c, c + d), !0, !0, !0);
           }
           m.removeRunDependency("dataUrl"),
             (m.dataUrlLoadEndTime = performance.now() - p);
@@ -1253,18 +1257,18 @@ function createUnityInstance(t, n, d) {
           t(n))
         : m.SystemInfo.hasWasm
           ? ((m.startupErrorHandler = t),
-            d(0),
+            c(0),
             m.postRun.push(function () {
-              d(1),
+              c(1),
                 m.WebPlayer.WaitForInitialization().then(function () {
                   delete m.startupErrorHandler,
-                    e(S),
+                    e(C),
                     (m.pageStartupTime = performance.now());
                 });
             }),
             (m.SystemInfo.hasWebGPU = !1),
             Promise.resolve(!1).then(function () {
-              D();
+              A();
             }))
           : t("Your browser does not support WebAssembly.")
       : t("Your browser does not support WebGL.");

@@ -342,7 +342,6 @@ export async function POST(request: Request) {
                 minute: "2-digit",
               }),
               caffeineAmount: dose.mg,
-              fullDateTime: dose.time.toISOString(), // デバッグ用
             }))
         : [],
       simulationData: simulationData,
