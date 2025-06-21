@@ -8,8 +8,8 @@ export const useSleepTimes = () => {
   const loadFromStorage = () => {
     const savedBed = localStorage.getItem("bedTime");
     const savedWake = localStorage.getItem("wakeTime");
-    if (savedBed) setBedTime(savedBed);
-    if (savedWake) setWakeTime(savedWake);
+    if (savedBed && savedBed !== "") setBedTime(savedBed);
+    if (savedWake && savedWake !== "") setWakeTime(savedWake);
   };
 
   useEffect(() => {

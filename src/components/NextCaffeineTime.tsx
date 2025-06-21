@@ -49,8 +49,22 @@ function getValidRecommendations(
     isDayPassed = hoursPassed >= 24;
   }
 
+  // デバッグログ
+  console.log("NextCaffeineTime - Day Passed Check:", {
+    wakeTime,
+    currentTime: `${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")}`,
+    wakeMinutes,
+    nowMinutes,
+    isDayPassed,
+    hoursPassed:
+      wakeMinutes <= nowMinutes
+        ? (nowMinutes - wakeMinutes) / 60
+        : (nowMinutes + 24 * 60 - wakeMinutes) / 60,
+  });
+
   // 起床時間から24時間が過ぎている場合は空を返す
   if (isDayPassed) {
+    console.log("NextCaffeineTime - Hiding recommendations: Day passed");
     return [];
   }
 
@@ -84,15 +98,42 @@ function getValidRecommendations(
 
       // すべての集中時間が終了している場合は空を返す
       if (allFocusPeriodsEnded) {
+        console.log(
+          "NextCaffeineTime - Hiding recommendations: All focus periods ended",
+        );
         return [];
       }
     }
   }
 
   // 現在時刻以降の推奨プランのみを取得
-  const futureRecommendations = recommendations.filter(
-    (rec) => toMinutes(rec.time) > nowMinutes,
-  );
+  console.log("NextCaffeineTime - Filtering recommendations:", {
+    allRecommendations: recommendations.map((r) => ({
+      time: r.time,
+      timeMinutes: toMinutes(r.time),
+    })),
+    nowMinutes,
+    currentTime: `${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")}`,
+  });
+
+  const futureRecommendations = recommendations.filter((rec) => {
+    let recMinutes = toMinutes(rec.time);
+
+    // 夜型対応：推奨時刻が現在時刻より小さい場合、翌日の時刻として扱う
+    if (recMinutes < nowMinutes) {
+      recMinutes += 24 * 60; // 翌日として計算
+    }
+
+    return recMinutes > nowMinutes;
+  });
+
+  console.log("NextCaffeineTime - Future recommendations:", {
+    count: futureRecommendations.length,
+    items: futureRecommendations.map((r) => ({
+      time: r.time,
+      amount: r.caffeineAmount,
+    })),
+  });
 
   // 時刻順にソート
   return futureRecommendations.sort(
