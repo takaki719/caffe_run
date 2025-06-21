@@ -5,11 +5,6 @@ import FocusForm from "./FocusForm";
 import { useSleepTimes } from "@/hooks/UseSleepTimes";
 import { useFocusPeriods } from "@/hooks/UseFocusPeriods";
 
-interface GraphPoint {
-  time: string;
-  value: number;
-}
-
 interface ProcessedRecommendation {
   time: string;
   caffeineAmount: number;
