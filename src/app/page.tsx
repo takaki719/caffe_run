@@ -258,10 +258,11 @@ const HomePage: React.FC = () => {
         simulation: result.simulationData || [],
         current: result.currentStatusData || [],
       });
+      const schedule = result.rawSchedule || result.caffeinePlan || [];
       setRecommendations(
-        (result.caffeinePlan || []).map(
-          (rec: { time: string; mg: number }) => ({
-            time: rec.time,
+        schedule.map(
+          (rec: { timeDisplay?: string; time?: string; mg: number }) => ({
+            time: rec.timeDisplay || rec.time || "",
             caffeineAmount: rec.mg,
           }),
         ),
@@ -324,12 +325,7 @@ const HomePage: React.FC = () => {
               setActiveGraph("simulation");
             }
             if (recommendations) {
-              setRecommendations(
-                recommendations.map((rec: { time: string; mg: number }) => ({
-                  time: rec.time,
-                  caffeineAmount: rec.mg,
-                })),
-              );
+              setRecommendations(recommendations);
             }
             setShowSettingModal(false);
           }}
