@@ -15,9 +15,9 @@ interface SimulationPoint {
   value: number;
 }
 
-interface CaffeineRecommendation {
+interface ProcessedRecommendation {
   time: string;
-  mg: number;
+  caffeineAmount: number;
 }
 
 interface SettingModalProps {
@@ -25,7 +25,7 @@ interface SettingModalProps {
     minPerformances: number[],
     targetPerformance: number,
     graphData?: GraphData,
-    recommendations?: CaffeineRecommendation[],
+    recommendations?: ProcessedRecommendation[],
   ) => void;
 }
 
@@ -41,6 +41,9 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     !!wakeTime &&
     bedTime !== "" &&
     wakeTime !== "" &&
+    focusPeriods.some(
+      (p) => p.start && p.end && p.start !== "" && p.end !== "",
+    );
     focusPeriods.some(
       (p) => p.start && p.end && p.start !== "" && p.end !== "",
     );
@@ -62,7 +65,7 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     let mins: number[] = [];
     let tgt = 0.7;
     let graphData: GraphData = { simulation: [], current: [] };
-    let recommendations: CaffeineRecommendation[] = [];
+    let recommendations: ProcessedRecommendation[] = [];
 
     try {
       const res = await fetch("/api/plan", {

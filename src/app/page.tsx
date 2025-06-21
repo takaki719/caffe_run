@@ -27,8 +27,10 @@ type GraphPoint = { time: string; value: number };
 // Unityのロジックをカプセル化する新しいコンポーネント
 const UnityContainer = ({
   graphData,
+  wakeTime,
 }: {
   graphData: { current: GraphPoint[] };
+  wakeTime: string;
 }) => {
   const [currentFocus, setCurrentFocus] = useState(0);
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
@@ -49,16 +51,51 @@ const UnityContainer = ({
     return () => clearTimeout(timer);
   }, []);
 
-  // 現在の集中力値を計算する関数
+  // --- ★★★ ここから修正 ★★★ ---
+  // 現在の集中力値を計算する関数（ご提案に基づき条件分岐を追加）
   const getCurrentFocusValue = (): number => {
-    if (graphData.current.length === 0) return 0;
+    if (!graphData.current || graphData.current.length === 0 || !wakeTime) {
+      return 0;
+    }
 
-    const now = new Date();
-    const timeToMinutes = (timeStr: string) => {
+    const simpleTimeToMinutes = (timeStr: string) => {
       const [h, m] = timeStr.split(":").map(Number);
       return h * 60 + m;
     };
-    const nowInMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const firstPointMinutes = simpleTimeToMinutes(graphData.current[0].time);
+    const lastPointMinutes = simpleTimeToMinutes(
+      graphData.current[graphData.current.length - 1].time,
+    );
+
+    // 日をまたいでいるかを判定
+    const crossesMidnight = firstPointMinutes > lastPointMinutes;
+
+    const [wakeH, wakeM] = wakeTime.split(":").map(Number);
+    const wakeMinutes = wakeH * 60 + wakeM;
+    const now = new Date();
+
+    let timeToMinutes: (timeStr: string) => number;
+    let nowInMinutes: number;
+
+    if (crossesMidnight) {
+      //【日をまたぐ場合】時刻の連続性を保つため24時間分の分を加算
+      timeToMinutes = (timeStr: string) => {
+        let pointMinutes = simpleTimeToMinutes(timeStr);
+        if (pointMinutes < wakeMinutes) {
+          pointMinutes += 24 * 60;
+        }
+        return pointMinutes;
+      };
+      nowInMinutes = now.getHours() * 60 + now.getMinutes();
+      if (nowInMinutes < wakeMinutes) {
+        nowInMinutes += 24 * 60;
+      }
+    } else {
+      //【日をまたがない場合】シンプルな変換ロジックを使用
+      timeToMinutes = simpleTimeToMinutes;
+      nowInMinutes = now.getHours() * 60 + now.getMinutes();
+    }
 
     // 二分探索で最も近い時刻のデータを取得
     let low = 0;
@@ -89,6 +126,7 @@ const UnityContainer = ({
 
     return closestPoint.value;
   };
+  // --- ★★★ ここまで修正 ★★★ ---
 
   // Unityに集中度データを送信するタイマー処理
   useEffect(() => {
@@ -209,6 +247,7 @@ const HomePage: React.FC = () => {
       setLogs(JSON.parse(savedLogs));
     }
   }, [setLogs]);
+  }, [setLogs]);
 
   const isValid = useCallback(() => {
     return (
@@ -258,10 +297,11 @@ const HomePage: React.FC = () => {
         simulation: result.simulationData || [],
         current: result.currentStatusData || [],
       });
+      const schedule = result.rawSchedule || result.caffeinePlan || [];
       setRecommendations(
-        (result.caffeinePlan || []).map(
-          (rec: { time: string; mg: number }) => ({
-            time: rec.time,
+        schedule.map(
+          (rec: { timeDisplay?: string; time?: string; mg: number }) => ({
+            time: rec.timeDisplay || rec.time || "",
             caffeineAmount: rec.mg,
           }),
         ),
@@ -388,7 +428,11 @@ const HomePage: React.FC = () => {
             {activeView === "detailed" && (
               <>
                 <div className="w-full max-w-2xl flex justify-center">
-                  <UnityContainer key={unityKey} graphData={graphData} />
+                  <UnityContainer
+                    key={unityKey}
+                    graphData={graphData}
+                    wakeTime={wakeTime}
+                  />
                 </div>
 
                 {/* developブランチの新しいレイアウトを採用 */}
