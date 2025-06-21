@@ -30,7 +30,16 @@ const UnityContainer = ({
 }: {
   graphData: { current: GraphPoint[] };
 }) => {
-  // 現在の集中力値を計算
+  const [currentFocus, setCurrentFocus] = useState(0);
+  
+  const { unityProvider, sendMessage, isLoaded } = useUnityContext({
+    loaderUrl: "/unity/Build/Downloads.loader.js",
+    dataUrl: "/unity/Build/Downloads.data",
+    frameworkUrl: "/unity/Build/Downloads.framework.js",
+    codeUrl: "/unity/Build/Downloads.wasm",
+  });
+
+  // 現在の集中力値を計算する関数
   const getCurrentFocusValue = (): number => {
     if (graphData.current.length === 0) return 0;
 
@@ -41,249 +50,57 @@ const UnityContainer = ({
     };
     const nowInMinutes = now.getHours() * 60 + now.getMinutes();
 
-    // 最も近い時刻のデータを取得
+    // 二分探索で最も近い時刻のデータを取得
+    let low = 0;
+    let high = graphData.current.length - 1;
     let closestPoint = graphData.current[0];
-    let minDiff = Infinity;
 
-    for (const point of graphData.current) {
-      const pointMinutes = timeToMinutes(point.time);
-      const diff = Math.abs(pointMinutes - nowInMinutes);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closestPoint = point;
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      const midPoint = graphData.current[mid];
+      const midTimeInMinutes = timeToMinutes(midPoint.time);
+
+      if (
+        Math.abs(midTimeInMinutes - nowInMinutes) <
+        Math.abs(timeToMinutes(closestPoint.time) - nowInMinutes)
+      ) {
+        closestPoint = midPoint;
+      }
+
+      if (midTimeInMinutes < nowInMinutes) {
+        low = mid + 1;
+      } else if (midTimeInMinutes > nowInMinutes) {
+        high = mid - 1;
+      } else {
+        closestPoint = midPoint;
+        break;
       }
     }
 
     return closestPoint.value;
   };
-  const [isUnityReady, setIsUnityReady] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const [currentFocus, setCurrentFocus] = useState(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  const {
-    unityProvider,
-    sendMessage,
-    isLoaded,
-    addEventListener,
-    removeEventListener,
-  } = useUnityContext({
-    loaderUrl: "/unity/Build/Downloads.loader.js",
-    dataUrl: "/unity/Build/Downloads.data",
-    frameworkUrl: "/unity/Build/Downloads.framework.js",
-    codeUrl: "/unity/Build/Downloads.wasm",
-  });
-
-  // Unity エラーハンドリング
-  useEffect(() => {
-    const handleUnityError = (...parameters: unknown[]) => {
-      console.warn("Unity error detected:", parameters);
-      setHasError(true);
-      setIsUnityReady(false);
-
-      // インターバルをクリア
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-
-    const handleUnityLoaded = () => {
-      console.log("Unity loaded successfully");
-      setIsUnityReady(true);
-      setHasError(false);
-      setRetryCount(0);
-    };
-
-    if (addEventListener && removeEventListener) {
-      addEventListener("error", handleUnityError);
-      addEventListener("loaded", handleUnityLoaded);
-
-      return () => {
-        removeEventListener("error", handleUnityError);
-        removeEventListener("loaded", handleUnityLoaded);
-      };
-    }
-  }, [addEventListener, removeEventListener]);
-
-  // Unity初期化状態の管理
-  useEffect(() => {
-    if (isLoaded && unityProvider && !hasError) {
-      setIsUnityReady(true);
-    } else {
-      setIsUnityReady(false);
-    }
-  }, [isLoaded, unityProvider, hasError]);
-
-  // 現在の集中力値を定期的に更新
-  useEffect(() => {
-    const updateCurrentFocus = () => {
-      const focus = getCurrentFocusValue();
-      setCurrentFocus(focus);
-    };
-
-    // 初回更新
-    updateCurrentFocus();
-
-    // 30秒ごとに更新
-    const focusInterval = setInterval(updateCurrentFocus, 30000);
-
-    return () => clearInterval(focusInterval);
-  }, [graphData]);
-
-  // クリーンアップ処理
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-
-      // Unityのクリーンアップは完全に無効化（エラーの原因）
-      // unloadは呼び出さない
-      setIsUnityReady(false);
-    };
-  }, []);
 
   // Unityに集中度データを送信するタイマー処理
   useEffect(() => {
-    // インターバルをクリア
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-
-    if (
-      !isUnityReady ||
-      !isLoaded ||
-      graphData.current.length === 0 ||
-      hasError
-    ) {
+    if (!isLoaded || graphData.current.length === 0) {
       return;
     }
-
-    // 安全な送信間隔を設定（5秒間隔）
-    intervalRef.current = setInterval(() => {
-      try {
-        // Unity の状態を再確認
-        if (!isLoaded || hasError) {
-          return;
-        }
-
-        const now = new Date();
-        const timeToMinutes = (timeStr: string) => {
-          const [h, m] = timeStr.split(":").map(Number);
-          return h * 60 + m;
-        };
-        const nowInMinutes = now.getHours() * 60 + now.getMinutes();
-
-        // シンプルな最寄り時刻検索
-        let closestPoint = graphData.current[0];
-        let minDiff = Infinity;
-
-        for (const point of graphData.current) {
-          const pointMinutes = timeToMinutes(point.time);
-          const diff = Math.abs(pointMinutes - nowInMinutes);
-          if (diff < minDiff) {
-            minDiff = diff;
-            closestPoint = point;
-          }
-        }
-
-        if (closestPoint && sendMessage) {
-          // より安全なメッセージ送信
-          try {
-            // 値を0-1の範囲に正規化
-            const normalizedValue = Math.max(
-              0,
-              Math.min(1, closestPoint.value / 100),
-            );
-            sendMessage(
-              "unitychan",
-              "SetAnimationSpeed",
-              normalizedValue.toString(),
-            );
-          } catch (msgError) {
-            console.warn("Unity message send failed:", msgError);
-            // エラーが発生した場合はエラー状態に設定
-            setHasError(true);
-          }
-        }
-      } catch (error) {
-        console.warn("Unity timer error:", error);
-        setHasError(true);
-      }
-    }, 5000); // 5秒間隔
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [isUnityReady, isLoaded, graphData, hasError, sendMessage]);
-
-  // エラー状態の場合は代替表示
-  if (hasError) {
-    return (
-      <div className="relative">
-        <div className="flex-1 bg-gray-200 rounded-2xl flex items-center justify-center h-[240px] sm:h-[320px] lg:h-[420px] w-full">
-          <div className="text-gray-500 text-center">
-            <div className="mb-2">🎮</div>
-            <div>Unity表示でエラーが発生しました</div>
-            <div className="text-xs mt-1">リトライ回数: {retryCount}</div>
-            <button
-              onClick={() => {
-                if (retryCount < 3) {
-                  setHasError(false);
-                  setIsUnityReady(false);
-                  setRetryCount((prev) => prev + 1);
-                } else {
-                  // 3回リトライ後はページリロード
-                  window.location.reload();
-                }
-              }}
-              className="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-sm"
-            >
-              {retryCount < 3 ? "再試行" : "ページを再読み込み"}
-            </button>
-          </div>
-        </div>
-        {/* 透明なオーバーレイ（スクロール対応） */}
-        <div className="absolute inset-0 pointer-events-none"></div>
-        {/* 現在の集中力表示 */}
-        <div className="absolute top-3 left-3 bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg shadow-lg pointer-events-none">
-          <div className="text-xs font-medium">現在の集中力</div>
-          <div className="text-lg font-bold text-center">
-            {Math.round(currentFocus)}%
-          </div>
-        </div>
-      </div>
-    );
-  }
+    const intervalId = setInterval(() => {
+      const focusValue = getCurrentFocusValue();
+      setCurrentFocus(focusValue);
+      
+      sendMessage(
+        "unitychan",
+        "SetAnimationSpeed",
+        focusValue.toString(),
+      );
+    }, 2000);
+    return () => clearInterval(intervalId);
+  }, [isLoaded, sendMessage, graphData]);
 
   return (
     <div className="relative">
       <UnityModelWrapper unityProvider={unityProvider} />
-      {/* スクロール用オーバーレイ（Unity上を覆う） */}
-      <div 
-        className="absolute inset-0 z-10 bg-transparent cursor-default"
-        style={{ pointerEvents: 'auto' }}
-        onMouseDown={(e) => e.preventDefault()}
-        onMouseUp={(e) => e.preventDefault()}
-        onMouseMove={(e) => e.preventDefault()}
-        onClick={(e) => e.preventDefault()}
-        onWheel={(e) => {
-          // ホイールイベントを親要素に委譲してスクロールを維持
-          const parent = e.currentTarget.parentElement?.parentElement;
-          if (parent) {
-            parent.scrollBy({
-              top: e.deltaY,
-              behavior: 'auto'
-            });
-          }
-        }}
-      ></div>
       {/* 現在の集中力表示 */}
       <div className="absolute top-3 left-3 bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg shadow-lg z-20">
         <div className="text-xs font-medium">現在の集中力</div>
@@ -357,24 +174,30 @@ const HomePage: React.FC = () => {
     setGraphData({ simulation: [], current: [] });
 
     try {
+      const requestBody = {
+        bed_time: bedTime,
+        wake_time: wakeTime,
+        focus_periods: focusPeriods,
+        caffeine_logs: logs,
+      };
+      
+      console.log("API Request Body:", requestBody);
+      
       const response = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bed_time: bedTime,
-          wake_time: wakeTime,
-          focus_periods: focusPeriods,
-          caffeine_logs: logs,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
         console.error("API Error Response:", {
           status: response.status,
           statusText: response.statusText,
-          url: response.url
+          url: response.url,
+          body: errorText
         });
-        throw new Error(`APIリクエストに失敗しました (${response.status}: ${response.statusText})`);
+        throw new Error(`APIリクエストに失敗しました (${response.status}: ${response.statusText}) - ${errorText}`);
       }
       const result = await response.json();
       setGraphData({

@@ -32,16 +32,26 @@ const timeToDate = (timeStr: string, date: Date): Date => {
 
 export async function POST(request: Request) {
   try {
+    console.log("API /plan - Request received");
     const body = await request.json();
+    console.log("API /plan - Request body:", body);
     const { bed_time, wake_time, focus_periods, caffeine_logs } = body;
 
     // --- バリデーション ---
+    console.log("API /plan - Validation check:", {
+      bed_time: !!bed_time,
+      wake_time: !!wake_time,
+      focus_periods: !!focus_periods,
+      focus_periods_length: focus_periods?.length
+    });
+    
     if (
       !bed_time ||
       !wake_time ||
       !focus_periods ||
       focus_periods.length === 0
     ) {
+      console.log("API /plan - Validation failed");
       return NextResponse.json(
         { error: "必須の時刻データが不足しています。" },
         { status: 400 },
@@ -50,7 +60,10 @@ export async function POST(request: Request) {
     const validFocusPeriods = focus_periods.filter(
       (p: FocusPeriodRequest) => p.start && p.end,
     );
+    console.log("API /plan - Valid focus periods:", validFocusPeriods);
+    
     if (validFocusPeriods.length === 0) {
+      console.log("API /plan - No valid focus periods");
       return NextResponse.json(
         { error: "有効な集中時間がありません。" },
         { status: 400 },
@@ -80,12 +93,24 @@ export async function POST(request: Request) {
       },
     ];
 
-    const actualCaffeineHistory: CaffeineDose[] = (caffeine_logs || []).map(
-      (log: CaffeineLogEntry) => ({
+    const actualCaffeineHistory: CaffeineDose[] = (caffeine_logs || [])
+      .map((log: CaffeineLogEntry) => ({
         time: timeToDate(log.time, today),
         mg: log.caffeineMg,
-      }),
-    );
+      }))
+      .sort((a, b) => a.time.getTime() - b.time.getTime()); // 時系列順にソート
+    
+    // デバッグ用: カフェイン履歴の詳細ログ
+    console.log("API /plan - Caffeine History Details:", {
+      originalLogs: caffeine_logs,
+      processedHistory: actualCaffeineHistory.map(h => ({
+        time: h.time.toLocaleTimeString(),
+        mg: h.mg
+      })),
+      totalEntries: actualCaffeineHistory.length,
+      isSorted: actualCaffeineHistory.every((h, i, arr) => 
+        i === 0 || arr[i-1].time.getTime() <= h.time.getTime())
+    });
 
     const sleepDurationMs = finalWakeTime.getTime() - finalBedTime.getTime();
     const sleepDurationHours = sleepDurationMs / (1000 * 60 * 60);
@@ -206,13 +231,18 @@ export async function POST(request: Request) {
 
     return NextResponse.json(responseData);
   } catch (error) {
-    console.error("API Error:", error);
+    console.error("API /plan - Error occurred:", error);
     if (error instanceof Error) {
+      console.error("API /plan - Error details:", {
+        message: error.message,
+        stack: error.stack
+      });
       return NextResponse.json(
         { error: "サーバーでエラーが発生しました。", details: error.message },
         { status: 500 },
       );
     }
+    console.error("API /plan - Unknown error:", error);
     return NextResponse.json(
       { error: "サーバーで不明なエラーが発生しました。" },
       { status: 500 },

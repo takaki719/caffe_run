@@ -33,16 +33,18 @@ export const FocusForm: React.FC<FocusFormProps> = ({
               type="time"
               value={period.start}
               onChange={(e) => updateFocusPeriod(idx, "start", e.target.value)}
-              className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black"
+              className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black cursor-pointer hover:border-blue-400 transition-colors"
               disabled={disabled}
+              title="クリックして開始時刻を変更"
             />
             <span className="text-gray-500">～</span>
             <input
               type="time"
               value={period.end}
               onChange={(e) => updateFocusPeriod(idx, "end", e.target.value)}
-              className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black"
+              className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black cursor-pointer hover:border-blue-400 transition-colors"
               disabled={disabled}
+              title="クリックして終了時刻を変更"
             />
             {focusPeriods.length > 1 && (
               <button

@@ -25,16 +25,18 @@ const SleepForm: React.FC<SleepFormProps> = ({
         type="time"
         value={bedTime}
         onChange={(e) => setBedTime(e.target.value)}
-        className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black"
+        className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black cursor-pointer hover:border-blue-400 transition-colors"
         disabled={disabled}
+        title="クリックして就寝時刻を変更"
       />
       <span className="text-gray-500">～</span>
       <input
         type="time"
         value={wakeTime}
         onChange={(e) => setWakeTime(e.target.value)}
-        className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black"
+        className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black cursor-pointer hover:border-blue-400 transition-colors"
         disabled={disabled}
+        title="クリックして起床時刻を変更"
       />
     </div>
   </section>
