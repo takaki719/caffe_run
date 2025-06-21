@@ -24,6 +24,13 @@ import ExpirePopup from "@/components/ExpirePopup";
 // グラフの点の型定義
 type GraphPoint = { time: string; value: number };
 
+type ModalRecommendation = {
+  time: string;
+  mg?: number; // mgはオプショナル（存在する場合もあれば、ない場合もある）
+  caffeineAmount?: number; // caffeineAmountもオプショナル
+  fullDateTime?: string; // fullDateTimeもオプショナル
+};
+
 // Unityのロジックをカプセル化する新しいコンポーネント
 const UnityContainer = ({
   graphData,
@@ -364,9 +371,10 @@ const HomePage: React.FC = () => {
             }
             if (recommendations) {
               setRecommendations(
-                recommendations.map((rec: { time: string; mg: number }) => ({
+                recommendations.map((rec: ModalRecommendation) => ({
                   time: rec.time,
-                  caffeineAmount: rec.mg,
+                  caffeineAmount: rec.caffeineAmount ?? rec.mg ?? 0,
+                  fullDateTime: rec.fullDateTime || "",
                 })),
               );
             }
