@@ -1,4 +1,3 @@
-// components/SettingModal.tsx
 "use client";
 import React, { useState } from "react";
 import SleepForm from "./SleepForm";
@@ -6,12 +5,27 @@ import FocusForm from "./FocusForm";
 import { useSleepTimes } from "@/hooks/UseSleepTimes";
 import { useFocusPeriods } from "@/hooks/UseFocusPeriods";
 
+interface GraphData {
+  simulation: SimulationPoint[];
+  current: SimulationPoint[];
+}
+
+interface SimulationPoint {
+  time: string;
+  value: number;
+}
+
+interface CaffeineRecommendation {
+  time: string;
+  mg: number;
+}
+
 interface SettingModalProps {
   onClose: (
-    minPerformances: number[], 
+    minPerformances: number[],
     targetPerformance: number,
-    graphData?: { simulation: any[], current: any[] },
-    recommendations?: any[]
+    graphData?: GraphData,
+    recommendations?: CaffeineRecommendation[],
   ) => void;
 }
 
@@ -23,10 +37,10 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
   const [error, setError] = useState("");
 
   const isValid = () =>
-    !!bedTime && 
-    !!wakeTime && 
-    bedTime !== "" && 
-    wakeTime !== "" && 
+    !!bedTime &&
+    !!wakeTime &&
+    bedTime !== "" &&
+    wakeTime !== "" &&
     focusPeriods.some((p) => p.start && p.end && p.start !== "" && p.end !== "");
 
   const handleSave = async () => {
@@ -35,7 +49,6 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
       return;
     }
 
-    // localStorage 保存…
     console.log("保存する設定値:", { bedTime, wakeTime, focusPeriods });
     localStorage.setItem("initial-setup-complete", "true");
     localStorage.setItem("bedTime", bedTime);
@@ -44,11 +57,11 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     window.dispatchEvent(new CustomEvent("sleepTimesUpdated"));
     window.dispatchEvent(new CustomEvent("focusPeriodsUpdated"));
 
-    // API コールしてローカル変数に受け取る
     let mins: number[] = [];
     let tgt = 0.7;
-    let graphData = { simulation: [], current: [] };
-    let recommendations: any[] = [];
+    let graphData: GraphData = { simulation: [], current: [] };
+    let recommendations: CaffeineRecommendation[] = [];
+
     try {
       const res = await fetch("/api/plan", {
         method: "POST",
@@ -66,7 +79,7 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
       tgt = json.targetPerformance ?? 0.7;
       graphData = {
         simulation: json.simulationData || [],
-        current: json.currentStatusData || []
+        current: json.currentStatusData || [],
       };
       recommendations = json.caffeinePlan || [];
       setError("");
@@ -75,7 +88,6 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
       return;
     }
 
-    // **ここでローカル変数を渡す**
     onClose(mins, tgt, graphData, recommendations);
   };
 
