@@ -34,13 +34,11 @@ const UnityModel: React.FC<UnityModelProps> = ({ unityProvider }) => {
   // Unity WebGLコンテキストエラーの予防
   useEffect(() => {
     const handleContextLost = (event: Event) => {
-      console.warn("WebGL context lost, preventing default behavior");
       event.preventDefault();
       setHasContextError(true);
     };
 
     const handleContextRestored = () => {
-      console.log("WebGL context restored");
       setHasContextError(false);
     };
 

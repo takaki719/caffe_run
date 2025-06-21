@@ -224,10 +224,16 @@ const HomePage: React.FC = () => {
 
           // 未来の時刻のみ通知設定
           if (notificationTime > new Date()) {
-            await registerNotification(notificationTime);
-            console.log(
-              `通知設定完了: ${recommendation.time} の5分前 (${notificationTime.toLocaleString()})`,
-            );
+            const success = await registerNotification(notificationTime);
+            if (success) {
+              console.log(
+                `通知設定完了: ${recommendation.time} の5分前 (${notificationTime.toLocaleString()})`,
+              );
+            } else {
+              console.error(
+                `通知設定失敗: ${recommendation.time} の5分前 (${notificationTime.toLocaleString()})`,
+              );
+            }
           }
         }
       } catch (error) {
