@@ -23,15 +23,6 @@ export class PerformanceModel {
     caffeineHistory: CaffeineDose[],
     focusWindows: { start: Date; end: Date }[] = [],
   ): number {
-    // デバッグ用: 予測開始時のカフェイン履歴ログ
-    if (caffeineHistory.length > 0) {
-      console.log(
-        `[Performance Predict] Target: ${targetTime.toLocaleTimeString()}, Caffeine entries: ${caffeineHistory.length}`,
-      );
-      caffeineHistory.forEach((dose, i) => {
-        console.log(`  [${i}] ${dose.time.toLocaleTimeString()}: ${dose.mg}mg`);
-      });
-    }
     let state: ModelState;
     let wakeUpTime: Date;
 
@@ -105,9 +96,6 @@ export class PerformanceModel {
       // すべての該当するカフェイン摂取を処理
       for (const dose of dosesNow) {
         state.caffeineInGut += dose.mg;
-        console.log(
-          `[Caffeine Intake] Time: ${dose.time.toLocaleTimeString()}, Amount: ${dose.mg}mg, Total in gut: ${state.caffeineInGut.toFixed(1)}mg`,
-        );
       }
 
       state = this.step(
@@ -240,9 +228,6 @@ export class PerformanceModel {
     // デバッグ用: カフェイン血中濃度と効果をログ出力
     if (state.caffeineInPlasma > 5) {
       // 5mg以上の時のみログ
-      console.log(
-        `[Caffeine Debug] Time: ${state.time.toLocaleTimeString()}, Plasma: ${state.caffeineInPlasma.toFixed(1)}mg, Effect: ${(caffeineEffect * 100).toFixed(1)}%, ProcessC: ${(processC * 100).toFixed(1)}%, ProcessS: ${(state.processS * 100).toFixed(1)}%`,
-      );
     }
 
     const performance = processC - state.processS * 1.15 + caffeineEffect;
