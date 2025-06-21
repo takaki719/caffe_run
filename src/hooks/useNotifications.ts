@@ -55,7 +55,9 @@ export const useNotifications = () => {
     }
 
     try {
+      console.log("Requesting notification permission...");
       const permission = await Notification.requestPermission();
+      console.log("Permission result:", permission);
       setPermission(permission);
       return permission === "granted";
     } catch (error) {
@@ -66,24 +68,30 @@ export const useNotifications = () => {
 
   const subscribeToPush = async (): Promise<PushSubscription | null> => {
     if (!isSupported || permission !== "granted") {
+      console.log("Cannot subscribe:", { isSupported, permission });
       return null;
     }
 
     try {
+      console.log("Getting service worker registration...");
       const registration = await navigator.serviceWorker.ready;
 
       // VAPID公開鍵をAPIから取得
+      console.log("Fetching VAPID public key...");
       const vapidResponse = await fetch("/api/vapid");
       if (!vapidResponse.ok) {
-        throw new Error("Failed to fetch VAPID public key");
+        throw new Error(`Failed to fetch VAPID public key: ${vapidResponse.status}`);
       }
       const { publicKey } = await vapidResponse.json();
+      console.log("VAPID key received:", publicKey ? "✓" : "✗");
 
+      console.log("Subscribing to push...");
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicKey),
       });
 
+      console.log("Push subscription successful:", subscription ? "✓" : "✗");
       setSubscription(subscription);
       return subscription;
     } catch (error) {
@@ -135,10 +143,13 @@ export const useNotifications = () => {
   };
 
   const setupNotifications = async (): Promise<boolean> => {
+    console.log("setupNotifications: Starting...");
     const hasPermission = await requestPermission();
+    console.log("setupNotifications: Permission:", hasPermission);
     if (!hasPermission) return false;
 
     const sub = await subscribeToPush();
+    console.log("setupNotifications: Subscription:", sub ? "Success" : "Failed");
     return sub !== null;
   };
 
