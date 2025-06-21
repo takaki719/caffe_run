@@ -86,13 +86,16 @@ export class PerformanceModel {
       const currentTimeMs = state.time.getTime();
       const nextTime = new Date(currentTimeMs + C.TIME_STEP_SECONDS * 1000);
 
-      const doseNow = caffeineHistory.find(
+      // 複数のカフェイン摂取を処理するため、findではなくfilterを使用
+      const dosesNow = caffeineHistory.filter(
         (d) =>
           d.time.getTime() >= currentTimeMs &&
           d.time.getTime() < nextTime.getTime(),
       );
-      if (doseNow) {
-        state.caffeineInGut += doseNow.mg;
+
+      // すべての該当するカフェイン摂取を処理
+      for (const dose of dosesNow) {
+        state.caffeineInGut += dose.mg;
       }
 
       state = this.step(
@@ -221,6 +224,12 @@ export class PerformanceModel {
     const caffeineEffect =
       C.CAFFEINE_MAX_EFFECT *
       (state.caffeineInPlasma / (C.CAFFEINE_EC50 + state.caffeineInPlasma));
+
+    // デバッグ用: カフェイン血中濃度と効果をログ出力
+    if (state.caffeineInPlasma > 5) {
+      // 5mg以上の時のみログ
+    }
+
     const performance = processC - state.processS * 1.15 + caffeineEffect;
     return Math.max(0, Math.min(1, performance));
   }

@@ -29,21 +29,43 @@ export const FocusForm: React.FC<FocusFormProps> = ({
             <label className="text-gray-600 text-sm font-medium min-w-[95px]">
               集中時間
             </label>
-            <input
-              type="time"
-              value={period.start}
-              onChange={(e) => updateFocusPeriod(idx, "start", e.target.value)}
-              className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black"
-              disabled={disabled}
-            />
+            <div className="relative">
+              <input
+                type="time"
+                value={period.start}
+                onChange={(e) =>
+                  updateFocusPeriod(idx, "start", e.target.value)
+                }
+                className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black cursor-pointer hover:border-blue-400 transition-colors appearance-none"
+                disabled={disabled}
+                title="クリックして開始時刻を変更"
+                style={{
+                  WebkitAppearance: "none",
+                  MozAppearance: "textfield",
+                }}
+                onClick={(e) => {
+                  e.currentTarget.showPicker?.();
+                }}
+              />
+            </div>
             <span className="text-gray-500">～</span>
-            <input
-              type="time"
-              value={period.end}
-              onChange={(e) => updateFocusPeriod(idx, "end", e.target.value)}
-              className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black"
-              disabled={disabled}
-            />
+            <div className="relative">
+              <input
+                type="time"
+                value={period.end}
+                onChange={(e) => updateFocusPeriod(idx, "end", e.target.value)}
+                className="px-2 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 bg-white w-24 text-black cursor-pointer hover:border-blue-400 transition-colors appearance-none"
+                disabled={disabled}
+                title="クリックして終了時刻を変更"
+                style={{
+                  WebkitAppearance: "none",
+                  MozAppearance: "textfield",
+                }}
+                onClick={(e) => {
+                  e.currentTarget.showPicker?.();
+                }}
+              />
+            </div>
             {focusPeriods.length > 1 && (
               <button
                 type="button"

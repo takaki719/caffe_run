@@ -95,12 +95,22 @@ const CaffeineLogForm: React.FC<Props> = ({ logs, setLogs }) => {
         </div>
         <div>
           <label className="block text-sm text-gray-600 mb-1">摂取時間</label>
-          <input
-            type="time"
-            className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 text-gray-900"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-          />
+          <div className="relative">
+            <input
+              type="time"
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 text-gray-900 cursor-pointer hover:border-blue-400 transition-colors appearance-none"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              title="クリックして摂取時刻を変更"
+              style={{
+                WebkitAppearance: "none",
+                MozAppearance: "textfield",
+              }}
+              onClick={(e) => {
+                e.currentTarget.showPicker?.();
+              }}
+            />
+          </div>
         </div>
       </div>
       <button

@@ -32,7 +32,7 @@ export class CaffeineOptimizer {
       for (
         let t = window.start.getTime();
         t <= window.end.getTime();
-        t += 30 * 60 * 1000 // 30分ごとにチェック
+        t += 15 * 60 * 1000 // 15分ごとにチェック（より細かい評価）
       ) {
         const performance = this.model.predict(
           new Date(t),
