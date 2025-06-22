@@ -15,10 +15,9 @@ interface SimulationPoint {
   value: number;
 }
 
-interface CaffeineRecommendation {
+interface ProcessedRecommendation {
   time: string;
   caffeineAmount: number;
-  fullDateTime: string;
 }
 
 interface SettingModalProps {
@@ -26,7 +25,7 @@ interface SettingModalProps {
     minPerformances: number[],
     targetPerformance: number,
     graphData?: GraphData,
-    recommendations?: CaffeineRecommendation[],
+    recommendations?: ProcessedRecommendation[],
   ) => void;
 }
 
@@ -45,6 +44,7 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     focusPeriods.some(
       (p) => p.start && p.end && p.start !== "" && p.end !== "",
     );
+  focusPeriods.some((p) => p.start && p.end && p.start !== "" && p.end !== "");
 
   const handleSave = async () => {
     if (!isValid()) {
@@ -73,7 +73,7 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     let mins: number[] = [];
     let tgt = 0.7;
     let graphData: GraphData = { simulation: [], current: [] };
-    let recommendations: CaffeineRecommendation[] = [];
+    let recommendations: ProcessedRecommendation[] = [];
 
     try {
       const res = await fetch("/api/plan", {
@@ -94,31 +94,12 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
         simulation: json.simulationData || [],
         current: json.currentStatusData || [],
       };
-      const schedule = json.rawSchedule || json.caffeinePlan || [];
-      recommendations = schedule.map(
-        (rec: { timeDisplay?: string; time?: string; mg: number }) => {
-          const time = rec.timeDisplay || rec.time || "";
-          const now = new Date();
-          const [hour, minute] = time.split(":").map(Number);
-          const inferredDate = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate(),
-            hour,
-            minute,
-          );
-          if (inferredDate < now) {
-            inferredDate.setDate(inferredDate.getDate() + 1);
-          }
-
-          return {
-            time,
-            caffeineAmount: rec.mg ?? 0,
-            fullDateTime: rec.time || inferredDate.toISOString(),
-          };
-        },
+      recommendations = (json.caffeinePlan || []).map(
+        (rec: { time: string; mg: number }) => ({
+          time: rec.time,
+          mg: rec.mg,
+        }),
       );
-      console.log("SettingModal - Final recommendations:", recommendations);
       setError("");
     } catch {
       setError("初期プラン取得中にエラーが発生しました");

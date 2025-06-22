@@ -26,11 +26,21 @@ import NotificationButton from "@/components/NotificationButton";
 // グラフの点の型定義
 type GraphPoint = { time: string; value: number };
 
+type ModalRecommendation = {
+  time: string;
+  mg?: number;
+  caffeineAmount?: number;
+  fullDateTime?: string;
+  timeDisplay?: string; // ← これを追加！
+};
+
 // Unityのロジックをカプセル化する新しいコンポーネント
 const UnityContainer = ({
   graphData,
+  wakeTime,
 }: {
   graphData: { current: GraphPoint[] };
+  wakeTime: string;
 }) => {
   const [currentFocus, setCurrentFocus] = useState(0);
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
@@ -51,16 +61,51 @@ const UnityContainer = ({
     return () => clearTimeout(timer);
   }, []);
 
-  // 現在の集中力値を計算する関数
+  // --- ★★★ ここから修正 ★★★ ---
+  // 現在の集中力値を計算する関数（ご提案に基づき条件分岐を追加）
   const getCurrentFocusValue = (): number => {
-    if (graphData.current.length === 0) return 0;
+    if (!graphData.current || graphData.current.length === 0 || !wakeTime) {
+      return 0;
+    }
 
-    const now = new Date();
-    const timeToMinutes = (timeStr: string) => {
+    const simpleTimeToMinutes = (timeStr: string) => {
       const [h, m] = timeStr.split(":").map(Number);
       return h * 60 + m;
     };
-    const nowInMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const firstPointMinutes = simpleTimeToMinutes(graphData.current[0].time);
+    const lastPointMinutes = simpleTimeToMinutes(
+      graphData.current[graphData.current.length - 1].time,
+    );
+
+    // 日をまたいでいるかを判定
+    const crossesMidnight = firstPointMinutes > lastPointMinutes;
+
+    const [wakeH, wakeM] = wakeTime.split(":").map(Number);
+    const wakeMinutes = wakeH * 60 + wakeM;
+    const now = new Date();
+
+    let timeToMinutes: (timeStr: string) => number;
+    let nowInMinutes: number;
+
+    if (crossesMidnight) {
+      //【日をまたぐ場合】時刻の連続性を保つため24時間分の分を加算
+      timeToMinutes = (timeStr: string) => {
+        let pointMinutes = simpleTimeToMinutes(timeStr);
+        if (pointMinutes < wakeMinutes) {
+          pointMinutes += 24 * 60;
+        }
+        return pointMinutes;
+      };
+      nowInMinutes = now.getHours() * 60 + now.getMinutes();
+      if (nowInMinutes < wakeMinutes) {
+        nowInMinutes += 24 * 60;
+      }
+    } else {
+      //【日をまたがない場合】シンプルな変換ロジックを使用
+      timeToMinutes = simpleTimeToMinutes;
+      nowInMinutes = now.getHours() * 60 + now.getMinutes();
+    }
 
     // 二分探索で最も近い時刻のデータを取得
     let low = 0;
@@ -91,6 +136,7 @@ const UnityContainer = ({
 
     return closestPoint.value;
   };
+  // --- ★★★ ここまで修正 ★★★ ---
 
   // Unityに集中度データを送信するタイマー処理
   useEffect(() => {
@@ -104,7 +150,7 @@ const UnityContainer = ({
       sendMessage("unitychan", "SetAnimationSpeed", focusValue.toString());
     }, 2000);
     return () => clearInterval(intervalId);
-  }, [isLoaded, sendMessage, graphData]);
+  }, [isLoaded, sendMessage, graphData, getCurrentFocusValue]);
 
   return (
     <div className="relative">
@@ -263,7 +309,7 @@ const HomePage: React.FC = () => {
     if (savedLogs) {
       setLogs(JSON.parse(savedLogs));
     }
-  }, []);
+  }, [setLogs]);
 
   const isValid = useCallback(() => {
     return (
@@ -309,11 +355,45 @@ const HomePage: React.FC = () => {
         );
       }
       const result = await response.json();
-      const schedule = result.rawSchedule || result.caffeinePlan || [];
+      const schedule: ModalRecommendation[] =
+        result.rawSchedule || result.caffeinePlan || [];
       setGraphData({
         simulation: result.simulationData || [],
         current: result.currentStatusData || [],
       });
+
+      // setRecommendations(
+      //   schedule.map(
+      //     (rec: { timeDisplay?: string; time?: string; mg: number }) => ({
+      //       time: rec.timeDisplay || rec.time || "",
+      //       caffeineAmount: rec.mg,
+      //     }),
+      //   ),
+      // );
+
+      setRecommendations(
+        schedule.map((rec) => {
+          const time = rec.timeDisplay || rec.time || "";
+          const now = new Date();
+          const [hour, minute] = time.split(":").map(Number);
+          const inferredDate = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            hour,
+            minute,
+          );
+          if (inferredDate < now) {
+            inferredDate.setDate(inferredDate.getDate() + 1); // 過去なら明日に繰り上げ
+          }
+
+          return {
+            time,
+            caffeineAmount: rec.caffeineAmount ?? rec.mg ?? 0,
+            fullDateTime: rec.fullDateTime || inferredDate.toISOString(),
+          };
+        }),
+      );
       setMinPerformances(result.minPerformances || []);
       setTargetPerformance(result.targetPerformance);
       setActiveGraph("simulation");
@@ -429,12 +509,14 @@ const HomePage: React.FC = () => {
               setActiveGraph("simulation");
             }
             if (recommendations) {
-              console.log("Page - Setting recommendations:", recommendations);
-              setRecommendations(recommendations);
-              // SettingModalからの推奨に対しても通知を設定
+              setRecommendations(
+                recommendations.map((rec: ModalRecommendation) => ({
+                  time: rec.time,
+                  caffeineAmount: rec.caffeineAmount ?? rec.mg ?? 0,
+                  fullDateTime: rec.fullDateTime || "",
+                })),
+              );
               setupNotificationsForRecommendations(recommendations);
-            } else {
-              console.log("Page - No recommendations received");
             }
             setShowSettingModal(false);
             setSettingModalJustClosed(true); // フラグを設定
@@ -495,7 +577,11 @@ const HomePage: React.FC = () => {
             {activeView === "detailed" && (
               <>
                 <div className="w-full max-w-2xl flex justify-center">
-                  <UnityContainer key={unityKey} graphData={graphData} />
+                  <UnityContainer
+                    key={unityKey}
+                    graphData={graphData}
+                    wakeTime={wakeTime}
+                  />
                 </div>
 
                 {/* developブランチの新しいレイアウトを採用 */}
