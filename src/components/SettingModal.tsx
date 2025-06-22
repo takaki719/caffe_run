@@ -42,7 +42,9 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     !!wakeTime &&
     bedTime !== "" &&
     wakeTime !== "" &&
-    focusPeriods.some((p) => p.start && p.end && p.start !== "" && p.end !== "");
+    focusPeriods.some(
+      (p) => p.start && p.end && p.start !== "" && p.end !== "",
+    );
 
   const handleSave = async () => {
     if (!isValid()) {
@@ -50,7 +52,11 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
       return;
     }
 
-    console.log("SettingModal - 保存する設定値:", { bedTime, wakeTime, focusPeriods });
+    console.log("SettingModal - 保存する設定値:", {
+      bedTime,
+      wakeTime,
+      focusPeriods,
+    });
     console.log("SettingModal - APIリクエストボディ:", {
       bed_time: bedTime,
       wake_time: wakeTime,
@@ -89,27 +95,29 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
         current: json.currentStatusData || [],
       };
       const schedule = json.rawSchedule || json.caffeinePlan || [];
-      recommendations = schedule.map((rec: { timeDisplay?: string; time?: string; mg: number }) => {
-        const time = rec.timeDisplay || rec.time || "";
-        const now = new Date();
-        const [hour, minute] = time.split(":").map(Number);
-        const inferredDate = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate(),
-          hour,
-          minute,
-        );
-        if (inferredDate < now) {
-          inferredDate.setDate(inferredDate.getDate() + 1);
-        }
+      recommendations = schedule.map(
+        (rec: { timeDisplay?: string; time?: string; mg: number }) => {
+          const time = rec.timeDisplay || rec.time || "";
+          const now = new Date();
+          const [hour, minute] = time.split(":").map(Number);
+          const inferredDate = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            hour,
+            minute,
+          );
+          if (inferredDate < now) {
+            inferredDate.setDate(inferredDate.getDate() + 1);
+          }
 
-        return {
-          time,
-          caffeineAmount: rec.mg ?? 0,
-          fullDateTime: rec.time || inferredDate.toISOString(),
-        };
-      });
+          return {
+            time,
+            caffeineAmount: rec.mg ?? 0,
+            fullDateTime: rec.time || inferredDate.toISOString(),
+          };
+        },
+      );
       console.log("SettingModal - Final recommendations:", recommendations);
       setError("");
     } catch {
@@ -117,7 +125,11 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
       return;
     }
 
-    console.log("SettingModal - Calling onClose with:", { mins, tgt, recommendations });
+    console.log("SettingModal - Calling onClose with:", {
+      mins,
+      tgt,
+      recommendations,
+    });
     onClose(mins, tgt, graphData, recommendations);
   };
 

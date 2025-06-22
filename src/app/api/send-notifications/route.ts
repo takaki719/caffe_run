@@ -22,13 +22,15 @@ export async function POST(request: NextRequest) {
 
     console.log("Debug auth check:", {
       authHeader,
-      expectedToken: expectedToken ? `${expectedToken.substring(0, 5)}...` : 'undefined',
-      hasExpectedToken: !!expectedToken
+      expectedToken: expectedToken
+        ? `${expectedToken.substring(0, 5)}...`
+        : "undefined",
+      hasExpectedToken: !!expectedToken,
     });
 
     if (!expectedToken || authHeader !== `Bearer ${expectedToken}`) {
       console.log("Auth failed:", {
-        reason: !expectedToken ? 'No CRON_SECRET' : 'Token mismatch'
+        reason: !expectedToken ? "No CRON_SECRET" : "Token mismatch",
       });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

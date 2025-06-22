@@ -33,11 +33,11 @@ function getValidRecommendations(
   focusPeriods: FocusPeriod[],
   now: Date,
 ): Recommendation[] {
-  console.log("Dashboard - getValidRecommendations called with:", { 
-    recommendations, 
-    wakeTime, 
-    focusPeriods, 
-    now: now.toISOString() 
+  console.log("Dashboard - getValidRecommendations called with:", {
+    recommendations,
+    wakeTime,
+    focusPeriods,
+    now: now.toISOString(),
   });
 
   // NextCaffeineTimeと同じロジックを使用
@@ -52,7 +52,7 @@ function getValidRecommendations(
       time: rec.time,
       fullDateTime: rec.fullDateTime,
       recommendationDate: recommendationDate.toISOString(),
-      isFuture
+      isFuture,
     });
     return isFuture;
   });
@@ -60,8 +60,7 @@ function getValidRecommendations(
   // 時刻順にソート（念のため）
   const sortedRecs = futureRecommendations.sort(
     (a, b) =>
-      new Date(a.fullDateTime).getTime() -
-      new Date(b.fullDateTime).getTime(),
+      new Date(a.fullDateTime).getTime() - new Date(b.fullDateTime).getTime(),
   );
 
   console.log("Dashboard - Final valid recommendations:", sortedRecs);
@@ -74,7 +73,11 @@ export interface DashboardProps {
     simulation: { time: string; value: number }[];
     current: { time: string; value: number }[];
   };
-  recommendations: { time: string; caffeineAmount: number; fullDateTime: string }[];
+  recommendations: {
+    time: string;
+    caffeineAmount: number;
+    fullDateTime: string;
+  }[];
   bedTime: string;
   wakeTime: string;
   focusPeriods: { start: string; end: string }[];

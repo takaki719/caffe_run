@@ -3,7 +3,8 @@ import React from "react";
 import { useNotifications } from "@/hooks/useNotifications";
 
 const NotificationButton: React.FC = () => {
-  const { isSupported, permission, setupNotifications, subscription, userId } = useNotifications();
+  const { isSupported, permission, setupNotifications, subscription, userId } =
+    useNotifications();
 
   if (!isSupported) {
     return null; // ブラウザが対応していない場合は非表示
@@ -26,7 +27,8 @@ const NotificationButton: React.FC = () => {
           <span>通知設定済み</span>
         </div>
         <div className="text-xs text-gray-500">
-          Subscription: {subscription ? "✓" : "✗"} | UserID: {userId ? "✓" : "✗"}
+          Subscription: {subscription ? "✓" : "✗"} | UserID:{" "}
+          {userId ? "✓" : "✗"}
         </div>
         {(!subscription || !userId) && (
           <button

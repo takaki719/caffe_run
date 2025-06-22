@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 export interface Recommendation {
   time: string; // "08:00"
   caffeineAmount: number; // 例: 150
+  fullDateTime: string; // ISO 8601形式の完全な日時
 }
 
 // 集中時間の型定義

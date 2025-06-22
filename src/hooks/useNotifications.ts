@@ -80,7 +80,9 @@ export const useNotifications = () => {
       console.log("Fetching VAPID public key...");
       const vapidResponse = await fetch("/api/vapid");
       if (!vapidResponse.ok) {
-        throw new Error(`Failed to fetch VAPID public key: ${vapidResponse.status}`);
+        throw new Error(
+          `Failed to fetch VAPID public key: ${vapidResponse.status}`,
+        );
       }
       const { publicKey } = await vapidResponse.json();
       console.log("VAPID key received:", publicKey ? "✓" : "✗");
@@ -154,7 +156,10 @@ export const useNotifications = () => {
     if (!hasPermission) return false;
 
     const sub = await subscribeToPush();
-    console.log("setupNotifications: Subscription:", sub ? "Success" : "Failed");
+    console.log(
+      "setupNotifications: Subscription:",
+      sub ? "Success" : "Failed",
+    );
     return sub !== null;
   };
 
