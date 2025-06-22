@@ -95,15 +95,14 @@ export async function POST(request: NextRequest) {
 
     console.log("Redis payload:", redisPayload);
 
-    const redisResponse = await fetch(`${redisUrl}/set`, {
-      method: "POST",
+    const url = `${redisUrl}/set/${encodeURIComponent(redisKey)}?EX=${ttlSeconds}&value=${encodeURIComponent(JSON.stringify(notificationData))}`;
+
+    const redisResponse = await fetch(url, {
+      method: "GET",
       headers: {
         Authorization: `Bearer ${redisToken}`,
-        "Content-Type": "application/json",
       },
-      body: JSON.stringify(redisPayload),
     });
-
     console.log("Redis response status:", redisResponse.status);
     console.log("Redis response headers:", Object.fromEntries(redisResponse.headers.entries()));
 
