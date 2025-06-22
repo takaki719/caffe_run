@@ -66,9 +66,10 @@ export const useNotifications = () => {
     }
   };
 
-  const subscribeToPush = async (): Promise<PushSubscription | null> => {
-    if (!isSupported || permission !== "granted") {
-      console.log("Cannot subscribe:", { isSupported, permission });
+  const subscribeToPush = async (permissionStatus?: NotificationPermission): Promise<PushSubscription | null> => {
+    const currentPermission = permissionStatus || permission;
+    if (!isSupported || currentPermission !== "granted") {
+      console.log("Cannot subscribe:", { isSupported, permission: currentPermission });
       return null;
     }
 
@@ -155,7 +156,7 @@ export const useNotifications = () => {
     console.log("setupNotifications: Permission:", hasPermission);
     if (!hasPermission) return false;
 
-    const sub = await subscribeToPush();
+    const sub = await subscribeToPush("granted");
     console.log(
       "setupNotifications: Subscription:",
       sub ? "Success" : "Failed",
