@@ -16,7 +16,13 @@ webpush.setVapidDetails(
 
 export async function GET(request: NextRequest) {
   try {
-    // セキュリティ: cronジョブからのクエリパラメータでトークンチェック
+    // セキュリティ: cronジョブから
+    // のクエリパラメータでトークンチェック
+    console.log("📥 Request received:", {
+      url: request.url,
+      method: request.method,
+      headers: Object.fromEntries(request.headers.entries()),
+    });
     const url = new URL(request.url);
     const token = url.searchParams.get("token");
     const expectedToken = process.env.CRON_SECRET;
