@@ -9,11 +9,19 @@ interface NotificationRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("=== Notification Registration Debug ===");
     const body: NotificationRequest = await request.json();
+    console.log("Request body:", JSON.stringify(body, null, 2));
+    
     const { userId, notificationTime, subscription } = body;
 
     // バリデーション
     if (!userId || !notificationTime || !subscription) {
+      console.log("Validation failed - missing fields:", { 
+        hasUserId: !!userId, 
+        hasNotificationTime: !!notificationTime, 
+        hasSubscription: !!subscription 
+      });
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },
@@ -22,7 +30,16 @@ export async function POST(request: NextRequest) {
 
     // 通知時刻が未来の時刻であることを確認
     const notificationDate = new Date(notificationTime);
-    if (notificationDate <= new Date()) {
+    const now = new Date();
+    console.log("Time validation:", {
+      notificationTime,
+      notificationDate: notificationDate.toISOString(),
+      now: now.toISOString(),
+      isFuture: notificationDate > now
+    });
+    
+    if (notificationDate <= now) {
+      console.log("Validation failed - time is not in future");
       return NextResponse.json(
         { error: "Notification time must be in the future" },
         { status: 400 },
@@ -32,6 +49,13 @@ export async function POST(request: NextRequest) {
     // Upstash Redisに保存
     const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
     const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+    console.log("Redis configuration check:", {
+      hasRedisUrl: !!redisUrl,
+      hasRedisToken: !!redisToken,
+      redisUrlPrefix: redisUrl ? redisUrl.substring(0, 20) + "..." : "undefined",
+      redisTokenPrefix: redisToken ? redisToken.substring(0, 10) + "..." : "undefined"
+    });
 
     if (!redisUrl || !redisToken) {
       console.error("Redis configuration missing:", {
@@ -59,6 +83,19 @@ export async function POST(request: NextRequest) {
 
     // Redisに保存（キー: notification:{userId}:{timestamp}）
     const redisKey = `notification:${userId}:${notificationDate.getTime()}`;
+    
+    console.log("Redis save attempt:", {
+      redisKey,
+      ttlSeconds,
+      dataSize: JSON.stringify(notificationData).length
+    });
+
+    const redisPayload = {
+      value: JSON.stringify(notificationData),
+      ex: ttlSeconds,
+    };
+
+    console.log("Redis payload:", redisPayload);
 
     const redisResponse = await fetch(`${redisUrl}/set/${redisKey}`, {
       method: "POST",
@@ -66,20 +103,28 @@ export async function POST(request: NextRequest) {
         Authorization: `Bearer ${redisToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        value: JSON.stringify(notificationData),
-        ex: ttlSeconds,
-      }),
+      body: JSON.stringify(redisPayload),
     });
+
+    console.log("Redis response status:", redisResponse.status);
+    console.log("Redis response headers:", Object.fromEntries(redisResponse.headers.entries()));
 
     if (!redisResponse.ok) {
       const errorText = await redisResponse.text();
-      console.error("Redis save failed:", errorText);
+      console.error("Redis save failed:", {
+        status: redisResponse.status,
+        statusText: redisResponse.statusText,
+        errorText,
+        url: `${redisUrl}/set/${redisKey}`
+      });
       return NextResponse.json(
-        { error: "Failed to save notification" },
+        { error: "Failed to save notification", details: errorText },
         { status: 500 },
       );
     }
+
+    const redisResult = await redisResponse.json();
+    console.log("Redis save success:", redisResult);
 
     console.log(`Notification registered: ${redisKey}`);
 
