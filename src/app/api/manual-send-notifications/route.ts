@@ -8,11 +8,15 @@ const vapidDetails = {
   privateKey: process.env.VAPID_PRIVATE_KEY || "",
 };
 
-webpush.setVapidDetails(
-  vapidDetails.subject,
-  vapidDetails.publicKey,
-  vapidDetails.privateKey,
-);
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    process.env.VAPID_SUBJECT || "mailto:your-email@example.com",
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY,
+  );
+} else {
+  console.warn("⚠️ VAPID keys are not set, skipping webpush setup.");
+}
 
 export async function GET() {
   try {
