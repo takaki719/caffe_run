@@ -4,6 +4,7 @@ import SleepForm from "./SleepForm";
 import FocusForm from "./FocusForm";
 import { useSleepTimes } from "@/hooks/UseSleepTimes";
 import { useFocusPeriods } from "@/hooks/UseFocusPeriods";
+import { generateCaffeinePlan } from "@/utils/generatePlan";
 
 interface GraphData {
   simulation: SimulationPoint[];
@@ -52,7 +53,6 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
       return;
     }
 
-    console.log("保存する設定値:", { bedTime, wakeTime, focusPeriods });
     localStorage.setItem("initial-setup-complete", "true");
     localStorage.setItem("bedTime", bedTime);
     localStorage.setItem("wakeTime", wakeTime);
@@ -60,43 +60,21 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
     window.dispatchEvent(new CustomEvent("sleepTimesUpdated"));
     window.dispatchEvent(new CustomEvent("focusPeriodsUpdated"));
 
-    let mins: number[] = [];
-    let tgt = 0.7;
-    let graphData: GraphData = { simulation: [], current: [] };
-    let recommendations: ProcessedRecommendation[] = [];
-
     try {
-      const res = await fetch("/api/plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bed_time: bedTime,
-          wake_time: wakeTime,
-          focus_periods: focusPeriods,
-          caffeine_logs: [],
-        }),
-      });
-      if (!res.ok) throw new Error("API error");
-      const json = await res.json();
-      mins = json.minPerformances || [];
-      tgt = json.targetPerformance ?? 0.7;
-      graphData = {
-        simulation: json.simulationData || [],
-        current: json.currentStatusData || [],
-      };
-      recommendations = (json.caffeinePlan || []).map(
-        (rec: { time: string; mg: number }) => ({
-          time: rec.time,
-          mg: rec.mg,
-        }),
-      );
-      setError("");
-    } catch {
-      setError("初期プラン取得中にエラーが発生しました");
-      return;
-    }
+      const { minPerformances, targetPerformance, graphData, recommendations } =
+        await generateCaffeinePlan({
+          bedTime,
+          wakeTime,
+          focusPeriods,
+          caffeineLogs: [],
+        });
 
-    onClose(mins, tgt, graphData, recommendations);
+      setError("");
+      onClose(minPerformances, targetPerformance, graphData, recommendations);
+    } catch (err) {
+      setError("初期プラン取得中にエラーが発生しました");
+      console.error("Error generating caffeine plan:", err);
+    }
   };
 
   return (
