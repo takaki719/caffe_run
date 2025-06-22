@@ -1,0 +1,15 @@
+name: Send Notification
+
+on:
+  workflow_dispatch:  # 手動実行
+  schedule:
+    - cron: '*/5 * * * *'  # 5分ごと実行（UTC基準）
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call notification API
+        run: |
+          curl -X GET "https://your-vercel-app.vercel.app/api/send-notifications?token=${{ secrets.CRON_SECRET }}"
