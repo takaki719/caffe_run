@@ -202,11 +202,17 @@ const HomePage: React.FC = () => {
   const setupNotificationsForRecommendations = useCallback(
     async (caffeineRecommendations: Recommendation[]) => {
       if (!isSupported || permission !== "granted") {
-        console.log("Notifications not available:", { isSupported, permission });
+        console.log("Notifications not available:", {
+          isSupported,
+          permission,
+        });
         return;
       }
 
-      console.log("Setting up notifications for recommendations:", caffeineRecommendations);
+      console.log(
+        "Setting up notifications for recommendations:",
+        caffeineRecommendations,
+      );
 
       // 未来の推奨のみをフィルタリング
       const now = new Date();
@@ -216,7 +222,10 @@ const HomePage: React.FC = () => {
         return recommendationDate > now;
       });
 
-      console.log("Future recommendations for notifications:", futureRecommendations);
+      console.log(
+        "Future recommendations for notifications:",
+        futureRecommendations,
+      );
 
       // 各推奨について5分前に通知を設定
       for (const rec of futureRecommendations) {
@@ -225,9 +234,14 @@ const HomePage: React.FC = () => {
 
         // 通知時刻が現在時刻より未来の場合のみ設定
         if (notificationTime > now) {
-          console.log(`Setting notification for ${rec.time} at ${notificationTime.toLocaleString()}`);
+          console.log(
+            `Setting notification for ${rec.time} at ${notificationTime.toLocaleString()}`,
+          );
           const success = await registerNotification(notificationTime);
-          console.log(`Notification registration for ${rec.time}:`, success ? "Success" : "Failed");
+          console.log(
+            `Notification registration for ${rec.time}:`,
+            success ? "Success" : "Failed",
+          );
         }
       }
     },
@@ -328,7 +342,7 @@ const HomePage: React.FC = () => {
           };
         },
       );
-      
+
       setRecommendations(processedRecommendations);
       await setupNotificationsForRecommendations(processedRecommendations);
 
