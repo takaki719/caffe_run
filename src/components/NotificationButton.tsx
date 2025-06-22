@@ -19,57 +19,6 @@ const NotificationButton: React.FC = () => {
     }
   };
 
-  const handleTestNotification = async () => {
-    // 5秒後にテスト通知を送信
-    const testTime = new Date();
-    testTime.setSeconds(testTime.getSeconds() + 5);
-
-    console.log(
-      "Registering test notification for:",
-      testTime.toLocaleString(),
-    );
-
-    if (subscription && userId) {
-      try {
-        const response = await fetch("/api/register-notification", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId,
-            notificationTime: testTime.toISOString(),
-            subscription: {
-              endpoint: subscription.endpoint,
-              keys: {
-                p256dh: btoa(
-                  String.fromCharCode(
-                    ...new Uint8Array(subscription.getKey("p256dh")!),
-                  ),
-                ),
-                auth: btoa(
-                  String.fromCharCode(
-                    ...new Uint8Array(subscription.getKey("auth")!),
-                  ),
-                ),
-              },
-            },
-          }),
-        });
-
-        if (response.ok) {
-          alert("テスト通知を5秒後に送信するよう設定しました！");
-        } else {
-          const errorText = await response.text();
-          alert(`テスト通知の設定に失敗: ${errorText}`);
-        }
-      } catch (error) {
-        console.error("Test notification error:", error);
-        alert("テスト通知の設定に失敗しました");
-      }
-    }
-  };
-
   if (permission === "granted") {
     return (
       <div className="flex flex-col gap-1">
@@ -88,14 +37,6 @@ const NotificationButton: React.FC = () => {
               className="text-xs text-blue-600 hover:text-blue-800"
             >
               再設定
-            </button>
-          )}
-          {subscription && userId && (
-            <button
-              onClick={handleTestNotification}
-              className="text-xs text-green-600 hover:text-green-800"
-            >
-              テスト通知
             </button>
           )}
         </div>
