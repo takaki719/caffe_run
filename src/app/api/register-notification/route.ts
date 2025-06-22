@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       ttl: ttlSeconds,
     });
 
-    const url = `${redisUrl}/set/${encodeURIComponent(redisKey)}?value=${encodeURIComponent(redisValue)}&EX=${ttlSeconds}`;
+    const url = `${redisUrl}/set/${encodeURIComponent(redisKey)}/${encodeURIComponent(redisValue)}/EX/${ttlSeconds}`;
     console.log("Redis request URL:", url);
 
     const redisResponse = await fetch(url, {
