@@ -146,13 +146,14 @@ export async function POST(request: Request) {
     // カフェイン摂取ログの日付処理（夜型対応）
     const actualCaffeineHistory: CaffeineDose[] = (caffeine_logs || [])
       .map((log: CaffeineLogEntry) => {
-        // カフェイン摂取時刻が起床時刻より前の場合、翌日とみなす
-        const logTimeToday = timeToDate(log.time, today);
-        const logTimeTomorrow = timeToDate(log.time, tomorrow);
+        // ログの時刻文字列から、まず起床日を基準としたDateオブジェクトを生成する
+        const logTime = timeToDate(log.time, finalWakeTime);
 
-        // 起床時刻より前の場合は翌日、そうでなければ今日
-        const logTime =
-          logTimeToday < finalWakeTime ? logTimeToday : logTimeTomorrow;
+        // もし生成した時刻が起床時刻よりも前だった場合、
+        // それは活動サイクルにおける「翌日」の出来事なので、日付を1日進める
+        if (logTime.getTime() < finalWakeTime.getTime()) {
+          logTime.setDate(logTime.getDate() + 1);
+        }
 
         return {
           time: logTime,
