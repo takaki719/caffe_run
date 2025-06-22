@@ -90,12 +90,17 @@ export async function POST(request: NextRequest) {
       dataSize: JSON.stringify(notificationData).length
     });
 
-    // Upstash Redis REST APIの正しい形式でTTLを設定
-    const redisPayload = [redisKey, JSON.stringify(notificationData), "EX", ttlSeconds];
+    // GET + URLパラメータ形式でRedisに保存
+    const redisValue = JSON.stringify(notificationData);
+    
+    console.log("Redis save data:", {
+      key: redisKey,
+      valueLength: redisValue.length,
+      ttl: ttlSeconds
+    });
 
-    console.log("Redis payload:", redisPayload);
-
-    const url = `${redisUrl}/set/${encodeURIComponent(redisKey)}?EX=${ttlSeconds}&value=${encodeURIComponent(JSON.stringify(notificationData))}`;
+    const url = `${redisUrl}/set/${encodeURIComponent(redisKey)}/${encodeURIComponent(redisValue)}?EX=${ttlSeconds}`;
+    console.log("Redis request URL:", url);
 
     const redisResponse = await fetch(url, {
       method: "GET",
@@ -112,7 +117,7 @@ export async function POST(request: NextRequest) {
         status: redisResponse.status,
         statusText: redisResponse.statusText,
         errorText,
-        url: `${redisUrl}/set`
+        url: url
       });
       return NextResponse.json(
         { error: "Failed to save notification", details: errorText },
