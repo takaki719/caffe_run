@@ -63,7 +63,7 @@ export async function GET() {
 
         // 通知データを取得
         const dataResponse = await fetch(
-          `${redisUrl}/get/${encodeURIComponent(key)}`,
+          `${redisUrl}/get/${key}`,
           {
             headers: {
               Authorization: `Bearer ${redisToken}`,

@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
       try {
         // 通知データを取得
         const dataResponse = await fetch(
-          `${redisUrl}/get/${encodeURIComponent(key)}`,
+          `${redisUrl}/get/${key}`,
           {
             headers: {
               Authorization: `Bearer ${redisToken}`,
@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
           );
 
           // 送信後にRedisから削除
-          await fetch(`${redisUrl}/del/${encodeURIComponent(key)}`, {
+          await fetch(`${redisUrl}/del/${key}`, {
             headers: {
               Authorization: `Bearer ${redisToken}`,
             },
