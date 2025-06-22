@@ -1,18 +1,23 @@
 import { NextResponse } from "next/server";
 import webpush from "web-push";
 
-// VAPID設定
+// VAPID設定（環境変数がある場合のみ）
 const vapidDetails = {
   subject: process.env.VAPID_SUBJECT || "mailto:your-email@example.com",
   publicKey: process.env.VAPID_PUBLIC_KEY || "",
   privateKey: process.env.VAPID_PRIVATE_KEY || "",
 };
 
-webpush.setVapidDetails(
-  vapidDetails.subject,
-  vapidDetails.publicKey,
-  vapidDetails.privateKey,
-);
+// 環境変数が設定されている場合のみVAPID設定を初期化
+if (vapidDetails.publicKey && vapidDetails.privateKey) {
+  webpush.setVapidDetails(
+    vapidDetails.subject,
+    vapidDetails.publicKey,
+    vapidDetails.privateKey,
+  );
+} else {
+  console.warn("VAPID keys not found in environment variables");
+}
 
 export async function GET() {
   try {
