@@ -20,6 +20,7 @@ import Warnings from "@/components/Warnings";
 import Dashboard from "@/components/Dashboard";
 import { useExpireCaffeineLogs } from "@/hooks/useExpireCaffeineLogs";
 import ExpirePopup from "@/components/ExpirePopup";
+import { generateCaffeinePlan } from "@/utils/generatePlan";
 
 // グラフの点の型定義
 type GraphPoint = { time: string; value: number };
@@ -269,88 +270,25 @@ const HomePage: React.FC = () => {
     }
     setError("");
     setIsLoading(true);
-    setGraphData({ simulation: [], current: [] });
 
     try {
-      const requestBody = {
-        bed_time: bedTime,
-        wake_time: wakeTime,
-        focus_periods: focusPeriods,
-        caffeine_logs: logs,
-      };
-
-      console.log("API Request Body:", requestBody);
-
-      const response = await fetch("/api/plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("API Error Response:", {
-          status: response.status,
-          statusText: response.statusText,
-          url: response.url,
-          body: errorText,
+      const { minPerformances, targetPerformance, graphData, recommendations } =
+        await generateCaffeinePlan({
+          bedTime,
+          wakeTime,
+          focusPeriods,
+          caffeineLogs: logs ?? [],
         });
-        throw new Error(
-          `APIリクエストに失敗しました (${response.status}: ${response.statusText}) - ${errorText}`,
-        );
-      }
-      const result = await response.json();
-      const schedule: ModalRecommendation[] =
-        result.rawSchedule || result.caffeinePlan || [];
-      setGraphData({
-        simulation: result.simulationData || [],
-        current: result.currentStatusData || [],
-      });
 
-      // setRecommendations(
-      //   schedule.map(
-      //     (rec: { timeDisplay?: string; time?: string; mg: number }) => ({
-      //       time: rec.timeDisplay || rec.time || "",
-      //       caffeineAmount: rec.mg,
-      //     }),
-      //   ),
-      // );
-
-      setRecommendations(
-        schedule.map((rec) => {
-          const time = rec.timeDisplay || rec.time || "";
-          const now = new Date();
-          const [hour, minute] = time.split(":").map(Number);
-          const inferredDate = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate(),
-            hour,
-            minute,
-          );
-          if (inferredDate < now) {
-            inferredDate.setDate(inferredDate.getDate() + 1); // 過去なら明日に繰り上げ
-          }
-
-          return {
-            time,
-            caffeineAmount: rec.caffeineAmount ?? rec.mg ?? 0,
-            fullDateTime: rec.fullDateTime || inferredDate.toISOString(),
-          };
-        }),
-      );
-      setMinPerformances(result.minPerformances || []);
-      setTargetPerformance(result.targetPerformance);
+      setMinPerformances(minPerformances);
+      setTargetPerformance(targetPerformance);
+      setGraphData(graphData);
+      setRecommendations(recommendations);
       setActiveGraph("simulation");
-      setUnityKey((prevKey) => prevKey + 1);
-    } catch (error) {
-      console.error("プラン生成エラー詳細:", {
-        error,
-        errorMessage: error instanceof Error ? error.message : String(error),
-        errorStack: error instanceof Error ? error.stack : undefined,
-      });
+      setUnityKey((prev) => prev + 1);
+    } catch (err) {
       setError(
-        `プラン生成中にエラーが発生しました: ${error instanceof Error ? error.message : String(error)}`,
+        `プラン生成中にエラーが発生しました: ${err instanceof Error ? err.message : String(err)}`,
       );
     } finally {
       setIsLoading(false);
