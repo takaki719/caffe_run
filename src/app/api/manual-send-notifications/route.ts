@@ -62,14 +62,11 @@ export async function GET() {
         console.log(`Processing key: ${key}`);
 
         // 通知データを取得
-        const dataResponse = await fetch(
-          `${redisUrl}/get/${key}`,
-          {
-            headers: {
-              Authorization: `Bearer ${redisToken}`,
-            },
+        const dataResponse = await fetch(`${redisUrl}/get/${key}`, {
+          headers: {
+            Authorization: `Bearer ${redisToken}`,
           },
-        );
+        });
 
         if (!dataResponse.ok) {
           results.push({ key, status: "failed to get data" });
@@ -82,7 +79,7 @@ export async function GET() {
           continue;
         }
 
-        const notificationData = JSON.parse(dataResult.result);
+        const notificationData = JSON.parse(decodeURIComponent(dataResult.result));
         console.log(`Notification data for ${key}:`, notificationData);
 
         // Push通知送信

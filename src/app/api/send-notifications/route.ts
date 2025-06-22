@@ -86,21 +86,18 @@ export async function GET(request: NextRequest) {
     for (const key of keys) {
       try {
         // 通知データを取得
-        const dataResponse = await fetch(
-          `${redisUrl}/get/${key}`,
-          {
-            headers: {
-              Authorization: `Bearer ${redisToken}`,
-            },
+        const dataResponse = await fetch(`${redisUrl}/get/${key}`, {
+          headers: {
+            Authorization: `Bearer ${redisToken}`,
           },
-        );
+        });
 
         if (!dataResponse.ok) continue;
 
         const dataResult = await dataResponse.json();
         if (!dataResult.result) continue;
 
-        const notificationData = JSON.parse(dataResult.result);
+        const notificationData = JSON.parse(decodeURIComponent(dataResult.result));
         const notificationTime = new Date(notificationData.notificationTime);
 
         // 通知時刻が現在時刻の前後1分以内かチェック
