@@ -1,0 +1,18 @@
+{
+    "functions": {
+      "api/send-notifications/route.js": {
+        "maxDuration": 10
+      }
+    },
+    "headers": [
+      {
+        "source": "/api/send-notifications",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
+          }
+        ]
+      }
+    ]
+  }
