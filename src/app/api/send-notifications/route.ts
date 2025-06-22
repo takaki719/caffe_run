@@ -14,21 +14,22 @@ webpush.setVapidDetails(
   vapidDetails.privateKey,
 );
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    // セキュリティ: cronジョブからの呼び出しかチェック
-    const authHeader = request.headers.get("authorization");
+    // セキュリティ: cronジョブからのクエリパラメータでトークンチェック
+    const url = new URL(request.url);
+    const token = url.searchParams.get("token");
     const expectedToken = process.env.CRON_SECRET;
 
     console.log("Debug auth check:", {
-      authHeader,
+      token: token ? `${token.substring(0, 5)}...` : "undefined",
       expectedToken: expectedToken
         ? `${expectedToken.substring(0, 5)}...`
         : "undefined",
       hasExpectedToken: !!expectedToken,
     });
 
-    if (!expectedToken || authHeader !== `Bearer ${expectedToken}`) {
+    if (!expectedToken || token !== expectedToken) {
       console.log("Auth failed:", {
         reason: !expectedToken ? "No CRON_SECRET" : "Token mismatch",
       });
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
     const oneMinuteAfter = new Date(now.getTime() + 60000);
 
     // Redisからすべての通知キーを取得
-    const keysResponse = await fetch(`${redisUrl}/keys/notification:*`, {
+    const keysResponse = await fetch(`${redisUrl}/keys/${encodeURIComponent("notification:*")}`, {
       headers: {
         Authorization: `Bearer ${redisToken}`,
       },
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
     for (const key of keys) {
       try {
         // 通知データを取得
-        const dataResponse = await fetch(`${redisUrl}/get/${key}`, {
+        const dataResponse = await fetch(`${redisUrl}/get/${encodeURIComponent(key)}`, {
           headers: {
             Authorization: `Bearer ${redisToken}`,
           },
@@ -103,8 +104,7 @@ export async function POST(request: NextRequest) {
           );
 
           // 送信後にRedisから削除
-          await fetch(`${redisUrl}/del/${key}`, {
-            method: "POST",
+          await fetch(`${redisUrl}/del/${encodeURIComponent(key)}`, {
             headers: {
               Authorization: `Bearer ${redisToken}`,
             },

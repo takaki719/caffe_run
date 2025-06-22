@@ -29,7 +29,7 @@ export async function GET() {
     }
 
     // Redisからすべての通知キーを取得
-    const keysResponse = await fetch(`${redisUrl}/keys/notification:*`, {
+    const keysResponse = await fetch(`${redisUrl}/keys/${encodeURIComponent("notification:*")}`, {
       headers: {
         Authorization: `Bearer ${redisToken}`,
       },
@@ -54,7 +54,7 @@ export async function GET() {
         console.log(`Processing key: ${key}`);
         
         // 通知データを取得
-        const dataResponse = await fetch(`${redisUrl}/get/${key}`, {
+        const dataResponse = await fetch(`${redisUrl}/get/${encodeURIComponent(key)}`, {
           headers: {
             Authorization: `Bearer ${redisToken}`,
           },
