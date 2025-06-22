@@ -342,32 +342,7 @@ const HomePage: React.FC = () => {
       setActiveGraph("simulation");
 
       // 通知を設定
-      const processedRecommendations = schedule.map(
-        (rec: { timeDisplay?: string; time?: string; mg: number }) => {
-          const time = rec.timeDisplay || rec.time || "";
-          const now = new Date();
-          const [hour, minute] = time.split(":").map(Number);
-          const inferredDate = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate(),
-            hour,
-            minute,
-          );
-          if (inferredDate < now) {
-            inferredDate.setDate(inferredDate.getDate() + 1);
-          }
-
-          return {
-            time,
-            caffeineAmount: rec.mg ?? 0,
-            fullDateTime: rec.time || inferredDate.toISOString(),
-          };
-        },
-      );
-
-      setRecommendations(processedRecommendations);
-      await setupNotificationsForRecommendations(processedRecommendations);
+      await setupNotificationsForRecommendations(recommendations);
 
       setUnityKey((prevKey) => prevKey + 1);
     } catch (error) {
@@ -377,12 +352,19 @@ const HomePage: React.FC = () => {
         errorStack: error instanceof Error ? error.stack : undefined,
       });
       setError(
-        `プラン生成中にエラーが発生しました: ${err instanceof Error ? err.message : String(err)}`,
+        `プラン生成中にエラーが発生しました: ${error instanceof Error ? error.message : String(error)}`,
       );
     } finally {
       setIsLoading(false);
     }
-  }, [bedTime, wakeTime, focusPeriods, isValid, logs]);
+  }, [
+    bedTime,
+    wakeTime,
+    focusPeriods,
+    isValid,
+    logs,
+    setupNotificationsForRecommendations,
+  ]);
 
   useEffect(() => {
     if (!localStorage.getItem("initial-setup-complete")) {
@@ -452,14 +434,15 @@ const HomePage: React.FC = () => {
               setActiveGraph("simulation");
             }
             if (recommendations) {
-              setRecommendations(
-                recommendations.map((rec: ModalRecommendation) => ({
+              const processedRecs = recommendations.map(
+                (rec: ModalRecommendation) => ({
                   time: rec.time,
                   caffeineAmount: rec.caffeineAmount ?? rec.mg ?? 0,
                   fullDateTime: rec.fullDateTime || "",
-                })),
+                }),
               );
-              setupNotificationsForRecommendations(recommendations);
+              setRecommendations(processedRecs);
+              setupNotificationsForRecommendations(processedRecs);
             }
             setShowSettingModal(false);
             setSettingModalJustClosed(true); // フラグを設定
