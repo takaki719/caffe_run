@@ -17,7 +17,8 @@ interface SimulationPoint {
 
 interface CaffeineRecommendation {
   time: string;
-  mg: number;
+  caffeineAmount: number;
+  fullDateTime: string;
 }
 
 interface SettingModalProps {
@@ -49,7 +50,13 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
       return;
     }
 
-    console.log("保存する設定値:", { bedTime, wakeTime, focusPeriods });
+    console.log("SettingModal - 保存する設定値:", { bedTime, wakeTime, focusPeriods });
+    console.log("SettingModal - APIリクエストボディ:", {
+      bed_time: bedTime,
+      wake_time: wakeTime,
+      focus_periods: focusPeriods,
+      caffeine_logs: [],
+    });
     localStorage.setItem("initial-setup-complete", "true");
     localStorage.setItem("bedTime", bedTime);
     localStorage.setItem("wakeTime", wakeTime);
@@ -81,13 +88,36 @@ const SettingModal: React.FC<SettingModalProps> = ({ onClose }) => {
         simulation: json.simulationData || [],
         current: json.currentStatusData || [],
       };
-      recommendations = json.caffeinePlan || [];
+      const schedule = json.rawSchedule || json.caffeinePlan || [];
+      recommendations = schedule.map((rec: { timeDisplay?: string; time?: string; mg: number }) => {
+        const time = rec.timeDisplay || rec.time || "";
+        const now = new Date();
+        const [hour, minute] = time.split(":").map(Number);
+        const inferredDate = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          hour,
+          minute,
+        );
+        if (inferredDate < now) {
+          inferredDate.setDate(inferredDate.getDate() + 1);
+        }
+
+        return {
+          time,
+          caffeineAmount: rec.mg ?? 0,
+          fullDateTime: rec.time || inferredDate.toISOString(),
+        };
+      });
+      console.log("SettingModal - Final recommendations:", recommendations);
       setError("");
     } catch {
       setError("初期プラン取得中にエラーが発生しました");
       return;
     }
 
+    console.log("SettingModal - Calling onClose with:", { mins, tgt, recommendations });
     onClose(mins, tgt, graphData, recommendations);
   };
 

@@ -20,13 +20,12 @@ interface FocusPeriod {
 interface Recommendation {
   time: string;
   caffeineAmount: number;
+  fullDateTime: string;
 }
 
 /**
- * 起床時間と集中時間を基準に有効な推奨プランのみを返す
- * 以下の条件で推奨プランを表示しない：
- * 1. 起床時間から24時間が経過した場合
- * 2. すべての集中時間が終了した場合
+ * NextCaffeineTimeと同じロジックで有効な推奨プランのみを返す
+ * fullDateTimeを使用して未来の推奨のみをフィルタリング
  */
 function getValidRecommendations(
   recommendations: Recommendation[],
@@ -34,80 +33,39 @@ function getValidRecommendations(
   focusPeriods: FocusPeriod[],
   now: Date,
 ): Recommendation[] {
-  if (!wakeTime) return recommendations;
+  console.log("Dashboard - getValidRecommendations called with:", { 
+    recommendations, 
+    wakeTime, 
+    focusPeriods, 
+    now: now.toISOString() 
+  });
 
-  // "HH:MM"→分に変換
-  const toMinutes = (t: string) => {
-    const [h, m] = t.split(":").map(Number);
-    return h * 60 + m;
-  };
-
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const wakeMinutes = toMinutes(wakeTime);
-
-  // 起床時間から24時間経過したかをチェック
-  let isDayPassed = false;
-
-  if (wakeMinutes <= nowMinutes) {
-    // 通常のケース：起床時間が今日の朝など
-    const hoursPassed = (nowMinutes - wakeMinutes) / 60;
-    isDayPassed = hoursPassed >= 24;
-  } else {
-    // 日をまたぐケース：起床時間が今日の夜など（前日の起床から計算）
-    const minutesSinceYesterdayWake = nowMinutes + 24 * 60 - wakeMinutes;
-    const hoursPassed = minutesSinceYesterdayWake / 60;
-    isDayPassed = hoursPassed >= 24;
-  }
-
-  // 起床時間から24時間が過ぎている場合は空を返す
-  if (isDayPassed) {
-    return [];
-  }
-
-  // 集中時間がすべて終了しているかチェック
-  if (focusPeriods && focusPeriods.length > 0) {
-    const validFocusPeriods = focusPeriods.filter(
-      (period) => period.start && period.end,
-    );
-
-    if (validFocusPeriods.length > 0) {
-      const allFocusPeriodsEnded = validFocusPeriods.every((period) => {
-        let endMinutes = toMinutes(period.end);
-        const startMinutes = toMinutes(period.start);
-
-        // 日をまたぐ集中時間の場合（例：22:00-02:00）
-        if (startMinutes > endMinutes) {
-          endMinutes += 24 * 60; // 翌日の時刻として扱う
-          // 現在時刻が午前中（起床時刻より小さい）場合は翌日として扱う必要がある
-          const currentTimeForComparison =
-            nowMinutes < wakeMinutes ? nowMinutes + 24 * 60 : nowMinutes;
-          return currentTimeForComparison > endMinutes;
-        } else {
-          // 日をまたがない集中時間の場合
-          // 現在時刻が起床時刻より小さい場合（翌日）は、集中時間は終了している
-          if (nowMinutes < wakeMinutes) {
-            return true; // 翌日なので前日の集中時間は終了
-          }
-          return nowMinutes > endMinutes;
-        }
-      });
-
-      // すべての集中時間が終了している場合は空を返す
-      if (allFocusPeriodsEnded) {
-        return [];
-      }
+  // NextCaffeineTimeと同じロジックを使用
+  const futureRecommendations = recommendations.filter((rec) => {
+    if (!rec.fullDateTime) {
+      console.log("Dashboard - Recommendation without fullDateTime:", rec);
+      return false; // 日付情報がないものは除外
     }
-  }
+    const recommendationDate = new Date(rec.fullDateTime);
+    const isFuture = recommendationDate > now;
+    console.log("Dashboard - Checking recommendation:", {
+      time: rec.time,
+      fullDateTime: rec.fullDateTime,
+      recommendationDate: recommendationDate.toISOString(),
+      isFuture
+    });
+    return isFuture;
+  });
 
-  // 現在時刻以降の推奨プランのみを取得
-  const futureRecommendations = recommendations.filter(
-    (rec) => toMinutes(rec.time) > nowMinutes,
+  // 時刻順にソート（念のため）
+  const sortedRecs = futureRecommendations.sort(
+    (a, b) =>
+      new Date(a.fullDateTime).getTime() -
+      new Date(b.fullDateTime).getTime(),
   );
 
-  // 時刻順にソート
-  return futureRecommendations.sort(
-    (a, b) => toMinutes(a.time) - toMinutes(b.time),
-  );
+  console.log("Dashboard - Final valid recommendations:", sortedRecs);
+  return sortedRecs;
 }
 
 export interface DashboardProps {
@@ -116,7 +74,7 @@ export interface DashboardProps {
     simulation: { time: string; value: number }[];
     current: { time: string; value: number }[];
   };
-  recommendations: { time: string; caffeineAmount: number }[];
+  recommendations: { time: string; caffeineAmount: number; fullDateTime: string }[];
   bedTime: string;
   wakeTime: string;
   focusPeriods: { start: string; end: string }[];

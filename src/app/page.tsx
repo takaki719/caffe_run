@@ -309,8 +309,23 @@ const HomePage: React.FC = () => {
     } else if (isValid()) {
       handleGeneratePlan();
     }
+    
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 値が変更された時の処理
+  const [settingModalJustClosed, setSettingModalJustClosed] = useState(false);
+  
+  useEffect(() => {
+    console.log("Values changed:", { bedTime, wakeTime, focusPeriods });
+    
+    // SettingModal完了直後かつ値が有効な場合、自動でプラン生成
+    if (settingModalJustClosed && isValid()) {
+      console.log("Auto-generating plan due to value change after SettingModal");
+      handleGeneratePlan();
+      setSettingModalJustClosed(false);
+    }
+  }, [bedTime, wakeTime, focusPeriods, settingModalJustClosed, isValid, handleGeneratePlan]);
 
   const isInitialMount = useRef(true);
   useEffect(() => {
@@ -335,6 +350,7 @@ const HomePage: React.FC = () => {
       {showSettingModal && (
         <SettingModal
           onClose={(mins, tgt, graphData, recommendations) => {
+            console.log("Page - Received from SettingModal:", { mins, tgt, recommendations });
             setMinPerformances(mins);
             setTargetPerformance(tgt);
             if (graphData) {
@@ -342,14 +358,13 @@ const HomePage: React.FC = () => {
               setActiveGraph("simulation");
             }
             if (recommendations) {
-              setRecommendations(
-                recommendations.map((rec: any) => ({
-                  time: rec.time,
-                  caffeineAmount: rec.caffeineAmount ?? rec.amount ?? 0,
-                }))
-              );
+              console.log("Page - Setting recommendations:", recommendations);
+              setRecommendations(recommendations);
+            } else {
+              console.log("Page - No recommendations received");
             }
             setShowSettingModal(false);
+            setSettingModalJustClosed(true); // フラグを設定
           }}
         />
       )}
