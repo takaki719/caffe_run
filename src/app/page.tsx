@@ -198,16 +198,41 @@ const HomePage: React.FC = () => {
   // 通知機能
   const { isSupported, permission, registerNotification } = useNotifications();
 
-  // 推奨プランに基づいて通知を設定する関数 (一時的に無効化)
-  // const setupNotificationsForRecommendations = useCallback(
-  //   async (caffeineRecommendations: Recommendation[]) => {
-  //     if (!isSupported || permission !== "granted") {
-  //       return;
-  //     }
-  //     // ... 通知設定処理
-  //   },
-  //   [isSupported, permission, registerNotification],
-  // );
+  // 推奨プランに基づいて通知を設定する関数
+  const setupNotificationsForRecommendations = useCallback(
+    async (caffeineRecommendations: Recommendation[]) => {
+      if (!isSupported || permission !== "granted") {
+        console.log("Notifications not available:", { isSupported, permission });
+        return;
+      }
+
+      console.log("Setting up notifications for recommendations:", caffeineRecommendations);
+
+      // 未来の推奨のみをフィルタリング
+      const now = new Date();
+      const futureRecommendations = caffeineRecommendations.filter((rec) => {
+        if (!rec.fullDateTime) return false;
+        const recommendationDate = new Date(rec.fullDateTime);
+        return recommendationDate > now;
+      });
+
+      console.log("Future recommendations for notifications:", futureRecommendations);
+
+      // 各推奨について5分前に通知を設定
+      for (const rec of futureRecommendations) {
+        const notificationTime = new Date(rec.fullDateTime);
+        notificationTime.setMinutes(notificationTime.getMinutes() - 5); // 5分前
+
+        // 通知時刻が現在時刻より未来の場合のみ設定
+        if (notificationTime > now) {
+          console.log(`Setting notification for ${rec.time} at ${notificationTime.toLocaleString()}`);
+          const success = await registerNotification(notificationTime);
+          console.log(`Notification registration for ${rec.time}:`, success ? "Success" : "Failed");
+        }
+      }
+    },
+    [isSupported, permission, registerNotification],
+  );
 
   // 起床時刻＋24時間でローカルストレージ内のすべてのデータを自動消去&ポップアップ表示
   // 次のカフェイン摂取時間や摂取履歴も削除される
@@ -270,17 +295,42 @@ const HomePage: React.FC = () => {
         );
       }
       const result = await response.json();
+      const schedule = result.rawSchedule || result.caffeinePlan || [];
       setGraphData({
         simulation: result.simulationData || [],
         current: result.currentStatusData || [],
       });
-      setRecommendations(result.caffeinePlan || []);
       setMinPerformances(result.minPerformances || []);
       setTargetPerformance(result.targetPerformance);
       setActiveGraph("simulation");
 
-      // 通知を設定 (一時的に無効化)
-      // await setupNotificationsForRecommendations(result.caffeinePlan || []);
+      // 通知を設定
+      const processedRecommendations = schedule.map(
+        (rec: { timeDisplay?: string; time?: string; mg: number }) => {
+          const time = rec.timeDisplay || rec.time || "";
+          const now = new Date();
+          const [hour, minute] = time.split(":").map(Number);
+          const inferredDate = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            hour,
+            minute,
+          );
+          if (inferredDate < now) {
+            inferredDate.setDate(inferredDate.getDate() + 1);
+          }
+
+          return {
+            time,
+            caffeineAmount: rec.mg ?? 0,
+            fullDateTime: rec.time || inferredDate.toISOString(),
+          };
+        },
+      );
+      
+      setRecommendations(processedRecommendations);
+      await setupNotificationsForRecommendations(processedRecommendations);
 
       setUnityKey((prevKey) => prevKey + 1);
     } catch (error) {
@@ -367,6 +417,8 @@ const HomePage: React.FC = () => {
             if (recommendations) {
               console.log("Page - Setting recommendations:", recommendations);
               setRecommendations(recommendations);
+              // SettingModalからの推奨に対しても通知を設定
+              setupNotificationsForRecommendations(recommendations);
             } else {
               console.log("Page - No recommendations received");
             }

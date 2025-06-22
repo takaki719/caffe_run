@@ -6,8 +6,8 @@ self.addEventListener('push', function(event) {
     const data = event.data.json();
     const options = {
       body: data.body || '5分後にカフェイン摂取を推奨します ☕',
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      icon: '/icons/logo.png',
+      badge: '/icons/logo.png',
       tag: 'caffeine-reminder',
       requireInteraction: true,
       data: {
