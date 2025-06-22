@@ -22,6 +22,18 @@ if (vapidDetails.publicKey && vapidDetails.privateKey) {
 export async function GET() {
   try {
     console.log("=== Manual Notification Send Test ===");
+    console.log("VAPID check:", {
+      hasPublicKey: !!vapidDetails.publicKey,
+      hasPrivateKey: !!vapidDetails.privateKey,
+      publicKeyPrefix: vapidDetails.publicKey ? vapidDetails.publicKey.substring(0, 10) + "..." : "undefined",
+    });
+
+    if (!vapidDetails.publicKey || !vapidDetails.privateKey) {
+      return NextResponse.json(
+        { error: "VAPID keys not configured" },
+        { status: 500 },
+      );
+    }
 
     const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
     const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
