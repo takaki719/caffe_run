@@ -17,23 +17,26 @@ webpush.setVapidDetails(
 export async function GET() {
   try {
     console.log("=== Manual Notification Send Test ===");
-    
+
     const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
     const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
     if (!redisUrl || !redisToken) {
       return NextResponse.json(
         { error: "Redis configuration missing" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     // Redisからすべての通知キーを取得
-    const keysResponse = await fetch(`${redisUrl}/keys/${encodeURIComponent("notification:*")}`, {
-      headers: {
-        Authorization: `Bearer ${redisToken}`,
+    const keysResponse = await fetch(
+      `${redisUrl}/keys/${encodeURIComponent("notification:*")}`,
+      {
+        headers: {
+          Authorization: `Bearer ${redisToken}`,
+        },
       },
-    });
+    );
 
     if (!keysResponse.ok) {
       throw new Error("Failed to fetch notification keys");
@@ -41,7 +44,7 @@ export async function GET() {
 
     const keysData = await keysResponse.json();
     const keys = keysData.result || [];
-    
+
     console.log("Found notification keys:", keys);
 
     let sentCount = 0;
@@ -52,13 +55,16 @@ export async function GET() {
     for (const key of keys) {
       try {
         console.log(`Processing key: ${key}`);
-        
+
         // 通知データを取得
-        const dataResponse = await fetch(`${redisUrl}/get/${encodeURIComponent(key)}`, {
-          headers: {
-            Authorization: `Bearer ${redisToken}`,
+        const dataResponse = await fetch(
+          `${redisUrl}/get/${encodeURIComponent(key)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${redisToken}`,
+            },
           },
-        });
+        );
 
         if (!dataResponse.ok) {
           results.push({ key, status: "failed to get data" });
@@ -82,22 +88,18 @@ export async function GET() {
         });
 
         console.log(`Sending notification for ${key}...`);
-        await webpush.sendNotification(
-          notificationData.subscription,
-          payload,
-        );
+        await webpush.sendNotification(notificationData.subscription, payload);
 
         sentCount++;
         results.push({ key, status: "sent successfully" });
         console.log(`✓ Notification sent: ${key}`);
-
       } catch (error) {
         errorCount++;
         console.error(`✗ Failed to process notification ${key}:`, error);
-        results.push({ 
-          key, 
-          status: "error", 
-          error: error instanceof Error ? error.message : String(error) 
+        results.push({
+          key,
+          status: "error",
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -108,14 +110,16 @@ export async function GET() {
       sentCount,
       errorCount,
       results,
-      message: "Manual notification send test completed"
+      message: "Manual notification send test completed",
     });
-
   } catch (error) {
     console.error("Manual notification send error:", error);
     return NextResponse.json(
-      { error: "Manual send failed", details: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
+      {
+        error: "Manual send failed",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 },
     );
   }
 }

@@ -58,11 +58,14 @@ export async function GET(request: NextRequest) {
     const oneMinuteAfter = new Date(now.getTime() + 60000);
 
     // Redisからすべての通知キーを取得
-    const keysResponse = await fetch(`${redisUrl}/keys/${encodeURIComponent("notification:*")}`, {
-      headers: {
-        Authorization: `Bearer ${redisToken}`,
+    const keysResponse = await fetch(
+      `${redisUrl}/keys/${encodeURIComponent("notification:*")}`,
+      {
+        headers: {
+          Authorization: `Bearer ${redisToken}`,
+        },
       },
-    });
+    );
 
     if (!keysResponse.ok) {
       throw new Error("Failed to fetch notification keys");
@@ -78,11 +81,14 @@ export async function GET(request: NextRequest) {
     for (const key of keys) {
       try {
         // 通知データを取得
-        const dataResponse = await fetch(`${redisUrl}/get/${encodeURIComponent(key)}`, {
-          headers: {
-            Authorization: `Bearer ${redisToken}`,
+        const dataResponse = await fetch(
+          `${redisUrl}/get/${encodeURIComponent(key)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${redisToken}`,
+            },
           },
-        });
+        );
 
         if (!dataResponse.ok) continue;
 

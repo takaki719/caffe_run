@@ -8,15 +8,18 @@ export async function GET() {
     if (!redisUrl || !redisToken) {
       return NextResponse.json(
         { error: "Redis configuration missing" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     const testKey = `test:${Date.now()}`;
-    const testValue = { message: "Hello Redis", timestamp: new Date().toISOString() };
+    const testValue = {
+      message: "Hello Redis",
+      timestamp: new Date().toISOString(),
+    };
 
     console.log("Testing Redis write...");
-    
+
     // 書き込みテスト
     const writeResponse = await fetch(`${redisUrl}/set/${testKey}`, {
       method: "POST",
@@ -31,13 +34,13 @@ export async function GET() {
     });
 
     console.log("Write response status:", writeResponse.status);
-    
+
     if (!writeResponse.ok) {
       const writeError = await writeResponse.text();
       console.error("Write failed:", writeError);
       return NextResponse.json(
         { error: "Write failed", details: writeError },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -58,7 +61,7 @@ export async function GET() {
       console.error("Read failed:", readError);
       return NextResponse.json(
         { error: "Read failed", details: readError },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -70,14 +73,16 @@ export async function GET() {
       testKey,
       writeResult,
       readResult: readResult.result ? JSON.parse(readResult.result) : null,
-      message: "Redis read/write test completed"
+      message: "Redis read/write test completed",
     });
-
   } catch (error) {
     console.error("Redis test error:", error);
     return NextResponse.json(
-      { error: "Test failed", details: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
+      {
+        error: "Test failed",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 },
     );
   }
 }

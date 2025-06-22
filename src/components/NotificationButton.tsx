@@ -23,9 +23,12 @@ const NotificationButton: React.FC = () => {
     // 5秒後にテスト通知を送信
     const testTime = new Date();
     testTime.setSeconds(testTime.getSeconds() + 5);
-    
-    console.log("Registering test notification for:", testTime.toLocaleString());
-    
+
+    console.log(
+      "Registering test notification for:",
+      testTime.toLocaleString(),
+    );
+
     if (subscription && userId) {
       try {
         const response = await fetch("/api/register-notification", {
