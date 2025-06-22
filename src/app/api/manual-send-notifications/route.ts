@@ -25,7 +25,9 @@ export async function GET() {
     console.log("VAPID check:", {
       hasPublicKey: !!vapidDetails.publicKey,
       hasPrivateKey: !!vapidDetails.privateKey,
-      publicKeyPrefix: vapidDetails.publicKey ? vapidDetails.publicKey.substring(0, 10) + "..." : "undefined",
+      publicKeyPrefix: vapidDetails.publicKey
+        ? vapidDetails.publicKey.substring(0, 10) + "..."
+        : "undefined",
     });
 
     if (!vapidDetails.publicKey || !vapidDetails.privateKey) {
@@ -91,7 +93,9 @@ export async function GET() {
           continue;
         }
 
-        const notificationData = JSON.parse(decodeURIComponent(dataResult.result));
+        const notificationData = JSON.parse(
+          decodeURIComponent(dataResult.result),
+        );
         console.log(`Notification data for ${key}:`, notificationData);
 
         // Push通知送信

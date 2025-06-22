@@ -97,7 +97,9 @@ export async function GET(request: NextRequest) {
         const dataResult = await dataResponse.json();
         if (!dataResult.result) continue;
 
-        const notificationData = JSON.parse(decodeURIComponent(dataResult.result));
+        const notificationData = JSON.parse(
+          decodeURIComponent(dataResult.result),
+        );
         const notificationTime = new Date(notificationData.notificationTime);
 
         // 通知時刻が現在時刻の前後1分以内かチェック

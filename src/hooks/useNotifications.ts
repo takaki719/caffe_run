@@ -66,10 +66,15 @@ export const useNotifications = () => {
     }
   };
 
-  const subscribeToPush = async (permissionStatus?: NotificationPermission): Promise<PushSubscription | null> => {
+  const subscribeToPush = async (
+    permissionStatus?: NotificationPermission,
+  ): Promise<PushSubscription | null> => {
     const currentPermission = permissionStatus || permission;
     if (!isSupported || currentPermission !== "granted") {
-      console.log("Cannot subscribe:", { isSupported, permission: currentPermission });
+      console.log("Cannot subscribe:", {
+        isSupported,
+        permission: currentPermission,
+      });
       return null;
     }
 
