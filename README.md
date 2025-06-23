@@ -3,6 +3,8 @@
 ![logo](https://github.com/user-attachments/assets/aeac4111-073b-433c-8ba0-51f8506ddab1)
 
 カフェインの効果を最適化し、集中力を最大化するためのWebアプリケーションです。科学的根拠に基づいてカフェイン摂取タイミングを計算し、個人の生活リズムに合わせた最適な計画を提案します。
+https://caffe-run-flax.vercel.app/
+
 
 技育CAMPハッカソン Vol.5 に出場し、努力賞を受賞しました！
 <img width="358" alt="image" src="https://github.com/user-attachments/assets/2fe28879-0509-4f8e-a880-71c44e160c74" />
