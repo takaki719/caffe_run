@@ -1,4 +1,4 @@
-# カフェラン (Caffe Runn)
+# Caffe-Run
 
 ![logo](https://github.com/user-attachments/assets/aeac4111-073b-433c-8ba0-51f8506ddab1)
 
